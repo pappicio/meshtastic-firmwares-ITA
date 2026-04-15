@@ -161,3 +161,5 @@ Incolla: Apri il file src/configuration.h nel tuo progetto firmware (VS Code / P
 
 📝 Formato Output
 Il codice generato segue lo standard SSD1306 Page Addressing, necessario per il corretto funzionamento dei display OLED su firmware Meshtastic:
+
+![Meshtastic Logo Creator](https://raw.githubusercontent.com/pappicio/meshtastic-firmwares-ITA/main/meshtastic_logo_creator.jpg)
