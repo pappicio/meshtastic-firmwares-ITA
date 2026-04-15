@@ -1129,26 +1129,43 @@ void NodeDB::pickNewNodeNum()
 {
     NodeNum nodeNum = myNodeInfo.my_node_num;
     getMacAddr(ourMacAddr); // Make sure ourMacAddr is set
+    
     if (nodeNum == 0) {
-        // Pick an initial nodenum based on the macaddr
+        // --- INIZIO LOGICA PERSONALIZZATA RANDOM ID ---
+#if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
+        // Se la macro è attiva, usiamo il TRNG dell'ESP32 per un ID casuale
+#if defined(ARCH_ESP32)
+        randomSeed(esp_random());
+#else
+        randomSeed(millis() + ((ourMacAddr[4] << 8) | ourMacAddr[5]));
+#endif
+        nodeNum = random(NUM_RESERVED, LONG_MAX);
+        LOG_INFO("RANDOM_ID_ON_FACTORY_RESET: ID casuale generato: 0x%x", nodeNum);
+#else
+        // Pick an initial nodenum based on the macaddr (Logica Originale)
         nodeNum = (ourMacAddr[2] << 24) | (ourMacAddr[3] << 16) | (ourMacAddr[4] << 8) | ourMacAddr[5];
+#endif
+        // --- FINE LOGICA PERSONALIZZATA ---
     }
 
     meshtastic_NodeInfoLite *found;
     while (((found = getMeshNode(nodeNum)) && memcmp(found->user.macaddr, ourMacAddr, sizeof(ourMacAddr)) != 0) ||
            (nodeNum == NODENUM_BROADCAST || nodeNum < NUM_RESERVED)) {
+        
         NodeNum candidate = random(NUM_RESERVED, LONG_MAX); // try a new random choice
+        
         if (found)
             LOG_WARN("NOTE! Our desired nodenum 0x%x is invalid or in use, by MAC ending in 0x%02x%02x vs our 0x%02x%02x, so "
                      "trying for 0x%x",
                      nodeNum, found->user.macaddr[4], found->user.macaddr[5], ourMacAddr[4], ourMacAddr[5], candidate);
+        
         nodeNum = candidate;
     }
+    
     LOG_DEBUG("Use nodenum 0x%x ", nodeNum);
 
     myNodeInfo.my_node_num = nodeNum;
 }
-
 /** Load a protobuf from a file, return LoadFileResult */
 LoadFileResult NodeDB::loadProto(const char *filename, size_t protoSize, size_t objSize, const pb_msgdesc_t *fields,
                                  void *dest_struct)

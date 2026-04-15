@@ -632,8 +632,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_CONFIG_OWNER_SHORT_NAME "MN01"
 
  
+// NODES
+#define USERPREFS_MAX_NUM_NODES 100
 
 
+// RANDLM ID!
+#define RANDOM_ID_ON_FACTORY_RESET 1
 
 // --- OEM E DISPLAY ---
  

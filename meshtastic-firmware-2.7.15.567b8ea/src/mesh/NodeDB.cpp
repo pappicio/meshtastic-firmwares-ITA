@@ -1104,9 +1104,23 @@ void NodeDB::pickNewNodeNum()
 {
     NodeNum nodeNum = myNodeInfo.my_node_num;
     getMacAddr(ourMacAddr); // Make sure ourMacAddr is set
+    
     if (nodeNum == 0) {
-        // Pick an initial nodenum based on the macaddr
+        // --- INIZIO LOGICA PERSONALIZZATA RANDOM ID ---
+#if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
+        // Se la macro è attiva, usiamo il TRNG dell'ESP32 per un ID casuale
+#if defined(ARCH_ESP32)
+        randomSeed(esp_random());
+#else
+        randomSeed(millis() + ((ourMacAddr[4] << 8) | ourMacAddr[5]));
+#endif
+        nodeNum = random(NUM_RESERVED, LONG_MAX);
+        LOG_INFO("RANDOM_ID_ON_FACTORY_RESET: ID casuale generato: 0x%x", nodeNum);
+#else
+        // Pick an initial nodenum based on the macaddr (Logica Originale)
         nodeNum = (ourMacAddr[2] << 24) | (ourMacAddr[3] << 16) | (ourMacAddr[4] << 8) | ourMacAddr[5];
+#endif
+        // --- FINE LOGICA PERSONALIZZATA ---
     }
 
     meshtastic_NodeInfoLite *found;
