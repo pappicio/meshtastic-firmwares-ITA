@@ -183,37 +183,49 @@ void checkInternalFan() {
 }
 
 
+
+
 void checkAutoReboot() {
-    // 1. Il controllo macro va bene, ma usiamo un approccio più "pulito"
-    #ifdef AUTO_REBOOT_DAYS
-        // Se è 0, non facciamo nulla
-        if (AUTO_REBOOT_DAYS == 0) return;
+// Esegui tutto solo se la macro è definita e maggiore di 0
+#if defined(AUTO_REBOOT_DAYS) && (AUTO_REBOOT_DAYS > 0)
 
-        // 2. FIX: millis() ritorna un uint32_t. Se il tempo di reboot è molto lungo (es. 50 giorni),
-        // millis() va in overflow (torna a zero) dopo circa 49.7 giorni.
-        // Usiamo uint32_t per la soglia se i giorni sono pochi, o logiche di confronto sicure.
+    // Calcolo soglia a 64bit per evitare casini (86.400.000 ms in un giorno)
+    static const uint64_t threshold = (uint64_t)AUTO_REBOOT_DAYS * 86400000ULL;
+
+    if (millis() > threshold) {
+        LOG_INFO("GHOST: Uptime limit reached (%d days). Rebooting...", AUTO_REBOOT_DAYS);
+        delay(1000); 
+
+        // --- IL CUORE DEL REBOOT (Copiato dalla funzione ufficiale) ---
         
-        // Calcolo della soglia (usiamo uint32_t perché millis() è a 32 bit)
-        // Se AUTO_REBOOT_DAYS è troppo alto (es > 49), questa soglia sballa.
-        static const uint64_t rebootThreshold = (uint64_t)AUTO_REBOOT_DAYS * 24 * 3600 * 1000;
+        // Se possibile, avvisiamo il sistema (opzionale, se dà errore commenta la riga sotto)
+        // notifyReboot.notifyObservers(NULL);
 
-        // 3. FIX ARCHITETTURA: ESP.restart() esiste solo su ESP32.
-        // Se un giorno compili per un RAK (nRF52840), il codice si rompe.
-        if (millis() > rebootThreshold) {
-            LOG_INFO("GHOST: Uptime limit reached (%d days). Rebooting...", AUTO_REBOOT_DAYS);
-            delay(500); 
+        #if defined(ARCH_ESP32) || defined(ESP32)
+            ESP.restart();
 
-            #if defined(ARCH_ESP32)
-                ESP.restart();
-            #elif defined(NRF52_SERIES)
-                NVIC_SystemReset();
-            #else
-                // Metodo universale Meshtastic (se disponibile nel contesto) o reset hardware
-                NVIC_SystemReset(); 
-            #endif
-        }
-    #endif
+        #elif defined(ARCH_NRF52) || defined(NRF52_SERIES) || defined(ARDUINO_ARCH_NRF52840)
+            NVIC_SystemReset();
+
+        #elif defined(ARCH_RP2040)
+            rp2040.reboot();
+
+        #elif defined(ARCH_PORTDUINO)
+            // Se lo stai facendo girare su Linux/PC
+            LOG_DEBUG("final reboot!");
+            ::reboot(0); 
+
+        #elif defined(ARCH_STM32WL)
+            HAL_NVIC_SystemReset();
+
+        #else
+            // Fallback universale per processori ARM (incluso il T114)
+            NVIC_SystemReset();
+        #endif
+    }
+#endif
 }
+
 
 /// Do idle processing (mostly processing messages which have been queued from the radio)
 void MeshService::loop()
