@@ -1074,7 +1074,31 @@ void NodeDB::installDefaultDeviceState()
     devicestate.has_rx_waypoint = false;
     devicestate.has_rx_text_message = false;
 
-    generatePacketId(); // FIXME - ugly way to init current_packet_id;
+
+
+// 1. PRIMA DI TUTTO: Configura l'Hardware (LED e Schermo)
+#if defined(LED_DISABLED) && (LED_DISABLED == 1)
+    config.device.led_heartbeat_disabled = true;
+#endif
+
+#if defined(SCREEN_TIMEOUT_DEFAULT)
+    config.display.screen_on_secs = SCREEN_TIMEOUT_DEFAULT;
+#endif
+
+    // 2. SECONDO: Genera l'identità (Random ID)
+    // Dobbiamo avere il NodeNum PRONTO prima di fare altro
+#if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
+    #if defined(ARCH_ESP32)
+        randomSeed(esp_random());
+    #else
+        randomSeed(millis() + ((ourMacAddr[4] << 8) | ourMacAddr[5]));
+    #endif
+    myNodeInfo.my_node_num = random(4, LONG_MAX);
+#else
+     generatePacketId(); // FIXME - ugly way to init current_packet_id;
+#endif
+
+    // generatePacketId(); // FIXME - ugly way to init current_packet_id;
 
     // Set default owner name
     pickNewNodeNum(); // based on macaddr now
@@ -1104,23 +1128,9 @@ void NodeDB::pickNewNodeNum()
 {
     NodeNum nodeNum = myNodeInfo.my_node_num;
     getMacAddr(ourMacAddr); // Make sure ourMacAddr is set
-    
     if (nodeNum == 0) {
-        // --- INIZIO LOGICA PERSONALIZZATA RANDOM ID ---
-#if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
-        // Se la macro è attiva, usiamo il TRNG dell'ESP32 per un ID casuale
-#if defined(ARCH_ESP32)
-        randomSeed(esp_random());
-#else
-        randomSeed(millis() + ((ourMacAddr[4] << 8) | ourMacAddr[5]));
-#endif
-        nodeNum = random(NUM_RESERVED, LONG_MAX);
-        LOG_INFO("RANDOM_ID_ON_FACTORY_RESET: ID casuale generato: 0x%x", nodeNum);
-#else
-        // Pick an initial nodenum based on the macaddr (Logica Originale)
+        // Pick an initial nodenum based on the macaddr
         nodeNum = (ourMacAddr[2] << 24) | (ourMacAddr[3] << 16) | (ourMacAddr[4] << 8) | ourMacAddr[5];
-#endif
-        // --- FINE LOGICA PERSONALIZZATA ---
     }
 
     meshtastic_NodeInfoLite *found;

@@ -198,6 +198,7 @@ NodeDB::NodeDB()
     loadFromDisk();
     cleanupMeshDB();
 
+    
     uint32_t devicestateCRC = crc32Buffer(&devicestate, sizeof(devicestate));
     uint32_t nodeDatabaseCRC = crc32Buffer(&nodeDatabase, sizeof(nodeDatabase));
     uint32_t configCRC = crc32Buffer(&config, sizeof(config));
@@ -251,6 +252,11 @@ NodeDB::NodeDB()
     // keep using that nodenum forever. Crummy guess at our nodenum (but we will check against the nodedb to avoid conflicts)
     pickNewNodeNum();
 
+
+
+
+ 
+ 
     // Set our board type so we can share it with others
     owner.hw_model = HW_VENDOR;
     // Ensure user (nodeinfo) role is set to whatever we're configured to
@@ -1099,7 +1105,31 @@ void NodeDB::installDefaultDeviceState()
     devicestate.has_rx_waypoint = false;
     devicestate.has_rx_text_message = false;
 
-    generatePacketId(); // FIXME - ugly way to init current_packet_id;
+
+
+// 1. PRIMA DI TUTTO: Configura l'Hardware (LED e Schermo)
+#if defined(LED_DISABLED) && (LED_DISABLED == 1)
+    config.device.led_heartbeat_disabled = true;
+#endif
+
+#if defined(SCREEN_TIMEOUT_DEFAULT)
+    config.display.screen_on_secs = SCREEN_TIMEOUT_DEFAULT;
+#endif
+
+    // 2. SECONDO: Genera l'identità (Random ID)
+    // Dobbiamo avere il NodeNum PRONTO prima di fare altro
+#if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
+    #if defined(ARCH_ESP32)
+        randomSeed(esp_random());
+    #else
+        randomSeed(millis() + ((ourMacAddr[4] << 8) | ourMacAddr[5]));
+    #endif
+    myNodeInfo.my_node_num = random(4, LONG_MAX);
+#else
+     generatePacketId(); // FIXME - ugly way to init current_packet_id;
+#endif
+
+    // generatePacketId(); // FIXME - ugly way to init current_packet_id;
 
     // Set default owner name
     pickNewNodeNum(); // based on macaddr now
@@ -1129,43 +1159,26 @@ void NodeDB::pickNewNodeNum()
 {
     NodeNum nodeNum = myNodeInfo.my_node_num;
     getMacAddr(ourMacAddr); // Make sure ourMacAddr is set
-    
     if (nodeNum == 0) {
-        // --- INIZIO LOGICA PERSONALIZZATA RANDOM ID ---
-#if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
-        // Se la macro è attiva, usiamo il TRNG dell'ESP32 per un ID casuale
-#if defined(ARCH_ESP32)
-        randomSeed(esp_random());
-#else
-        randomSeed(millis() + ((ourMacAddr[4] << 8) | ourMacAddr[5]));
-#endif
-        nodeNum = random(NUM_RESERVED, LONG_MAX);
-        LOG_INFO("RANDOM_ID_ON_FACTORY_RESET: ID casuale generato: 0x%x", nodeNum);
-#else
-        // Pick an initial nodenum based on the macaddr (Logica Originale)
+        // Pick an initial nodenum based on the macaddr
         nodeNum = (ourMacAddr[2] << 24) | (ourMacAddr[3] << 16) | (ourMacAddr[4] << 8) | ourMacAddr[5];
-#endif
-        // --- FINE LOGICA PERSONALIZZATA ---
     }
 
     meshtastic_NodeInfoLite *found;
     while (((found = getMeshNode(nodeNum)) && memcmp(found->user.macaddr, ourMacAddr, sizeof(ourMacAddr)) != 0) ||
            (nodeNum == NODENUM_BROADCAST || nodeNum < NUM_RESERVED)) {
-        
         NodeNum candidate = random(NUM_RESERVED, LONG_MAX); // try a new random choice
-        
         if (found)
             LOG_WARN("NOTE! Our desired nodenum 0x%x is invalid or in use, by MAC ending in 0x%02x%02x vs our 0x%02x%02x, so "
                      "trying for 0x%x",
                      nodeNum, found->user.macaddr[4], found->user.macaddr[5], ourMacAddr[4], ourMacAddr[5], candidate);
-        
         nodeNum = candidate;
     }
-    
     LOG_DEBUG("Use nodenum 0x%x ", nodeNum);
 
     myNodeInfo.my_node_num = nodeNum;
 }
+
 /** Load a protobuf from a file, return LoadFileResult */
 LoadFileResult NodeDB::loadProto(const char *filename, size_t protoSize, size_t objSize, const pb_msgdesc_t *fields,
                                  void *dest_struct)

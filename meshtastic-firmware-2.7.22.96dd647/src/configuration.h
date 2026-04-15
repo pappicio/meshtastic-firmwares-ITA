@@ -639,8 +639,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // RANDOM ID!
 #define RANDOM_ID_ON_FACTORY_RESET 0
 
+
+// Disabilitiamo led blink all'avvio //TO FIX
+#define LED_DISABLED 1
+
+
 // --- OEM E DISPLAY ---
- 
+#define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD // TO FIX
 
 #define USERPREFS_SPLASH_TEXT "MIO TESTO"
 

@@ -18,6 +18,9 @@
 #define default_telemetry_broadcast_interval_secs IF_ROUTER(ONE_DAY / 2, 60 * 60)
 #define default_broadcast_interval_secs IF_ROUTER(ONE_DAY / 2, 60 * 60)
 #define default_broadcast_smart_minimum_interval_secs 5 * 60
+
+ 
+
 #define min_default_broadcast_interval_secs IF_ROUTER(ONE_DAY / 2, 60 * 60)
 #define min_default_broadcast_smart_minimum_interval_secs 5 * 60
 #define default_wait_bluetooth_secs IF_ROUTER(1, 60)
@@ -25,7 +28,15 @@
 #define default_ls_secs IF_ROUTER(ONE_DAY, 5 * 60)
 #define default_min_wake_secs 10
 
-#define default_screen_on_secs IF_ROUTER(1, 60 * 10)
+
+// Se hai definito SCREEN_TIMEOUT_DEFAULT in configuration.h usa quello, 
+// altrimenti usa il default originale di Meshtastic.
+#ifdef SCREEN_TIMEOUT_DEFAULT
+    #define default_screen_on_secs SCREEN_TIMEOUT_DEFAULT
+#else
+    #define default_screen_on_secs IF_ROUTER(1, 60 * 10)
+#endif
+
 
 #define default_node_info_broadcast_secs 3 * 60 * 60
 #define default_neighbor_info_broadcast_secs 6 * 60 * 60
