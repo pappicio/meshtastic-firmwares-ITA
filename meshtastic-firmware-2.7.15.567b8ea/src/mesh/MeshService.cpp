@@ -184,22 +184,34 @@ void checkInternalFan() {
 
 
 
-
 void checkAutoReboot() {
-    // 1. Controlla se la macro esiste. Se NON esiste, esce subito.
-    #ifndef AUTO_REBOOT_DAYS
-        return; 
-    #else
-        // 2. Se esiste, controlla se è stata messa a 0 per disabilitarla
+    // 1. Il controllo macro va bene, ma usiamo un approccio più "pulito"
+    #ifdef AUTO_REBOOT_DAYS
+        // Se è 0, non facciamo nulla
         if (AUTO_REBOOT_DAYS == 0) return;
 
-        // 3. Esegue il calcolo e il controllo del tempo
+        // 2. FIX: millis() ritorna un uint32_t. Se il tempo di reboot è molto lungo (es. 50 giorni),
+        // millis() va in overflow (torna a zero) dopo circa 49.7 giorni.
+        // Usiamo uint32_t per la soglia se i giorni sono pochi, o logiche di confronto sicure.
+        
+        // Calcolo della soglia (usiamo uint32_t perché millis() è a 32 bit)
+        // Se AUTO_REBOOT_DAYS è troppo alto (es > 49), questa soglia sballa.
         static const uint64_t rebootThreshold = (uint64_t)AUTO_REBOOT_DAYS * 24 * 3600 * 1000;
 
+        // 3. FIX ARCHITETTURA: ESP.restart() esiste solo su ESP32.
+        // Se un giorno compili per un RAK (nRF52840), il codice si rompe.
         if (millis() > rebootThreshold) {
-            LOG_INFO("Uptime limit: rebooting...");
+            LOG_INFO("GHOST: Uptime limit reached (%d days). Rebooting...", AUTO_REBOOT_DAYS);
             delay(500); 
-            ESP.restart();
+
+            #if defined(ARCH_ESP32)
+                ESP.restart();
+            #elif defined(NRF52_SERIES)
+                NVIC_SystemReset();
+            #else
+                // Metodo universale Meshtastic (se disponibile nel contesto) o reset hardware
+                NVIC_SystemReset(); 
+            #endif
         }
     #endif
 }
