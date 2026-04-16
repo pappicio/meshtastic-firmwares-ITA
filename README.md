@@ -67,7 +67,7 @@ Seleziona il target (heltec-v4 o tutti gli altri, attenzione sempre ai pin liber
 Flash e goditi il tuo nodo "Full Optional".
 
 
-# 🛠 Guida alla Compilazione (Per Principianti)
+# 🛠 Guida alla Compilazione
 
 1. Requisiti Software
    
