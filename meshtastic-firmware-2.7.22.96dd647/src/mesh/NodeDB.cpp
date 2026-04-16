@@ -1105,8 +1105,10 @@ void NodeDB::installDefaultDeviceState()
     devicestate.has_rx_waypoint = false;
     devicestate.has_rx_text_message = false;
 
-
-
+//HOPS DEFAULT AL PRIMO AVVIO/RESET FABBRICA
+#if defined(HOPS_DEFAULT)
+    config.lora.hop_limit = HOPS_DEFAULT;
+#endif
 // 1. PRIMA DI TUTTO: Configura l'Hardware (LED e Schermo)
 #if defined(LED_DISABLED) && (LED_DISABLED == 1)
     config.device.led_heartbeat_disabled = true;

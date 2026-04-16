@@ -250,19 +250,33 @@ const char *getDeviceName()
 
 static int32_t ledBlinker()
 {
-    // Still set up the blinking (heartbeat) interval but skip code path below, so LED will blink if
-    // config.device.led_heartbeat_disabled is changed
-    if (config.device.led_heartbeat_disabled)
-        return 1000;
+    // 1. Forza il Ghost Mode al primo avvio assoluto
+    #if defined(LED_DISABLED) && (LED_DISABLED == 1)
+    static bool firstRun = true;
+    if (firstRun) {
+        config.device.led_heartbeat_disabled = true;
+        firstRun = false;
+    }
+    #endif
 
+    // 2. Se il flag è OFF, spegni tutto e interrompi
+    if (config.device.led_heartbeat_disabled) {
+        ledBlink.set(false); 
+        #ifdef LED_PIN
+            // Spegnimento fisico calcolato per Heltec V4
+            digitalWrite(LED_PIN, (LED_STATE_ON == 0) ? 1 : 0);
+        #endif
+        return 1000; 
+    }
+
+    // 3. Logica originale di blink (attiva solo se metti ON dall'app)
     static bool ledOn;
     ledOn ^= 1;
-
     ledBlink.set(ledOn);
 
-    // have a very sparse duty cycle of LED being on, unless charging, then blink 0.5Hz square wave rate to indicate that
     return powerStatus->getIsCharging() ? 1000 : (ledOn ? 1 : 1000);
 }
+
 
 uint32_t timeLastPowered = 0;
 

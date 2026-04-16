@@ -158,11 +158,9 @@ bool FloodingRouter::isRebroadcaster()
            config.device.rebroadcast_mode != meshtastic_Config_DeviceConfig_RebroadcastMode_NONE;
 }
 
-
-
 /**
- * Gestisce i comandi remoti per i Relaysssss
- * Controlla se le macro sono inizializzate e se la password è corretta
+ * Gestisce i comandi remoti per i Relay in modo atomico.
+ * Ogni comando e ogni relay è indipendente per massima flessibilità.
  */
 void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
     // Verifichiamo: Messaggio di testo + Indirizzato a noi (DM)
@@ -171,45 +169,49 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
         isToUs(p)) {
 
         String msg = (char*)p->decoded.payload.bytes;
-        msg.trim(); // Rimuove spazi all'inizio e alla fine
+        msg.trim(); 
 
-        // --- GESTIONE ACCENSIONE (ON) ---
-        if (msg.startsWith(CMD_RELAY_ON)) {
-            #ifdef RELAY_1_PIN
-            if (msg.endsWith(RELAY_1_NAME)) {
+        // --- LOGICA RELAY 1 ---
+        #if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
+            // Caso ON
+            #ifdef CMD_RELAY_ON
+            if (msg == String(CMD_RELAY_ON) + " " + RELAY_1_NAME) {
                 pinMode(RELAY_1_PIN, OUTPUT);
                 digitalWrite(RELAY_1_PIN, HIGH);
                 LOG_INFO("REMOTE: %s -> ACCESO", RELAY_1_NAME);
             }
             #endif
-            
-            #ifdef RELAY_2_PIN
-            if (msg.endsWith(RELAY_2_NAME)) {
-                pinMode(RELAY_2_PIN, OUTPUT);
-                digitalWrite(RELAY_2_PIN, HIGH);
-                LOG_INFO("REMOTE: %s -> ACCESO", RELAY_2_PIN);
-            }
-            #endif
-        }
 
-        // --- GESTIONE SPEGNIMENTO (OFF) ---
-        else if (msg.startsWith(CMD_RELAY_OFF)) {
-            #ifdef RELAY_1_PIN
-            if (msg.endsWith(RELAY_1_NAME)) {
+            // Caso OFF
+            #ifdef CMD_RELAY_OFF
+            if (msg == String(CMD_RELAY_OFF) + " " + RELAY_1_NAME) {
                 pinMode(RELAY_1_PIN, OUTPUT);
                 digitalWrite(RELAY_1_PIN, LOW);
                 LOG_INFO("REMOTE: %s -> SPENTO", RELAY_1_NAME);
             }
             #endif
+        #endif
 
-            #ifdef RELAY_2_PIN
-            if (msg.endsWith(RELAY_2_NAME)) {
+        // --- LOGICA RELAY 2 ---
+        #if defined(RELAY_2_PIN) && defined(RELAY_2_NAME)
+            // Caso ON
+            #ifdef CMD_RELAY_ON
+            if (msg == String(CMD_RELAY_ON) + " " + RELAY_2_NAME) {
+                pinMode(RELAY_2_PIN, OUTPUT);
+                digitalWrite(RELAY_2_PIN, HIGH);
+                LOG_INFO("REMOTE: %s -> ACCESO", RELAY_2_NAME);
+            }
+            #endif
+
+            // Caso OFF
+            #ifdef CMD_RELAY_OFF
+            if (msg == String(CMD_RELAY_OFF) + " " + RELAY_2_NAME) {
                 pinMode(RELAY_2_PIN, OUTPUT);
                 digitalWrite(RELAY_2_PIN, LOW);
                 LOG_INFO("REMOTE: %s -> SPENTO", RELAY_2_NAME);
             }
             #endif
-        }
+        #endif
     }
 }
 

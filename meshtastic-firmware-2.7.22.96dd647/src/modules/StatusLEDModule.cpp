@@ -74,6 +74,21 @@ int32_t StatusLEDModule::runOnce()
 {
     my_interval = 1000;
 
+
+// --- LOGICA GHOST FORZATA (Aggiunta qui per vincere su tutto) ---
+    #if defined(LED_DISABLED) && (LED_DISABLED == 1)
+    static bool firstRun = true;
+    if (firstRun) {
+        // Se siamo al primo avvio dopo reset, forziamo il flag nella config
+        // Questo verrà poi salvato in Flash automaticamente dal sistema
+        config.device.led_heartbeat_disabled = true;
+        firstRun = false;
+    }
+    #endif
+    // ----------------------------------------------------------------
+
+
+
     if (power_state == charging) {
 #ifndef POWER_LED_HARDWARE_BLINKS_WHILE_CHARGING
         CHARGE_LED_state = !CHARGE_LED_state;
