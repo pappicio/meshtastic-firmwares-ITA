@@ -176,6 +176,6 @@ This project is a customized version of the **Meshtastic** firmware.
 * **License:** This software is released under the **GNU General Public License v3.0**, in compliance with the original project requirements.
 
 ### About this project
-This repository includes specific modifications and hardware optimizations and some optimizations.
+This repository includes specific modifications and hardware optimizations and some config customizations.
 
 ---
