@@ -628,12 +628,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USERPREFS_LORA_TX_DISABLED 1
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "2 Sessa A. (mobile)"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "SA02"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO NODO"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MN01"
 
  
 // NUMERO DI HOPS DI DEFAULT
-#define HOPS_DEFAULT 5
+#define HOPS_DEFAULT 4
 
 // NODES
 #define USERPREFS_MAX_NUM_NODES 100
@@ -650,7 +650,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "SA02"
+#define USERPREFS_SPLASH_TEXT "MN01"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator

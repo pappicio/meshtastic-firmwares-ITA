@@ -554,12 +554,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USERPREFS_LORA_TX_DISABLED 1
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Mio Nodo"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO NODO"
 #define USERPREFS_CONFIG_OWNER_SHORT_NAME "MN01"
 
  
 // NUMERO DI HOPS DI DEFAULT
-#define HOPS_DEFAULT 5
+#define HOPS_DEFAULT 4
 
 // NODES
 #define USERPREFS_MAX_NUM_NODES 100
@@ -569,14 +569,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RANDOM_ID_ON_FACTORY_RESET 0
 
 
-// Disabilitiamo led blink all'avvio //TO FIX
+// Disabilitiamo led blink all'avvio 
 #define LED_DISABLED 1
 
 
 // --- OEM E DISPLAY ---
-#define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD // TO FIX
+#define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "MIO TESTO"
+#define USERPREFS_SPLASH_TEXT "MN01"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -609,7 +609,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_REBOOT_DAYS 5
 
 //TX POWER
-#define DBI30 27 //fino anche a max 30 dbi, ma attenzione alle norme vigenti!
+#define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
 
 
