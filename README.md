@@ -175,7 +175,7 @@ This project is a customized version of the **Meshtastic** firmware.
 * **Source Code:** [Meshtastic GitHub Repository](https://github.com/meshtastic/firmware)
 * **License:** This software is released under the **GNU General Public License v3.0**, in compliance with the original project requirements.
 
-### About this Fork
-This repository includes specific modifications (Ghost Mode) and hardware optimizations for **Heltec T114 / V3** and **External RTC modules (RX8130CE/DS3231)** that are not part of the official upstream releases.
+### About this project
+This repository includes specific modifications and hardware optimizations and new features like: scheduled restart of device, that are not part of the official upstream releases.
 
 ---
