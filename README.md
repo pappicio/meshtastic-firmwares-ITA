@@ -165,3 +165,17 @@ Il codice generato segue lo standard SSD1306 Page Addressing, necessario per il 
 Screenshot del converter in azione:
 
 ![Logo](meshtastic_logo_creator.jpg)
+
+
+## Credits & Legal Notice
+
+This project is a customized version of the **Meshtastic** firmware. 
+
+* **Original Project:** [Meshtastic](https://meshtastic.org/)
+* **Source Code:** [Meshtastic GitHub Repository](https://github.com/meshtastic/firmware)
+* **License:** This software is released under the **GNU General Public License v3.0**, in compliance with the original project requirements.
+
+### About this Fork
+This repository includes specific modifications (Ghost Mode) and hardware optimizations for **Heltec T114 / V3** and **External RTC modules (RX8130CE/DS3231)** that are not part of the official upstream releases.
+
+---
