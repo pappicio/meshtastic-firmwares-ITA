@@ -67,7 +67,7 @@ Seleziona il target (heltec-v4 o tutti gli altri, attenzione sempre ai pin liber
 Flash e goditi il tuo nodo "Full Optional".
 
 
-# 🛠 Guida alla Compilazione (Per Principianti)
+# 🛠 Guida alla Compilazione
 
 1. Requisiti Software
    
@@ -165,3 +165,17 @@ Il codice generato segue lo standard SSD1306 Page Addressing, necessario per il 
 Screenshot del converter in azione:
 
 ![Logo](meshtastic_logo_creator.jpg)
+
+
+## Credits & Legal Notice
+
+This project is a customized version of the **Meshtastic** firmware. 
+
+* **Original Project:** [Meshtastic](https://meshtastic.org/)
+* **Source Code:** [Meshtastic GitHub Repository](https://github.com/meshtastic/firmware)
+* **License:** This software is released under the **GNU General Public License v3.0**, in compliance with the original project requirements.
+
+### About this project
+This repository includes specific modifications and hardware optimizations and some optimizations.
+
+---
