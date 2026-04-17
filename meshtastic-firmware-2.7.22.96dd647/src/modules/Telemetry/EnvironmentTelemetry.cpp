@@ -140,6 +140,8 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 
 static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
 
+extern float fanTemp; // "Cerca questa variabile fuori da questo file"
+
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
     if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
@@ -533,14 +535,36 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 
     for (TelemetrySensor *sensor : sensors) {
 
-
-    #ifdef I2C_FAN_SENSOR_ADDR
-    // Se è il sensore della ventola, lo saltiamo completamente!
-    // Così non finirà mai nel pacchetto meteo trasmesso.
-    if (sensor->getI2CAddress() == I2C_FAN_SENSOR_ADDR) {
-        continue; 
-    }
-    #endif
+//////////////////////////
+        // --- La tua parte per la ventola ---
+        #ifdef I2C_FAN_SENSOR_ADDR
+        // Se è il sensore della ventola, lo saltiamo completamente!
+        // Così non finirà mai nel pacchetto meteo trasmesso.
+    
+ 
+            // Creiamo un pacchetto "finto" solo per vedere se questo sensore è quello giusto
+            meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
+            
+            // Se il sensore legge qualcosa 
+            // ci fidiamo che sia quello della ventola (se è l'unico nel box)
+            if (sensor->getMetrics(&temp_m)) 
+            {
+                // Salviamo la temperatura nella variabile globale
+                fanTemp = temp_m.variant.environment_metrics.temperature;
+                LOG_DEBUG("Intercettato sensore BOX: %.1f C. Salto telemetria pubblica.", fanTemp);
+            } 
+            else 
+            {
+                fanTemp = 0;
+            } 
+            
+            // IL TRUCCO: Usiamo 'continue' PRIMA che il sensore scriva nel pacchetto 'm' originale
+            // e prima che 'hasSensor' diventi true per il meteo.
+            continue; 
+     
+        #endif
+		
+		
 
         get_metrics = sensor->getMetrics(m); // avoid short-circuit evaluation rules
         valid = valid || get_metrics;

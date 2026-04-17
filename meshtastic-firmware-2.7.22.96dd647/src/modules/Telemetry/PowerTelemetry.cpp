@@ -25,6 +25,8 @@
 
 static constexpr uint16_t TX_HISTORY_KEY_POWER_TELEMETRY = 0x8005;
 
+extern float fanTemp;
+
 namespace graphics
 {
 extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const char *titleStr, bool force_no_invert,
@@ -271,18 +273,22 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 
 
     
-    #ifdef FAN_RELAY_PIN
+#ifdef FAN_RELAY_PIN
         m.variant.power_metrics.has_ch3_voltage = true;
         m.variant.power_metrics.has_ch3_current = true;
 
+        // Usiamo la variabile globale fanTemp (ricordati l'extern in cima al file)
+        m.variant.power_metrics.ch3_voltage = fanTemp; 
+
+        // Stato Ventola: 100 se accesa, 0 se spenta
         if (digitalRead(FAN_RELAY_PIN) == HIGH) {
-            m.variant.power_metrics.ch3_voltage = 1.0f;   // ON
-            m.variant.power_metrics.ch3_current = 100.0f; 
+            m.variant.power_metrics.ch3_current = 100.0f;
         } else {
-            m.variant.power_metrics.ch3_voltage = 0.0f;   // OFF
             m.variant.power_metrics.ch3_current = 0.0f;
         }
     #endif
+
+    // ... il resto del codice originale ...
 
 
 

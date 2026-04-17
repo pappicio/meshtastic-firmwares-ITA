@@ -148,6 +148,8 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 
 static std::forward_list<TelemetrySensor *> sensors;
 
+extern float fanTemp; // "Cerca questa variabile fuori da questo file"
+
 template <typename T> void addSensor(ScanI2C *i2cScanner, ScanI2C::DeviceType type)
 {
     ScanI2C::FoundDevice dev = i2cScanner->find(type);
@@ -564,14 +566,35 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 
     for (TelemetrySensor *sensor : sensors) {
 
-
-    #ifdef I2C_FAN_SENSOR_ADDR
-    // Se è il sensore della ventola, lo saltiamo completamente!
-    // Così non finirà mai nel pacchetto meteo trasmesso.
-    if (sensor->getI2CAddress() == I2C_FAN_SENSOR_ADDR) {
-        continue; 
-    }
-    #endif
+//////////////////////////
+        // --- La tua parte per la ventola ---
+        #ifdef I2C_FAN_SENSOR_ADDR
+        // Se è il sensore della ventola, lo saltiamo completamente!
+        // Così non finirà mai nel pacchetto meteo trasmesso.
+    
+ 
+            // Creiamo un pacchetto "finto" solo per vedere se questo sensore è quello giusto
+            meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
+            
+            // Se il sensore legge qualcosa 
+            // ci fidiamo che sia quello della ventola (se è l'unico nel box)
+            if (sensor->getMetrics(&temp_m)) 
+            {
+                // Salviamo la temperatura nella variabile globale
+                fanTemp = temp_m.variant.environment_metrics.temperature;
+                LOG_DEBUG("Intercettato sensore BOX: %.1f C. Salto telemetria pubblica.", fanTemp);
+            } 
+            else 
+            {
+                fanTemp = 0;
+            } 
+            
+            // IL TRUCCO: Usiamo 'continue' PRIMA che il sensore scriva nel pacchetto 'm' originale
+            // e prima che 'hasSensor' diventi true per il meteo.
+            continue; 
+     
+        #endif
+		
         valid = valid && sensor->getMetrics(m);
         hasSensor = true;
     }
