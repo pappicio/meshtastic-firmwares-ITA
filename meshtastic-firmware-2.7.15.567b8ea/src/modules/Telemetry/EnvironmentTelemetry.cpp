@@ -568,32 +568,31 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 
 //////////////////////////
         // --- La tua parte per la ventola ---
-        #ifdef I2C_FAN_SENSOR_ADDR
-        // Se è il sensore della ventola, lo saltiamo completamente!
-        // Così non finirà mai nel pacchetto meteo trasmesso.
-    
- 
-            // Creiamo un pacchetto "finto" solo per vedere se questo sensore è quello giusto
-            meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
-            
-            // Se il sensore legge qualcosa 
-            // ci fidiamo che sia quello della ventola (se è l'unico nel box)
-            if (sensor->getMetrics(&temp_m)) 
-            {
-                // Salviamo la temperatura nella variabile globale
-                fanTemp = temp_m.variant.environment_metrics.temperature;
-                LOG_DEBUG("Intercettato sensore BOX: %.1f C. Salto telemetria pubblica.", fanTemp);
-            } 
-            else 
-            {
-                fanTemp = 0;
-            } 
-            
-            // IL TRUCCO: Usiamo 'continue' PRIMA che il sensore scriva nel pacchetto 'm' originale
-            // e prima che 'hasSensor' diventi true per il meteo.
-            continue; 
-     
-        #endif
+#ifdef I2C_FAN_SENSOR_ADDR
+        // Creiamo un pacchetto temporaneo per testare il sensore
+        meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
+        
+        if (sensor->getMetrics(&temp_m)) {
+            float sensorValue = temp_m.variant.environment_metrics.temperature;
+
+            // Se fanTemp è vuota, la inizializziamo ora
+            if (fanTemp < -50.0f) {
+                fanTemp = sensorValue;
+            }
+
+            // SE IL DATO È LO STESSO: è il sensore del box, lo saltiamo!
+            // Usiamo una tolleranza di 0.01 per evitare piccoli errori di arrotondamento float
+            if (abs(sensorValue - fanTemp) < 0.01f) {
+                LOG_DEBUG("Sensore interno rilevato dal valore (%.1f C). Salto pacchetto pubblico.", sensorValue);
+                continue; 
+            }
+        }
+#endif
+		
+		
+		
+
+
 		
         valid = valid && sensor->getMetrics(m);
         hasSensor = true;

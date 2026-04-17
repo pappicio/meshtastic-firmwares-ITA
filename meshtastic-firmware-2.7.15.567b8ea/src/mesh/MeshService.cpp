@@ -53,6 +53,9 @@ the new node can build its node db)
 
 MeshService *service;
 
+
+extern float fanTemp; // "Cerca questa variabile fuori da questo file"
+
 #define MAX_MQTT_PROXY_MESSAGES 16
 static MemoryPool<meshtastic_MqttClientProxyMessage, MAX_MQTT_PROXY_MESSAGES> staticMqttClientProxyMessagePool;
 
@@ -124,8 +127,7 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
 
 
 void checkInternalFan() {
-    // Se le macro non ci sono, il compilatore ignora tutto questo
-    #if !defined(I2C_FAN_SENSOR_ADDR) || !defined(FAN_RELAY_PIN)
+    #if !defined(I2C_FAN_SENSOR_ADDR)
         return; 
     #else
         static uint32_t lastFanCheck = 0;
@@ -135,50 +137,94 @@ void checkInternalFan() {
         float currentTemp = -999.0;
         uint8_t addr = I2C_FAN_SENSOR_ADDR;
 
-        // --- PING DI SICUREZZA ---
+        // PING DI SICUREZZA
         Wire.beginTransmission(addr);
         if (Wire.endTransmission() != 0) return; 
 
-        // --- TENTATIVO 1: Protocollo SHT (SHT31, SHT4X, SHTC3) ---
-        // Proviamo a inviare il comando di lettura SHT
-        Wire.beginTransmission(addr);
-        Wire.write(0x2C); Wire.write(0x06); 
-        if (Wire.endTransmission() == 0) {
-            delay(20);
-            Wire.requestFrom(addr, (uint8_t)2);
-            if (Wire.available() >= 2) {
-                uint16_t raw = (Wire.read() << 8) | Wire.read();
-                currentTemp = -45.0 + 175.0 * ((float)raw / 65535.0);
-            }
-        }
-
-        // --- TENTATIVO 2: Protocollo Bosch (BME_280, BMP_280, BME_680) ---
+        // --- 1. PROTOCOLLO SHT3x / SHT4x / SHTC3 ---
         if (currentTemp < -50.0) {
             Wire.beginTransmission(addr);
-            Wire.write(0xFA); // Registro temperatura
+            // Proviamo il comando SHT3x/SHTC3 (0x2C06) o SHT4x (0xFD)
+            Wire.write(0x2C); Wire.write(0x06); 
             if (Wire.endTransmission() == 0) {
+                delay(20);
                 Wire.requestFrom(addr, (uint8_t)2);
                 if (Wire.available() >= 2) {
                     uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    // Evitiamo valori spazzatura se il registro è vuoto
-                    if (raw != 0 && raw != 0xFFFF) {
-                        currentTemp = raw / 500.0;
+                    currentTemp = -45.0 + 175.0 * ((float)raw / 65535.0);
+                }
+            }
+        }
+
+        // --- 2. PROTOCOLLO BOSCH (BME280 / BMP280 / BME680) ---
+        if (currentTemp < -50.0) {
+            Wire.beginTransmission(addr);
+            Wire.write(0xFA); // Registro temperatura grezza
+            if (Wire.endTransmission() == 0) {
+                Wire.requestFrom(addr, (uint8_t)3); // Leggiamo 3 byte per precisione
+                if (Wire.available() >= 3) {
+                    uint32_t raw = (uint32_t)Wire.read() << 12;
+                    raw |= (uint32_t)Wire.read() << 4;
+                    raw |= (uint32_t)Wire.read() >> 4;
+                    if (raw != 0 && raw != 0x7FFFF && raw != 0xFFFFF) {
+                        currentTemp = ((float)raw / 16384.0); // Calcolo approssimativo (senza coefficienti)
                     }
                 }
             }
         }
 
-        // --- LOGICA DI CONTROLLO CON SOGLIE ---
-        if (currentTemp > -50.0) {
-            pinMode(FAN_RELAY_PIN, OUTPUT);
-            
-            if (currentTemp >= FAN_TEMP_START) {
-                digitalWrite(FAN_RELAY_PIN, HIGH); // Accende
-            } 
-            else if (currentTemp <= FAN_TEMP_STOP) {
-                digitalWrite(FAN_RELAY_PIN, LOW);  // Spegne
+        // --- 3. PROTOCOLLO MCP9808 / TMP117 (Termometri puri) ---
+        if (currentTemp < -50.0) {
+            Wire.beginTransmission(addr);
+            Wire.write(0x05); // Registro MCP9808
+            if (Wire.endTransmission() == 0) {
+                Wire.requestFrom(addr, (uint8_t)2);
+                if (Wire.available() >= 2) {
+                    uint16_t raw = (Wire.read() << 8) | Wire.read();
+                    uint16_t t = raw & 0x0FFF;
+                    currentTemp = t / 16.0;
+                    if (raw & 0x1000) currentTemp -= 256.0; // Gestione negativi
+                }
             }
         }
+
+        // --- 4. PROTOCOLLO AHT10 / AHT20 / AHT21 ---
+        if (currentTemp < -50.0) {
+            // Gli AHT richiedono un comando di trigger (0xAC)
+            Wire.beginTransmission(addr);
+            Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
+            Wire.endTransmission();
+            delay(80); // Richiedono tempo per convertire
+            Wire.requestFrom(addr, (uint8_t)6);
+            if (Wire.available() >= 6) {
+                Wire.read(); // Status byte (ignorato)
+                uint32_t raw = (uint32_t)Wire.read() << 12;
+                raw |= (uint32_t)Wire.read() << 4;
+                raw |= (uint32_t)Wire.read() >> 4;
+                currentTemp = ((float)raw * 200.0 / 1048576.0) - 50.0;
+            }
+        }
+
+// AGGIORNAMENTO DATI E LOGICA VENTOLA
+        if (currentTemp > -50.0) {
+            fanTemp = currentTemp; // Passa il dato reale alla variabile globale
+
+            #ifdef FAN_RELAY_PIN
+                pinMode(FAN_RELAY_PIN, OUTPUT);
+                if (currentTemp >= FAN_TEMP_START) {
+                    digitalWrite(FAN_RELAY_PIN, HIGH); // Accende
+                } 
+                else if (currentTemp <= FAN_TEMP_STOP) {
+                    digitalWrite(FAN_RELAY_PIN, LOW);  // Spegne
+                }
+            #endif
+        } 
+        else {
+            // Se il sensore fallisce, resettiamo solo la variabile globale
+            // Il filtro nel modulo Telemetry vedrà -100 e smetterà di filtrare.
+            fanTemp = -100.0; 
+        }
+
     #endif
 }
 
