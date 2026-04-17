@@ -614,6 +614,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- GESTIONE VENTOLA INTERNA ---
+// IL SENSORE SARA TOTALMENTE INVISIBILE A MESHTASTIC CHE XO DARA INFO COME 
+// POWER TELEMETRI, con voltaggio1/corrente100 e Voltaggio0/corrente0 per indicare ventola accesa/spenta
+
 ////#define FAN_RELAY_PIN 1           // Pin fisico del modulo Relay, controllare se il pin prescento  possa essere libero gia, da IMPEGNI!
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x77, 0x44, 0x45, il sensore usato solo per la ventola

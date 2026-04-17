@@ -563,6 +563,15 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
     for (TelemetrySensor *sensor : sensors) {
+
+
+    #ifdef I2C_FAN_SENSOR_ADDR
+    // Se è il sensore della ventola, lo saltiamo completamente!
+    // Così non finirà mai nel pacchetto meteo trasmesso.
+    if (sensor->getI2CAddress() == I2C_FAN_SENSOR_ADDR) {
+        continue; 
+    }
+    #endif
         valid = valid && sensor->getMetrics(m);
         hasSensor = true;
     }

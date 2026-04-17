@@ -47,6 +47,17 @@ int32_t PowerTelemetryModule::runOnce()
     // moduleConfig.telemetry.power_screen_enabled = 1;
     // moduleConfig.telemetry.power_update_interval = 45;
 
+    #ifdef FAN_RELAY_PIN
+        // Forza l'abilitazione se stiamo gestendo la ventola
+        moduleConfig.telemetry.power_measurement_enabled = true;
+        moduleConfig.telemetry.power_screen_enabled = true;
+        if(moduleConfig.telemetry.power_update_interval == 0) 
+            moduleConfig.telemetry.power_update_interval = 60;
+    #endif
+
+    
+    // ... resto del codice
+
     if (!(moduleConfig.telemetry.power_measurement_enabled)) {
         // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
         return disable();
@@ -248,6 +259,24 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
     m.which_variant = meshtastic_Telemetry_power_metrics_tag;
     m.time = getTime();
+
+
+    
+    #ifdef FAN_RELAY_PIN
+        m.variant.power_metrics.has_ch3_voltage = true;
+        m.variant.power_metrics.has_ch3_current = true;
+
+        if (digitalRead(FAN_RELAY_PIN) == HIGH) {
+            m.variant.power_metrics.ch3_voltage = 1.0f;   // ON
+            m.variant.power_metrics.ch3_current = 100.0f; 
+        } else {
+            m.variant.power_metrics.ch3_voltage = 0.0f;   // OFF
+            m.variant.power_metrics.ch3_current = 0.0f;
+        }
+    #endif
+
+
+
     if (getPowerTelemetry(&m)) {
         LOG_INFO("Send: ch1_voltage=%f, ch1_current=%f, ch2_voltage=%f, ch2_current=%f, "
                  "ch3_voltage=%f, ch3_current=%f",
