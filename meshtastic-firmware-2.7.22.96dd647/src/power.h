@@ -113,10 +113,10 @@ class Power : private concurrency::OSThread
     bool meshSolarInit();
     /// Setup a serial battery sensor
     bool serialBatteryInit();
-
-  private:
     void shutdown();
     void reboot();
+  private:
+ 
     // open circuit voltage lookup table
     uint8_t low_voltage_counter;
     uint32_t lastLogTime = 0;
