@@ -537,24 +537,18 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 
 //////////////////////////
         // --- La tua parte per la ventola ---
+// --- La tua parte per la ventola ---
 #ifdef I2C_FAN_SENSOR_ADDR
-        // Creiamo un pacchetto temporaneo per testare il sensore
-        meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
-        
-        if (sensor->getMetrics(&temp_m)) {
-            float sensorValue = temp_m.variant.environment_metrics.temperature;
-
-            // Se fanTemp è vuota, la inizializziamo ora
-            if (fanTemp < -50.0f) {
-                fanTemp = sensorValue;
+        if (sensor->getAddr() == I2C_FAN_SENSOR_ADDR) {
+            meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
+            if (sensor->getMetrics(&temp_m)) {
+                fanTemp = temp_m.variant.environment_metrics.temperature;
+                LOG_DEBUG("Sensore Box (0x%02x) identificato. Temp: %.1f C.", I2C_FAN_SENSOR_ADDR, fanTemp);
+            } else {
+                fanTemp = -50.0f; 
+                LOG_WARN("Sensore Box (0x%02x) trovato ma LETTURA FALLITA!", I2C_FAN_SENSOR_ADDR);
             }
-
-            // SE IL DATO È LO STESSO: è il sensore del box, lo saltiamo!
-            // Usiamo una tolleranza di 0.01 per evitare piccoli errori di arrotondamento float
-            if (abs(sensorValue - fanTemp) < 0.01f) {
-                LOG_DEBUG("Sensore interno rilevato dal valore (%.1f C). Salto pacchetto pubblico.", sensorValue);
-                continue; 
-            }
+            continue; // Salta questo sensore, non deve finire nel campo Temperature
         }
 #endif
 		
@@ -599,6 +593,33 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         hasSensor = true;
     }
 #endif
+
+// ... (restano i check per INA219, INA260, ecc. come nel tuo codice) ...
+
+    // --- INIEZIONE FINALE NEL DEW POINT ---
+// --- INIEZIONE MONITORAGGIO BOX --- Se vogliamo voltaggio e tensione come temp e acceso/spento su fantemp/fan relay
+#ifdef I2C_FAN_SENSOR_ADDR
+////    if (fanTemp > -50.0f) {
+        // 1. Temperatura Box nel campo Voltage
+////        m->variant.environment_metrics.has_voltage = true;
+////        m->variant.environment_metrics.voltage = fanTemp;
+
+        // 2. Stato Ventola nel campo Current
+        // Se FAN_RELAY_PIN è HIGH (accesa), mandiamo 1.0 (o 100.0), altrimenti 0.0
+////        #ifdef FAN_RELAY_PIN
+////            m->variant.environment_metrics.has_current = true;
+////            m->variant.environment_metrics.current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
+////        #endif
+        
+        // Forziamo l'invio del pacchetto
+////        valid = true;
+////        hasSensor = true;
+
+////        LOG_INFO("Box Monitor -> Inviato: Temp=%.1f (V), Ventola=%.0f (A)", 
+////                  fanTemp, m->variant.environment_metrics.current);
+////    }
+#endif
+
     return valid && hasSensor;
 }
 

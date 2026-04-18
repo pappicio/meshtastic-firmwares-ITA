@@ -24,11 +24,13 @@ class TelemetrySensor
         this->sensorName = sensorName;
         this->sensorType = sensorType;
         this->status = 0;
+        this->address = 0; // Inizializzazione indirizzo
     }
 
     meshtastic_TelemetrySensorType sensorType = meshtastic_TelemetrySensorType_SENSOR_UNSET;
     unsigned status;
     bool initialized = false;
+    uint8_t address; // Variabile per memorizzare l'indirizzo I2C
 
     int32_t initI2CSensor()
     {
@@ -56,6 +58,10 @@ class TelemetrySensor
     }
 
     const char *sensorName;
+
+    // Metodo per recuperare l'indirizzo I2C del sensore
+    virtual uint8_t getAddr() const { return address; }
+
     // TODO: delete after migration
     bool hasSensor() { return nodeTelemetrySensorsMap[sensorType].first > 0; }
 
@@ -78,7 +84,14 @@ class TelemetrySensor
     virtual bool isRunning() { return status > 0; }
 
     virtual bool getMetrics(meshtastic_Telemetry *measurement) = 0;
-    virtual bool initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev) { return false; };
+    
+virtual bool initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev) { 
+        if (dev) {
+            // Proviamo l'accesso diretto alla proprietà address dell'oggetto address
+            this->address = dev->address.address; 
+        }
+        return false; 
+    };
 };
 
 #endif

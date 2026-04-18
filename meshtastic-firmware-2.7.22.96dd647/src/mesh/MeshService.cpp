@@ -139,12 +139,30 @@ void checkInternalFan() {
 
         // PING DI SICUREZZA
         Wire.beginTransmission(addr);
-        if (Wire.endTransmission() != 0) return; 
+        if (Wire.endTransmission() != 0) {
+            fanTemp = -100.0; // Sensore non trovato sul bus
+            return; 
+        }
+
+        // --- 0. PROTOCOLLO SHT21 / HTU21 / GY-21 (Specifico per 0x40) ---
+        // Questo sensore usa comandi a 8-bit e richiede un delay di conversione
+        if (addr == 0x40) {
+            Wire.beginTransmission(addr);
+            Wire.write(0xF3); // Trigger Temperatura (No Hold Master)
+            if (Wire.endTransmission() == 0) {
+                delay(100); // Necessario per la conversione (max 85ms)
+                Wire.requestFrom(addr, (uint8_t)2);
+                if (Wire.available() >= 2) {
+                    uint16_t raw = (Wire.read() << 8) | Wire.read();
+                    raw &= 0xFFFC; // Pulizia bit di stato (ultimi 2 bit)
+                    currentTemp = -46.85 + 175.72 * ((float)raw / 65536.0);
+                }
+            }
+        }
 
         // --- 1. PROTOCOLLO SHT3x / SHT4x / SHTC3 ---
         if (currentTemp < -50.0) {
             Wire.beginTransmission(addr);
-            // Proviamo il comando SHT3x/SHTC3 (0x2C06) o SHT4x (0xFD)
             Wire.write(0x2C); Wire.write(0x06); 
             if (Wire.endTransmission() == 0) {
                 delay(20);
@@ -159,45 +177,44 @@ void checkInternalFan() {
         // --- 2. PROTOCOLLO BOSCH (BME280 / BMP280 / BME680) ---
         if (currentTemp < -50.0) {
             Wire.beginTransmission(addr);
-            Wire.write(0xFA); // Registro temperatura grezza
+            Wire.write(0xFA); 
             if (Wire.endTransmission() == 0) {
-                Wire.requestFrom(addr, (uint8_t)3); // Leggiamo 3 byte per precisione
+                Wire.requestFrom(addr, (uint8_t)3); 
                 if (Wire.available() >= 3) {
                     uint32_t raw = (uint32_t)Wire.read() << 12;
                     raw |= (uint32_t)Wire.read() << 4;
                     raw |= (uint32_t)Wire.read() >> 4;
                     if (raw != 0 && raw != 0x7FFFF && raw != 0xFFFFF) {
-                        currentTemp = ((float)raw / 16384.0); // Calcolo approssimativo (senza coefficienti)
+                        currentTemp = ((float)raw / 16384.0); 
                     }
                 }
             }
         }
 
-        // --- 3. PROTOCOLLO MCP9808 / TMP117 (Termometri puri) ---
+        // --- 3. PROTOCOLLO MCP9808 / TMP117 ---
         if (currentTemp < -50.0) {
             Wire.beginTransmission(addr);
-            Wire.write(0x05); // Registro MCP9808
+            Wire.write(0x05); 
             if (Wire.endTransmission() == 0) {
                 Wire.requestFrom(addr, (uint8_t)2);
                 if (Wire.available() >= 2) {
                     uint16_t raw = (Wire.read() << 8) | Wire.read();
                     uint16_t t = raw & 0x0FFF;
                     currentTemp = t / 16.0;
-                    if (raw & 0x1000) currentTemp -= 256.0; // Gestione negativi
+                    if (raw & 0x1000) currentTemp -= 256.0; 
                 }
             }
         }
 
         // --- 4. PROTOCOLLO AHT10 / AHT20 / AHT21 ---
         if (currentTemp < -50.0) {
-            // Gli AHT richiedono un comando di trigger (0xAC)
             Wire.beginTransmission(addr);
             Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
             Wire.endTransmission();
-            delay(80); // Richiedono tempo per convertire
+            delay(80); 
             Wire.requestFrom(addr, (uint8_t)6);
             if (Wire.available() >= 6) {
-                Wire.read(); // Status byte (ignorato)
+                Wire.read(); 
                 uint32_t raw = (uint32_t)Wire.read() << 12;
                 raw |= (uint32_t)Wire.read() << 4;
                 raw |= (uint32_t)Wire.read() >> 4;
@@ -205,26 +222,23 @@ void checkInternalFan() {
             }
         }
 
-// AGGIORNAMENTO DATI E LOGICA VENTOLA
+        // --- AGGIORNAMENTO DATI E LOGICA VENTOLA ---
         if (currentTemp > -50.0) {
-            fanTemp = currentTemp; // Passa il dato reale alla variabile globale
+            fanTemp = currentTemp; 
 
             #ifdef FAN_RELAY_PIN
                 pinMode(FAN_RELAY_PIN, OUTPUT);
                 if (currentTemp >= FAN_TEMP_START) {
-                    digitalWrite(FAN_RELAY_PIN, HIGH); // Accende
+                    digitalWrite(FAN_RELAY_PIN, HIGH);
                 } 
                 else if (currentTemp <= FAN_TEMP_STOP) {
-                    digitalWrite(FAN_RELAY_PIN, LOW);  // Spegne
+                    digitalWrite(FAN_RELAY_PIN, LOW);
                 }
             #endif
         } 
         else {
-            // Se il sensore fallisce, resettiamo solo la variabile globale
-            // Il filtro nel modulo Telemetry vedrà -100 e smetterà di filtrare.
-            fanTemp = -100.0; 
+            fanTemp = -100.0; // Segnala errore al modulo Telemetry
         }
-
     #endif
 }
 

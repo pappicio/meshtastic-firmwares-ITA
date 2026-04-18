@@ -25,7 +25,8 @@
 
 static constexpr uint16_t TX_HISTORY_KEY_POWER_TELEMETRY = 0x8005;
 
-extern float fanTemp;
+
+extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 
 namespace graphics
 {
@@ -35,6 +36,7 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 
 int32_t PowerTelemetryModule::runOnce()
 {
+    // 1. Gestione Deep Sleep
     if (sleepOnNextExecution == true) {
         sleepOnNextExecution = false;
         uint32_t nightyNightMs = Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.power_update_interval,
@@ -43,81 +45,73 @@ int32_t PowerTelemetryModule::runOnce()
         doDeepSleep(nightyNightMs, true, false);
     }
 
-    /*
-        Uncomment the preferences below if you want to use the module
-        without having to configure it from the PythonAPI or WebUI.
-    */
-
-    // moduleConfig.telemetry.power_measurement_enabled = 1;
-    // moduleConfig.telemetry.power_screen_enabled = 1;
-    // moduleConfig.telemetry.power_update_interval = 45;
-
-    #ifdef FAN_RELAY_PIN
-        // Forza l'abilitazione se stiamo gestendo la ventola
-        moduleConfig.telemetry.power_measurement_enabled = true;
-        moduleConfig.telemetry.power_screen_enabled = true;
+   // 2. FORZATURA TOTALE PER MONITORAGGIO BOX
+    #if defined(FAN_RELAY_PIN) || defined(I2C_FAN_SENSOR_ADDR)
+        // Se abbiamo hardware per la ventola/box, il modulo DEVE esistere
+        if (!moduleConfig.telemetry.power_measurement_enabled) {
+            moduleConfig.telemetry.power_measurement_enabled = true;
+            
+            // FIX: La variabile corretta è 'enabled', non 'module_enabled'
+            enabled = true; 
+        }
         if(moduleConfig.telemetry.power_update_interval == 0) 
             moduleConfig.telemetry.power_update_interval = 60;
     #endif
 
-    
-    // ... resto del codice
 
     if (!(moduleConfig.telemetry.power_measurement_enabled)) {
-        // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
         return disable();
     }
 
     uint32_t sendToMeshIntervalMs = Default::getConfiguredOrDefaultMsScaled(
         moduleConfig.telemetry.power_update_interval, default_telemetry_broadcast_interval_secs, numOnlineNodes);
 
+    // 3. Setup iniziale
     if (firstTime) {
-        // This is the first time the OSThread library has called this function, so do some setup
         firstTime = 0;
         uint32_t result = UINT32_MAX;
 
 #if HAS_TELEMETRY
         if (moduleConfig.telemetry.power_measurement_enabled) {
-            LOG_INFO("Power Telemetry: init");
-            // If sensor is already initialized by EnvironmentTelemetryModule, then we don't need to initialize it again,
-            // but we need to set the result to != UINT32_MAX to avoid it being disabled
-            if (ina219Sensor.hasSensor())
-                result = ina219Sensor.isInitialized() ? 0 : ina219Sensor.runOnce();
-            if (ina226Sensor.hasSensor())
-                result = ina226Sensor.isInitialized() ? 0 : ina226Sensor.runOnce();
-            if (ina260Sensor.hasSensor())
-                result = ina260Sensor.isInitialized() ? 0 : ina260Sensor.runOnce();
-            if (ina3221Sensor.hasSensor())
-                result = ina3221Sensor.isInitialized() ? 0 : ina3221Sensor.runOnce();
-            if (max17048Sensor.hasSensor())
-                result = max17048Sensor.isInitialized() ? 0 : max17048Sensor.runOnce();
-        }
+            LOG_INFO("Power Telemetry: init sensori hardware");
+            
+            if (ina219Sensor.hasSensor()) result = ina219Sensor.isInitialized() ? 0 : ina219Sensor.runOnce();
+            if (ina226Sensor.hasSensor()) result = ina226Sensor.isInitialized() ? 0 : ina226Sensor.runOnce();
+            if (ina260Sensor.hasSensor()) result = ina260Sensor.isInitialized() ? 0 : ina260Sensor.runOnce();
+            if (ina3221Sensor.hasSensor()) result = ina3221Sensor.isInitialized() ? 0 : ina3221Sensor.runOnce();
+            if (max17048Sensor.hasSensor()) result = max17048Sensor.isInitialized() ? 0 : max17048Sensor.runOnce();
 
-        // it's possible to have this module enabled, only for displaying values on the screen.
-        // therefore, we should only enable the sensor loop if measurement is also enabled
+            // FIX: Forziamo il successo se abbiamo il monitoraggio Box
+            #if defined(I2C_FAN_SENSOR_ADDR) || defined(FAN_RELAY_PIN)
+                LOG_INFO("Power Telemetry: Monitor Box attivo, modulo abilitato.");
+                result = 0; 
+            #endif
+        }
         return result == UINT32_MAX ? disable() : setStartDelay();
 #else
         return disable();
 #endif
-    } else {
-        // if we somehow got to a second run of this module with measurement disabled, then just wait forever
-        if (!moduleConfig.telemetry.power_measurement_enabled)
-            return disable();
-
+    } 
+    else {
+        // Logica di invio normale (invoca sendTelemetry() dove abbiamo i dati di CH3)
         uint32_t lastTelemetry = transmitHistory ? transmitHistory->getLastSentToMeshMillis(TX_HISTORY_KEY_POWER_TELEMETRY) : 0;
+        
         if (((lastTelemetry == 0) || !Throttle::isWithinTimespanMs(lastTelemetry, sendToMeshIntervalMs)) &&
             airTime->isTxAllowedAirUtil()) {
-            sendTelemetry();
+            
+            sendTelemetry(); // Spedisce Temp e Stato Ventola
+            
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_POWER_TELEMETRY);
-        } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
+        } 
+        else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
-            // Just send to phone when it's not our time to send to mesh yet
-            // Only send while queue is empty (phone assumed connected)
+            
             sendTelemetry(NODENUM_BROADCAST, true);
             lastSentToPhone = millis();
         }
     }
+    
     return min(sendToPhoneIntervalMs, sendToMeshIntervalMs);
 }
 
@@ -271,47 +265,50 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     m.which_variant = meshtastic_Telemetry_power_metrics_tag;
     m.time = getTime();
 
+    // 1. Chiamata originale
+    bool hasHardwarePower = getPowerTelemetry(&m);
+    bool valid = hasHardwarePower;
 
+    // 2. INIEZIONE DATI BOX (Qui forziamo valid = true se abbiamo il nostro sensore)
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(FAN_RELAY_PIN)
     
-#ifdef FAN_RELAY_PIN
+    #ifdef I2C_FAN_SENSOR_ADDR
+    if (fanTemp > -50.0f) { 
         m.variant.power_metrics.has_ch3_voltage = true;
-        m.variant.power_metrics.has_ch3_current = true;
-
-        // Usiamo la variabile globale fanTemp (ricordati l'extern in cima al file)
         m.variant.power_metrics.ch3_voltage = fanTemp; 
-
-        // Stato Ventola: 100 se accesa, 0 se spenta
-        if (digitalRead(FAN_RELAY_PIN) == HIGH) {
-            m.variant.power_metrics.ch3_current = 100.0f;
-        } else {
-            m.variant.power_metrics.ch3_current = 0.0f;
-        }
+        valid = true; // Forza l'invio anche se non ci sono sensori INA
+    }
     #endif
 
-    // ... il resto del codice originale ...
+    #ifdef FAN_RELAY_PIN
+    m.variant.power_metrics.has_ch3_current = true;
+    m.variant.power_metrics.ch3_current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
+    valid = true; 
+    #endif
 
+#endif
 
-
-    if (getPowerTelemetry(&m)) {
-        LOG_INFO("Send: ch1_voltage=%f, ch1_current=%f, ch2_voltage=%f, ch2_current=%f, "
-                 "ch3_voltage=%f, ch3_current=%f",
-                 m.variant.power_metrics.ch1_voltage, m.variant.power_metrics.ch1_current, m.variant.power_metrics.ch2_voltage,
-                 m.variant.power_metrics.ch2_current, m.variant.power_metrics.ch3_voltage, m.variant.power_metrics.ch3_current);
+    // 3. Logica di invio originale (usiamo 'valid' invece del solo getPowerTelemetry)
+    if (valid) {
+        LOG_INFO("Send Box Data: ch3_v=%f, ch3_i=%f",
+                 m.variant.power_metrics.ch3_voltage, m.variant.power_metrics.ch3_current);
 
         sensor_read_error_count = 0;
 
         meshtastic_MeshPacket *p = allocDataProtobuf(m);
         p->to = dest;
         p->decoded.want_response = false;
+        
         if (config.device.role == meshtastic_Config_DeviceConfig_Role_SENSOR)
             p->priority = meshtastic_MeshPacket_Priority_RELIABLE;
         else
             p->priority = meshtastic_MeshPacket_Priority_BACKGROUND;
-        // release previous packet before occupying a new spot
+
         if (lastMeasurementPacket != nullptr)
             packetPool.release(lastMeasurementPacket);
 
         lastMeasurementPacket = packetPool.allocCopy(*p);
+
         if (phoneOnly) {
             LOG_INFO("Send packet to phone");
             service->sendToPhone(p);
@@ -329,5 +326,7 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     }
     return false;
 }
+
+
 
 #endif
