@@ -1,5 +1,5 @@
 # meshtastic-firmwares-ITA
-***meshtastic-firmware-2.7.22.96dd647 (ultima release alpha)***
+***meshtastic-firmware-2.7.22.96dd647 (ultima release alpha) meshtastic-firmware-2.7.15. (ultima release beta) ***
 
 
 🇮🇹 Meshtastic Italia "Smart Power" Edition
