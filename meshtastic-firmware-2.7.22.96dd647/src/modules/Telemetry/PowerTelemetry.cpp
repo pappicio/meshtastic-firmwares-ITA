@@ -48,12 +48,12 @@ int32_t PowerTelemetryModule::runOnce()
    // 2. FORZATURA TOTALE PER MONITORAGGIO BOX
     #if defined(FAN_RELAY_PIN) || defined(I2C_FAN_SENSOR_ADDR)
         // Se abbiamo hardware per la ventola/box, il modulo DEVE esistere
-        if (!moduleConfig.telemetry.power_measurement_enabled) {
+        
             moduleConfig.telemetry.power_measurement_enabled = true;
             
             // FIX: La variabile corretta è 'enabled', non 'module_enabled'
             enabled = true; 
-        }
+     
         if(moduleConfig.telemetry.power_update_interval == 0) 
             moduleConfig.telemetry.power_update_interval = 60;
     #endif
@@ -91,8 +91,7 @@ int32_t PowerTelemetryModule::runOnce()
 #else
         return disable();
 #endif
-    } 
-    else {
+    } else {
         // Logica di invio normale (invoca sendTelemetry() dove abbiamo i dati di CH3)
         uint32_t lastTelemetry = transmitHistory ? transmitHistory->getLastSentToMeshMillis(TX_HISTORY_KEY_POWER_TELEMETRY) : 0;
         
@@ -277,14 +276,19 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         m.variant.power_metrics.has_ch3_voltage = true;
         m.variant.power_metrics.ch3_voltage = fanTemp; 
         valid = true; // Forza l'invio anche se non ci sono sensori INA
+        #ifdef FAN_RELAY_PIN
+            m.variant.power_metrics.has_ch3_current = true;
+            m.variant.power_metrics.ch3_current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
+            valid = true;
+        #else
+            m.variant.power_metrics.has_ch3_current = true;
+            m.variant.power_metrics.ch3_current = -1.0f;
+            valid = true;
+        #endif
     }
     #endif
 
-    #ifdef FAN_RELAY_PIN
-    m.variant.power_metrics.has_ch3_current = true;
-    m.variant.power_metrics.ch3_current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
-    valid = true; 
-    #endif
+
 
 #endif
 

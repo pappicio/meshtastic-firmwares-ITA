@@ -599,25 +599,38 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     // --- INIEZIONE FINALE NEL DEW POINT ---
 // --- INIEZIONE MONITORAGGIO BOX --- Se vogliamo voltaggio e tensione come temp e acceso/spento su fantemp/fan relay
 #ifdef I2C_FAN_SENSOR_ADDR
-////    if (fanTemp > -50.0f) {
+
+
+
+
+///////////////// COMMENTARE DA QUI A....
+
+
+    if (fanTemp > -50.0f) {
         // 1. Temperatura Box nel campo Voltage
-////        m->variant.environment_metrics.has_voltage = true;
-////        m->variant.environment_metrics.voltage = fanTemp;
+        m->variant.environment_metrics.has_voltage = true;
+        m->variant.environment_metrics.voltage = fanTemp;
 
         // 2. Stato Ventola nel campo Current
         // Se FAN_RELAY_PIN è HIGH (accesa), mandiamo 1.0 (o 100.0), altrimenti 0.0
-////        #ifdef FAN_RELAY_PIN
-////            m->variant.environment_metrics.has_current = true;
-////            m->variant.environment_metrics.current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
-////        #endif
+        #ifdef FAN_RELAY_PIN
+            m->variant.environment_metrics.has_current = true;
+            m->variant.environment_metrics.current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
+        #else
+            m->variant.environment_metrics.has_current = true;
+            m->variant.environment_metrics.current = -1.0f;
+        #endif
         
         // Forziamo l'invio del pacchetto
-////        valid = true;
-////        hasSensor = true;
+/////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
 
-////        LOG_INFO("Box Monitor -> Inviato: Temp=%.1f (V), Ventola=%.0f (A)", 
-////                  fanTemp, m->variant.environment_metrics.current);
-////    }
+
+        valid = true;
+        hasSensor = true;
+
+        LOG_INFO("Box Monitor -> Inviato: Temp=%.1f (V), Ventola=%.0f (A)", 
+                  fanTemp, m->variant.environment_metrics.current);
+    }
 #endif
 
     return valid && hasSensor;
