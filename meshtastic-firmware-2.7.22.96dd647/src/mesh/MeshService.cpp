@@ -364,7 +364,7 @@ void checkAutoReboot() {
 void MeshService::fanControlTask(void *pvParameters) {
     LOG_INFO("TASK_MAINTENANCE: Avviato su Core 1");
     // Questo delay gira UNA SOLA VOLTA all'avvio del modulo
-    vTaskDelay(pdMS_TO_TICKS(10000));
+    vTaskDelay(pdMS_TO_TICKS(3000));
     for (;;) {
        
         checkInternalFan();
