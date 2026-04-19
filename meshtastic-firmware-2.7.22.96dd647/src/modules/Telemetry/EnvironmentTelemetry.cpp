@@ -21,7 +21,7 @@
 #include "sleep.h"
 #include "target_specific.h"
 #include <OLEDDisplay.h>
-
+#include "detect/ScanI2C.h"
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
 
 // Sensors
@@ -522,51 +522,92 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
     return false; // Let others look at this message also if they want
 }
 
+
+
+
 bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m)
 {
+    LOG_DEBUG("TELEMETRY: Avvio getEnvironmentTelemetry");
+
     bool valid = false;
     bool hasSensor = false;
-    // getMetrics() doesn't always get evaluated because of
-    // short-circuit evaluation rules in c++
     bool get_metrics;
+    
     m->time = getTime();
     m->which_variant = meshtastic_Telemetry_environment_metrics_tag;
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
+    // --- AGGIUNTO IL CICLO FOR MANCANTE ---
     for (TelemetrySensor *sensor : sensors) {
 
-//////////////////////////
-        // --- La tua parte per la ventola ---
-// --- La tua parte per la ventola ---
-#ifdef I2C_FAN_SENSOR_ADDR
-        if (sensor->getAddr() == I2C_FAN_SENSOR_ADDR) {
-            meshtastic_Telemetry temp_m = meshtastic_Telemetry_init_zero;
-            if (sensor->getMetrics(&temp_m)) {
-                fanTemp = temp_m.variant.environment_metrics.temperature;
-                LOG_DEBUG("Sensore Box (0x%02x) identificato. Temp: %.1f C.", I2C_FAN_SENSOR_ADDR, fanTemp);
-            } else {
-                fanTemp = -50.0f; 
-                LOG_WARN("Sensore Box (0x%02x) trovato ma LETTURA FALLITA!", I2C_FAN_SENSOR_ADDR);
+    // Recuperiamo l'indirizzo e prepariamo il nome
+        uint8_t currentAddr = sensor->getAddr();
+       const char* sName = sensor->sensorName; // VARIABILE PUBBLICA (non funzione!)
+        
+
+        // Se l'indirizzo è 0x00, lo ricostruiamo in base al nome del sensore
+if (currentAddr == 0x00) {
+        String nameStr = String(sName);
+            LOG_WARN("TELEMETRY: Indirizzo 0x00 per '%s', forzo recupero...", sName);
+
+            // SOLO SENSORI CON TEMPERATURA
+            if (nameStr.indexOf("SHT") >= 0 || nameStr.indexOf("GY-21") >= 0) {
+                currentAddr = 0x40;
+            } 
+            else if (nameStr.indexOf("BME280") >= 0 || nameStr.indexOf("BMP280") >= 0 || nameStr.indexOf("DPS310") >= 0) {
+                currentAddr = 0x76;
+            } 
+            else if (nameStr.indexOf("BME680") >= 0 || nameStr.indexOf("BMP085") >= 0 || nameStr.indexOf("BMP180") >= 0 || nameStr.indexOf("BMP3") >= 0) {
+                currentAddr = 0x77;
             }
-            continue; // Salta questo sensore, non deve finire nel campo Temperature
+            else if (nameStr.indexOf("AHT") >= 0) {
+                currentAddr = 0x38;
+            }
+            else if (nameStr.indexOf("MCP9808") >= 0) {
+                currentAddr = 0x18;
+            }
+            else if (nameStr.indexOf("PCT2075") >= 0) {
+                currentAddr = 0x37;
+            }
+
+            if (currentAddr != 0x00) {
+                LOG_INFO("TELEMETRY: Recupero Termico OK: %s -> 0x%02x", sName, currentAddr);
+            }
+        }
+
+       
+
+
+
+
+
+
+        // --- GESTIONE SENSORE BOX (BME280) ---
+#ifdef I2C_FAN_SENSOR_ADDR
+        if (currentAddr == I2C_FAN_SENSOR_ADDR) {
+            LOG_DEBUG("TELEMETRY: Salto sensore Box all'indirizzo 0x%02x (verrà iniettato dopo)", currentAddr);
+            continue; 
         }
 #endif
-		
-		
-		
-
-
-		
-		
-
-        get_metrics = sensor->getMetrics(m); // avoid short-circuit evaluation rules
-        valid = valid || get_metrics;
-        hasSensor = true;
+        
+        // --- GESTIONE SENSORE AMBIENTE (GY-21 / SHT) ---
+        LOG_DEBUG("TELEMETRY: Lettura sensore ambiente all'indirizzo 0x%02x", currentAddr);
+        get_metrics = sensor->getMetrics(m); 
+        if (get_metrics) {
+            LOG_INFO("TELEMETRY: Dati letti correttamente da 0x%02x (T: %.1f H: %.1f)", 
+                      currentAddr, m->variant.environment_metrics.temperature, m->variant.environment_metrics.relative_humidity);
+            valid = true;
+            hasSensor = true;
+        } else {
+            LOG_WARN("TELEMETRY: Lettura fallita per sensore 0x%02x", currentAddr);
+        }
     }
 
+    // --- SENSORI POWER (INA219, ecc.) ---
 #ifndef T1000X_SENSOR_EN
     if (ina219Sensor.hasSensor()) {
         get_metrics = ina219Sensor.getMetrics(m);
+		LOG_DEBUG("TELEMETRY: Lettura INA219: %s", get_metrics ? "OK" : "FAIL");
         valid = valid || get_metrics;
         hasSensor = true;
     }
@@ -595,24 +636,15 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 #endif
 
 // ... (restano i check per INA219, INA260, ecc. come nel tuo codice) ...
-
-    // --- INIEZIONE FINALE NEL DEW POINT ---
-// --- INIEZIONE MONITORAGGIO BOX --- Se vogliamo voltaggio e tensione come temp e acceso/spento su fantemp/fan relay
+    // --- INIEZIONE FINALE DATI BOX ---
 #ifdef I2C_FAN_SENSOR_ADDR
-
-
-
-
+    LOG_DEBUG("TELEMETRY: Controllo iniezione fanTemp (Attuale: %.1f C)", fanTemp);
 ///////////////// COMMENTARE DA QUI A....
-
-
     if (fanTemp > -50.0f) {
-        // 1. Temperatura Box nel campo Voltage
+        // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
         m->variant.environment_metrics.has_voltage = true;
         m->variant.environment_metrics.voltage = fanTemp;
 
-        // 2. Stato Ventola nel campo Current
-        // Se FAN_RELAY_PIN è HIGH (accesa), mandiamo 1.0 (o 100.0), altrimenti 0.0
         #ifdef FAN_RELAY_PIN
             m->variant.environment_metrics.has_current = true;
             m->variant.environment_metrics.current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
@@ -620,21 +652,24 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
             m->variant.environment_metrics.has_current = true;
             m->variant.environment_metrics.current = -1.0f;
         #endif
-        
-        // Forziamo l'invio del pacchetto
 /////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
-
 
         valid = true;
         hasSensor = true;
 
-        LOG_INFO("Box Monitor -> Inviato: Temp=%.1f (V), Ventola=%.0f (A)", 
-                  fanTemp, m->variant.environment_metrics.current);
+        LOG_INFO("TELEMETRY: Iniezione finale riuscita! Voltage=%.1f (Temp Box), Current=%.0f", 
+                  m->variant.environment_metrics.voltage, m->variant.environment_metrics.current);
+    } else {
+        LOG_WARN("TELEMETRY: fanTemp non valida (%.1f), iniezione saltata", fanTemp);
     }
 #endif
 
+    LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
     return valid && hasSensor;
 }
+
+
+
 
 meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()
 {

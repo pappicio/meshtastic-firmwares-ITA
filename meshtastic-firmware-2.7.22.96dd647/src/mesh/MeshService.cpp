@@ -5,7 +5,7 @@
 #endif
 
 #include "../concurrency/Periodic.h"
-#include "BluetoothCommon.h" // needed for updateBatteryLevel, FIXME, eventually when we pull mesh out into a lib we shouldn't be whacking bluetooth from here
+#include "BluetoothCommon.h" 
 #include "MeshService.h"
 #include "MessageStore.h"
 #include "NodeDB.h"
@@ -25,39 +25,30 @@
 #include "../detect/ScanI2C.h"
 #include <Wire.h>
 
-// Variabili per la ventola
+
+// --- DICHIARAZIONI GLOBALI UNICHE (PULITE) ---
+
+// Diciamo che 'service' e 'fanTemp' esistono già in main.cpp
+extern float fanTemp; 
+ 
+
+// scanI2C esiste già nel firmware
 extern ScanI2C *scanI2C; 
+
+// Questo lo teniamo noi qui perché è specifico del nostro nuovo task
+TaskHandle_t fanTaskHandle = NULL; 
+
+// Prototipi
+void checkInternalFan();
+void checkAutoReboot();
 
 // --- BLOCCHI ESISTENTI (NON TOCCARLI) ---
 #if ARCH_PORTDUINO
 #include "modules/StoreForwardModule.h"
 #include "PortduinoGlue.h"
 #endif
-
-/*
-receivedPacketQueue - this is a queue of messages we've received from the mesh, which we are keeping to deliver to the phone.
-It is implemented with a FreeRTos queue (wrapped with a little RTQueue class) of pointers to MeshPacket protobufs (which were
-alloced with new). After a packet ptr is removed from the queue and processed it should be deleted.  (eventually we should move
-sent packets into a 'sentToPhone' queue of packets we can delete just as soon as we are sure the phone has acked those packets -
-when the phone writes to FromNum)
-
-mesh - an instance of Mesh class.  Which manages the interface to the mesh radio library, reception of packets from other nodes,
-arbitrating to select a node number and keeping the current nodedb.
-
-*/
-
-/* Broadcast when a newly powered mesh node wants to find a node num it can use
-
-The algorithm is as follows:
-* when a node starts up, it broadcasts their user and the normal flow is for all other nodes to reply with their User as well (so
-the new node can build its node db)
-*/
-
+ 
 MeshService *service;
-
-
-extern float fanTemp; // "Cerca questa variabile fuori da questo file"
-
 #define MAX_MQTT_PROXY_MESSAGES 16
 static MemoryPool<meshtastic_MqttClientProxyMessage, MAX_MQTT_PROXY_MESSAGES> staticMqttClientProxyMessagePool;
 
@@ -68,12 +59,13 @@ static MemoryPool<meshtastic_QueueStatus, MAX_QUEUE_STATUS> staticQueueStatusPoo
 static MemoryPool<meshtastic_ClientNotification, MAX_CLIENT_NOTIFICATIONS> staticClientNotificationPool;
 
 Allocator<meshtastic_MqttClientProxyMessage> &mqttClientProxyMessagePool = staticMqttClientProxyMessagePool;
-
 Allocator<meshtastic_ClientNotification> &clientNotificationPool = staticClientNotificationPool;
-
 Allocator<meshtastic_QueueStatus> &queueStatusPool = staticQueueStatusPool;
 
 #include "Router.h"
+
+// --- IMPLEMENTAZIONE TASK E FUNZIONI ---
+// --- IMPLEMENTAZIONE TASK E FUNZIONI ---
 
 MeshService::MeshService()
 #ifdef ARCH_PORTDUINO
@@ -90,7 +82,24 @@ void MeshService::init()
     if (gps)
         gpsObserver.observe(&gps->newStatus);
 #endif
+
+    // --- AGGIUNTA PER VENTOLA ---
+#ifdef I2C_FAN_SENSOR_ADDR
+    if (fanTaskHandle == NULL) {
+        xTaskCreatePinnedToCore(
+            this->fanControlTask,   // Funzione
+            "FanControl",           // Nome
+            4096,                   // Stack
+            NULL,                   // Parametri
+            1,                      // Priorità
+            &fanTaskHandle,         // Handle
+            1                       // Core 1
+        );
+        LOG_INFO("Task Ventola inizializzato correttamente");
+    }
+#endif
 }
+
 
 int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
 {
@@ -126,135 +135,169 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
 }
 
 
+
+
+ 
+ 
+
+// --- GESTIONE MANUTENZIONE AVANZATA (VENTOLA + SENSORI I2C) ---
 void checkInternalFan() {
-    #if !defined(I2C_FAN_SENSOR_ADDR)
-        return; 
-    #else
-        static uint32_t lastFanCheck = 0;
-        if (millis() - lastFanCheck < 15000) return; 
-        lastFanCheck = millis();
+#ifdef I2C_FAN_SENSOR_ADDR
+    float currentTemp = -999.0;
+    uint8_t addr = I2C_FAN_SENSOR_ADDR;
 
-        float currentTemp = -999.0;
-        uint8_t addr = I2C_FAN_SENSOR_ADDR;
-
-        // --- 1. SHT3x / SHT4x / SHTC3 / SHTW2 / HDC1080 / HDC2080 (0x44, 0x45, 0x40, 0x70) ---
-        // Nota: Molti usano protocolli simili a 16-bit
-        if (addr == 0x44 || addr == 0x45 || addr == 0x70) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x24); Wire.write(0x00); // Comando SHT3x
-            if (Wire.endTransmission() == 0) {
-                delay(20);
-                if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                    uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    currentTemp = -45.0f + 175.0f * (raw / 65535.0f);
-                }
-            }
-        }
-        // --- 2. SHT2x / SI7021 / HTU21D / GY-21 / Si7013 / Si7020 (0x40) ---
-        else if (addr == 0x40) {
-            Wire.beginTransmission(addr);
-            Wire.write(0xF3); // Temp No Hold
-            if (Wire.endTransmission() == 0) {
-                delay(100);
-                if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                    uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    currentTemp = -46.85f + 175.72f * (raw / 65536.0f);
-                }
-            }
-        }
-        // --- 3. AHT10 / AHT20 / AHT21 / AHT25 / AHT30 (0x38) ---
-        else if (addr == 0x38) {
-            Wire.beginTransmission(addr);
-            Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
-            Wire.endTransmission();
-            delay(80);
-            if (Wire.requestFrom(addr, (uint8_t)6) >= 6) {
-                Wire.read(); Wire.read(); Wire.read();
-                uint32_t rawTemp = ((uint32_t)(Wire.read() & 0x0F) << 16) | ((uint32_t)Wire.read() << 8) | Wire.read();
-                currentTemp = (rawTemp / 1048576.0f) * 200.0f - 50.0f;
-            }
-        }
-        // --- 4. MCP9808 / TMP117 / TMP116 / SI7051 (0x18-0x1F, 0x48-0x4B) ---
-        else if ((addr >= 0x18 && addr <= 0x1F) || (addr >= 0x48 && addr <= 0x4B)) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x05); 
-            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                uint16_t raw = (Wire.read() << 8) | Wire.read();
-                if (addr >= 0x48) currentTemp = (int16_t)raw * 0.0078125f; // TMP117
-                else { // MCP9808
-                    uint16_t t = raw & 0x0FFF;
-                    currentTemp = t / 16.0f;
-                    if (raw & 0x1000) currentTemp -= 256.0f;
-                }
-            }
-        }
-        // --- 5. TC74 / MCP9804 (0x48-0x4D) ---
-        // Protocollo molto semplice a 8-bit
-        else if (addr >= 0x48 && addr <= 0x4D && currentTemp < -500) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x00);
-            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)1) == 1) {
-                currentTemp = (int8_t)Wire.read();
-            }
-        }
-        // --- 6. LM75 / TMP102 / TMP75 / PCT2075 / ADT7410 (0x48-0x4F) ---
-        else if (addr >= 0x48 && addr <= 0x4F && currentTemp < -500) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x00);
-            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                int8_t msb = Wire.read();
-                currentTemp = msb + ((Wire.read() >> 7) * 0.5f);
-            }
-        }
-// --- 7. BMP280 / BME280 (0x76, 0x77) - VERSIONE CORRETTA ---
-        else if (addr == 0x76 || addr == 0x77) {
-            // 1. Leggiamo i coefficienti di calibrazione (servono solo una volta, ma li leggiamo qui per semplicità)
-            uint16_t dig_T1; int16_t dig_T2, dig_T3;
-            
-            Wire.beginTransmission(addr);
-            Wire.write(0x88); // Inizio memoria calibrazione
-            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
-                dig_T1 = Wire.read() | (Wire.read() << 8);
-                dig_T2 = Wire.read() | (Wire.read() << 8);
-                dig_T3 = Wire.read() | (Wire.read() << 8);
-
-                // 2. Leggiamo il valore grezzo della temperatura
+    // Controllo presenza device sul bus
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+        switch (addr) {
+            // SHT3x / SHT4x / SHTC3 / STS3x
+            case 0x44: case 0x45: case 0x70:
                 Wire.beginTransmission(addr);
-                Wire.write(0xFA); 
-                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
-                    int32_t adc_T = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
+                Wire.write(0x24); Wire.write(0x00);
+                if (Wire.endTransmission() == 0) {
+                    vTaskDelay(pdMS_TO_TICKS(20));
+                    if (Wire.requestFrom(addr, (uint8_t)6) >= 2) {
+                        uint16_t raw = (Wire.read() << 8) | Wire.read();
+                        currentTemp = -45.0f + 175.0f * (raw / 65535.0f);
+                        LOG_DEBUG("FAN: SHT rilevato a 0x%02x: %.1f C", addr, currentTemp);
+                    }
+                }
+                break;
 
-                    // 3. FORMULA DI COMPENSAZIONE BOSCH (Semplificata ma precisa)
-                    float v1 = (((float)adc_T) / 16384.0f - ((float)dig_T1) / 1024.0f) * ((float)dig_T2);
-                    float v2 = ((((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f) *
-                               (((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f)) * ((float)dig_T3);
-                    
-                    currentTemp = (v1 + v2) / 5120.0f;
+            // SHT2x / SI7021 / HTU21D
+            case 0x40:
+                Wire.beginTransmission(addr);
+                Wire.write(0xF3);
+                if (Wire.endTransmission() == 0) {
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                        uint16_t raw = (Wire.read() << 8) | Wire.read();
+                        currentTemp = -46.85f + 175.72f * (raw / 65536.0f);
+                        LOG_DEBUG("FAN: SI7021 rilevato: %.1f C", currentTemp);
+                    }
+                }
+                break;
+
+            // AHT10 / AHT20 / AHT21
+            case 0x38:
+                Wire.beginTransmission(addr);
+                Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
+                Wire.endTransmission();
+                vTaskDelay(pdMS_TO_TICKS(80));
+                if (Wire.requestFrom(addr, (uint8_t)6) >= 6) {
+                    Wire.read(); // Skip status
+                    uint32_t rawTemp = ((uint32_t)(Wire.read() & 0x0F) << 16) | ((uint32_t)Wire.read() << 8) | Wire.read();
+                    currentTemp = (rawTemp / 1048576.0f) * 200.0f - 50.0f;
+                    LOG_DEBUG("FAN: AHT rilevato: %.1f C", currentTemp);
+                }
+                break;
+
+            // BMP280 / BME280 / BME680
+            case 0x76: case 0x77:
+                {
+                    uint16_t dig_T1; int16_t dig_T2, dig_T3;
+                    Wire.beginTransmission(addr);
+                    Wire.write(0x88);
+                    if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
+                        dig_T1 = Wire.read() | (Wire.read() << 8);
+                        dig_T2 = Wire.read() | (Wire.read() << 8);
+                        dig_T3 = Wire.read() | (Wire.read() << 8);
+                        Wire.beginTransmission(addr);
+                        Wire.write(0xFA);
+                        if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                            int32_t adc_T = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
+                            float v1 = (((float)adc_T) / 16384.0f - ((float)dig_T1) / 1024.0f) * ((float)dig_T2);
+                            float v2 = ((((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f) *
+                                       (((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f)) * ((float)dig_T3);
+                            currentTemp = (v1 + v2) / 5120.0f;
+                            LOG_DEBUG("FAN: BME rilevato: %.1f C", currentTemp);
+                        }
+                    }
+                }
+                break;
+
+            // MLX90614
+            case 0x5A: case 0x5B:
+                Wire.beginTransmission(addr);
+                Wire.write(0x07);
+                if (Wire.endTransmission(false) == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                    uint16_t raw = Wire.read() | (Wire.read() << 8);
+                    (void)Wire.read(); // Legge PEC e pulisce buffer (no warning)
+                    currentTemp = (raw * 0.02f) - 273.15f;
+                    LOG_DEBUG("FAN: MLX rilevato: %.1f C", currentTemp);
+                }
+                break;
+
+            // DS1621 / DS1624
+            case 0x4F:
+                Wire.beginTransmission(addr);
+                Wire.write(0xAA);
+                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                    int8_t h = Wire.read(); uint8_t l = Wire.read();
+                    currentTemp = h + (l >> 7) * 0.5f;
+                    LOG_DEBUG("FAN: DS1621 rilevato: %.1f C", currentTemp);
+                }
+                break;
+
+            // MCP9808 / LM75
+            case 0x18: case 0x48:
+                Wire.beginTransmission(addr);
+                Wire.write(addr == 0x18 ? 0x05 : 0x00);
+                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                    uint16_t raw = (Wire.read() << 8) | Wire.read();
+                    if (addr == 0x18) {
+                        uint16_t t = raw & 0x0FFF;
+                        currentTemp = t / 16.0f;
+                        if (raw & 0x1000) currentTemp -= 256.0f;
+                    } else {
+                        currentTemp = (int16_t)raw * 0.0078125f;
+                    }
+                    LOG_DEBUG("FAN: MCP/LM rilevato: %.1f C", currentTemp);
+                }
+                break;
+        }
+    }
+
+    // --- ATTUAZIONE RELAY ---
+    LOG_INFO("FAN: prima di if-then: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+
+    if (currentTemp > -55.0f && currentTemp < 155.0f) {
+        fanTemp = currentTemp;
+        
+        // LOG SEMPRE ATTIVO: Così vedi se il sensore sta leggendo!
+        LOG_INFO("FAN_CHECK: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+
+        #ifdef FAN_RELAY_PIN
+        LOG_INFO("FAN_RELAY_PIN: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+
+            pinMode(FAN_RELAY_PIN, OUTPUT);
+            LOG_INFO("FAN_RELAY_PIN: OUTPUT attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+
+            bool currentState = digitalRead(FAN_RELAY_PIN);
+ LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+
+            if (fanTemp >= FAN_TEMP_START) {
+                LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+
+                if (!currentState) { // Era spenta, accendiamo
+                    digitalWrite(FAN_RELAY_PIN, HIGH);
+                    LOG_INFO("VENTOLA: STATO CAMBIATO -> ACCESA");
+                }
+            } else if (fanTemp <= FAN_TEMP_STOP) {
+                if (currentState) { // Era accesa, spegniamo
+                    digitalWrite(FAN_RELAY_PIN, LOW);
+                    LOG_INFO("VENTOLA: STATO CAMBIATO -> SPENTA");
                 }
             }
-        }
-        
-        // --- 8. MLX90614 (IR) (0x5A) ---
-        else if (addr == 0x5A) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x07); 
-            if (Wire.endTransmission(false) == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
-                uint16_t raw = Wire.read() | (Wire.read() << 8);
-                currentTemp = (raw * 0.02f) - 273.15f;
-            }
-        }
-
-        // --- APPLICAZIONE LOGICA ---
-        if (currentTemp > -55.0f && currentTemp < 155.0f) {
-            fanTemp = currentTemp; 
-            #ifdef FAN_RELAY_PIN
-                pinMode(FAN_RELAY_PIN, OUTPUT);
-                if (fanTemp >= FAN_TEMP_START) digitalWrite(FAN_RELAY_PIN, HIGH);
-                else if (fanTemp <= FAN_TEMP_STOP) digitalWrite(FAN_RELAY_PIN, LOW);
-            #endif
-        }
-    #endif
+        #endif
+    } else {
+        // Se arrivi qui, il sensore è tornato a -999 o errore
+        LOG_ERROR("FAN_CHECK: Lettura sensore NON VALIDA (%.1f)", currentTemp);
+    }
+#endif
 }
+
+ 
 
 
 
@@ -300,11 +343,28 @@ void checkAutoReboot() {
 }
 
 
+
+
+// Task di sistema per il loop di controllo
+void MeshService::fanControlTask(void *pvParameters) {
+    LOG_INFO("TASK_MAINTENANCE: Avviato su Core 1");
+    // Questo delay gira UNA SOLA VOLTA all'avvio del modulo
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    for (;;) {
+       
+        checkInternalFan();
+        checkAutoReboot();
+        vTaskDelay(pdMS_TO_TICKS(15000)); // Controllo ogni 15 sec
+    }
+}
+
+
+
 /// Do idle processing (mostly processing messages which have been queued from the radio)
 void MeshService::loop()
 {
-    checkAutoReboot(); // Aggiungi questo
-    checkInternalFan(); // Gestisce la ventola in base alla temp interna
+    ////////////////checkAutoReboot(); // Aggiungi questo
+    //////////checkInternalFan(); // Gestisce la ventola in base alla temp interna
     if (lastQueueStatus.free == 0) { // check if there is now free space in TX queue
         meshtastic_QueueStatus qs = router->getQueueStatus();
         if (qs.free != lastQueueStatus.free)

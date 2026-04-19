@@ -694,9 +694,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FAN_RELAY_PIN 1           // Pin fisico del modulo Relay, controllare se il pin prescento  possa essere libero gia, da IMPEGNI!
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
-#define I2C_FAN_SENSOR_ADDR 0x76  
+#define I2C_FAN_SENSOR_ADDR 0x76 // = BME280  //0x76 0x40 = CY-21
 #define FAN_TEMP_START 42.0       // Temperatura accensione (Soglia ON)
-#define FAN_TEMP_STOP 25.0        // Temperatura spegnimento (Soglia OFF)
+#define FAN_TEMP_STOP 35.0        // Temperatura spegnimento (Soglia OFF)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // --- CONFIGURAZIONE RELAY REMOTO ---

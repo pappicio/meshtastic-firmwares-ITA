@@ -191,6 +191,12 @@ class MeshService
     uint32_t GetTimeSinceMeshPacket(const meshtastic_MeshPacket *mp);
 
   private:
+
+// Sotto private: o protected:
+TaskHandle_t fanTaskHandle = NULL;
+static void fanControlTask(void *pvParameters);
+
+
 #if HAS_GPS
     /// Called when our gps position has changed - updates nodedb and sends Location message out into the mesh
     /// returns 0 to allow further processing
