@@ -538,45 +538,12 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
     // --- AGGIUNTO IL CICLO FOR MANCANTE ---
-    for (TelemetrySensor *sensor : sensors) {
-
-    // Recuperiamo l'indirizzo e prepariamo il nome
+    
+for (TelemetrySensor *sensor : sensors) {
+        // Chiamata singola: recupera l'indirizzo già corretto dal .h
         uint8_t currentAddr = sensor->getAddr();
-       const char* sName = sensor->sensorName; // VARIABILE PUBBLICA (non funzione!)
-        
-
-        // Se l'indirizzo è 0x00, lo ricostruiamo in base al nome del sensore
-if (currentAddr == 0x00) {
-        String nameStr = String(sName);
-            LOG_WARN("TELEMETRY: Indirizzo 0x00 per '%s', forzo recupero...", sName);
-
-            // SOLO SENSORI CON TEMPERATURA
-            if (nameStr.indexOf("SHT") >= 0 || nameStr.indexOf("GY-21") >= 0) {
-                currentAddr = 0x40;
-            } 
-            else if (nameStr.indexOf("BME280") >= 0 || nameStr.indexOf("BMP280") >= 0 || nameStr.indexOf("DPS310") >= 0) {
-                currentAddr = 0x76;
-            } 
-            else if (nameStr.indexOf("BME680") >= 0 || nameStr.indexOf("BMP085") >= 0 || nameStr.indexOf("BMP180") >= 0 || nameStr.indexOf("BMP3") >= 0) {
-                currentAddr = 0x77;
-            }
-            else if (nameStr.indexOf("AHT") >= 0) {
-                currentAddr = 0x38;
-            }
-            else if (nameStr.indexOf("MCP9808") >= 0) {
-                currentAddr = 0x18;
-            }
-            else if (nameStr.indexOf("PCT2075") >= 0) {
-                currentAddr = 0x37;
-            }
-
-            if (currentAddr != 0x00) {
-                LOG_INFO("TELEMETRY: Recupero Termico OK: %s -> 0x%02x", sName, currentAddr);
-            }
-        }
 
        
-
 
 
 
