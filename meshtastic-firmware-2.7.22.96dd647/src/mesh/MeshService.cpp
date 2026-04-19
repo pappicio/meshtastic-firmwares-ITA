@@ -192,29 +192,44 @@ void checkInternalFan() {
                 }
                 break;
 
-            // BMP280 / BME280 / BME680
-            case 0x76: case 0x77:
-                {
-                    uint16_t dig_T1; int16_t dig_T2, dig_T3;
-                    Wire.beginTransmission(addr);
-                    Wire.write(0x88);
-                    if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
-                        dig_T1 = Wire.read() | (Wire.read() << 8);
-                        dig_T2 = Wire.read() | (Wire.read() << 8);
-                        dig_T3 = Wire.read() | (Wire.read() << 8);
-                        Wire.beginTransmission(addr);
-                        Wire.write(0xFA);
-                        if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
-                            int32_t adc_T = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
-                            float v1 = (((float)adc_T) / 16384.0f - ((float)dig_T1) / 1024.0f) * ((float)dig_T2);
-                            float v2 = ((((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f) *
-                                       (((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f)) * ((float)dig_T3);
-                            currentTemp = (v1 + v2) / 5120.0f;
-                            LOG_DEBUG("FAN: BME rilevato: %.1f C", currentTemp);
-                        }
-                    }
-                }
-                break;
+case 0x76: case 0x77:
+    {
+        // 1. FORZA IL SENSORE A FARE UNA MISURA (Power Mode: Forced)
+        // Scriviamo nel registro 0xF4 (ctrl_meas): 
+        // 0x21 significa: Oversampling Temp x1, Mode: Forced
+        Wire.beginTransmission(addr);
+        Wire.write(0xF4); 
+        Wire.write(0x21); 
+        Wire.endTransmission();
+        delay(10); // Aspetta che il sensore finisca la conversione
+
+        uint16_t dig_T1; int16_t dig_T2, dig_T3;
+        
+        // 2. LEGGI I COEFFICIENTI DI CALIBRAZIONE (Registro 0x88)
+        Wire.beginTransmission(addr);
+        Wire.write(0x88);
+        if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
+            dig_T1 = Wire.read() | (Wire.read() << 8);
+            dig_T2 = Wire.read() | (Wire.read() << 8);
+            dig_T3 = Wire.read() | (Wire.read() << 8);
+
+            // 3. LEGGI I DATI RAW DELLA TEMPERATURA (Registro 0xFA)
+            Wire.beginTransmission(addr);
+            Wire.write(0xFA);
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                int32_t adc_T = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
+                
+                // Formula Bosch compensata (Floating point)
+                float v1 = (((float)adc_T) / 16384.0f - ((float)dig_T1) / 1024.0f) * ((float)dig_T2);
+                float v2 = ((((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f) *
+                           (((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f)) * ((float)dig_T3);
+                
+                currentTemp = (v1 + v2) / 5120.0f;
+                LOG_INFO("FAN: Lettura manuale 0x%02x: %.1f C", addr, currentTemp);
+            }
+        }
+    }
+    break;
 
             // MLX90614
             case 0x5A: case 0x5B:
@@ -349,7 +364,7 @@ void checkAutoReboot() {
 void MeshService::fanControlTask(void *pvParameters) {
     LOG_INFO("TASK_MAINTENANCE: Avviato su Core 1");
     // Questo delay gira UNA SOLA VOLTA all'avvio del modulo
-    vTaskDelay(pdMS_TO_TICKS(3000));
+    vTaskDelay(pdMS_TO_TICKS(10000));
     for (;;) {
        
         checkInternalFan();
