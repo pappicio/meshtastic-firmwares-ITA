@@ -137,107 +137,121 @@ void checkInternalFan() {
         float currentTemp = -999.0;
         uint8_t addr = I2C_FAN_SENSOR_ADDR;
 
-        // PING DI SICUREZZA
-        Wire.beginTransmission(addr);
-        if (Wire.endTransmission() != 0) {
-            fanTemp = -100.0; // Sensore non trovato sul bus
-            return; 
-        }
-
-        // --- 0. PROTOCOLLO SHT21 / HTU21 / GY-21 (Specifico per 0x40) ---
-        // Questo sensore usa comandi a 8-bit e richiede un delay di conversione
-        if (addr == 0x40) {
+        // --- 1. SHT3x / SHT4x / SHTC3 / SHTW2 / HDC1080 / HDC2080 (0x44, 0x45, 0x40, 0x70) ---
+        // Nota: Molti usano protocolli simili a 16-bit
+        if (addr == 0x44 || addr == 0x45 || addr == 0x70) {
             Wire.beginTransmission(addr);
-            Wire.write(0xF3); // Trigger Temperatura (No Hold Master)
-            if (Wire.endTransmission() == 0) {
-                delay(100); // Necessario per la conversione (max 85ms)
-                Wire.requestFrom(addr, (uint8_t)2);
-                if (Wire.available() >= 2) {
-                    uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    raw &= 0xFFFC; // Pulizia bit di stato (ultimi 2 bit)
-                    currentTemp = -46.85 + 175.72 * ((float)raw / 65536.0);
-                }
-            }
-        }
-
-        // --- 1. PROTOCOLLO SHT3x / SHT4x / SHTC3 ---
-        if (currentTemp < -50.0) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x2C); Wire.write(0x06); 
+            Wire.write(0x24); Wire.write(0x00); // Comando SHT3x
             if (Wire.endTransmission() == 0) {
                 delay(20);
-                Wire.requestFrom(addr, (uint8_t)2);
-                if (Wire.available() >= 2) {
+                if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
                     uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    currentTemp = -45.0 + 175.0 * ((float)raw / 65535.0);
+                    currentTemp = -45.0f + 175.0f * (raw / 65535.0f);
                 }
             }
         }
-
-        // --- 2. PROTOCOLLO BOSCH (BME280 / BMP280 / BME680) ---
-        if (currentTemp < -50.0) {
+        // --- 2. SHT2x / SI7021 / HTU21D / GY-21 / Si7013 / Si7020 (0x40) ---
+        else if (addr == 0x40) {
             Wire.beginTransmission(addr);
-            Wire.write(0xFA); 
+            Wire.write(0xF3); // Temp No Hold
             if (Wire.endTransmission() == 0) {
-                Wire.requestFrom(addr, (uint8_t)3); 
-                if (Wire.available() >= 3) {
-                    uint32_t raw = (uint32_t)Wire.read() << 12;
-                    raw |= (uint32_t)Wire.read() << 4;
-                    raw |= (uint32_t)Wire.read() >> 4;
-                    if (raw != 0 && raw != 0x7FFFF && raw != 0xFFFFF) {
-                        currentTemp = ((float)raw / 16384.0); 
-                    }
-                }
-            }
-        }
-
-        // --- 3. PROTOCOLLO MCP9808 / TMP117 ---
-        if (currentTemp < -50.0) {
-            Wire.beginTransmission(addr);
-            Wire.write(0x05); 
-            if (Wire.endTransmission() == 0) {
-                Wire.requestFrom(addr, (uint8_t)2);
-                if (Wire.available() >= 2) {
+                delay(100);
+                if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
                     uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    uint16_t t = raw & 0x0FFF;
-                    currentTemp = t / 16.0;
-                    if (raw & 0x1000) currentTemp -= 256.0; 
+                    currentTemp = -46.85f + 175.72f * (raw / 65536.0f);
                 }
             }
         }
-
-        // --- 4. PROTOCOLLO AHT10 / AHT20 / AHT21 ---
-        if (currentTemp < -50.0) {
+        // --- 3. AHT10 / AHT20 / AHT21 / AHT25 / AHT30 (0x38) ---
+        else if (addr == 0x38) {
             Wire.beginTransmission(addr);
             Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
             Wire.endTransmission();
-            delay(80); 
-            Wire.requestFrom(addr, (uint8_t)6);
-            if (Wire.available() >= 6) {
-                Wire.read(); 
-                uint32_t raw = (uint32_t)Wire.read() << 12;
-                raw |= (uint32_t)Wire.read() << 4;
-                raw |= (uint32_t)Wire.read() >> 4;
-                currentTemp = ((float)raw * 200.0 / 1048576.0) - 50.0;
+            delay(80);
+            if (Wire.requestFrom(addr, (uint8_t)6) >= 6) {
+                Wire.read(); Wire.read(); Wire.read();
+                uint32_t rawTemp = ((uint32_t)(Wire.read() & 0x0F) << 16) | ((uint32_t)Wire.read() << 8) | Wire.read();
+                currentTemp = (rawTemp / 1048576.0f) * 200.0f - 50.0f;
+            }
+        }
+        // --- 4. MCP9808 / TMP117 / TMP116 / SI7051 (0x18-0x1F, 0x48-0x4B) ---
+        else if ((addr >= 0x18 && addr <= 0x1F) || (addr >= 0x48 && addr <= 0x4B)) {
+            Wire.beginTransmission(addr);
+            Wire.write(0x05); 
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                uint16_t raw = (Wire.read() << 8) | Wire.read();
+                if (addr >= 0x48) currentTemp = (int16_t)raw * 0.0078125f; // TMP117
+                else { // MCP9808
+                    uint16_t t = raw & 0x0FFF;
+                    currentTemp = t / 16.0f;
+                    if (raw & 0x1000) currentTemp -= 256.0f;
+                }
+            }
+        }
+        // --- 5. TC74 / MCP9804 (0x48-0x4D) ---
+        // Protocollo molto semplice a 8-bit
+        else if (addr >= 0x48 && addr <= 0x4D && currentTemp < -500) {
+            Wire.beginTransmission(addr);
+            Wire.write(0x00);
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)1) == 1) {
+                currentTemp = (int8_t)Wire.read();
+            }
+        }
+        // --- 6. LM75 / TMP102 / TMP75 / PCT2075 / ADT7410 (0x48-0x4F) ---
+        else if (addr >= 0x48 && addr <= 0x4F && currentTemp < -500) {
+            Wire.beginTransmission(addr);
+            Wire.write(0x00);
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                int8_t msb = Wire.read();
+                currentTemp = msb + ((Wire.read() >> 7) * 0.5f);
+            }
+        }
+// --- 7. BMP280 / BME280 (0x76, 0x77) - VERSIONE CORRETTA ---
+        else if (addr == 0x76 || addr == 0x77) {
+            // 1. Leggiamo i coefficienti di calibrazione (servono solo una volta, ma li leggiamo qui per semplicità)
+            uint16_t dig_T1; int16_t dig_T2, dig_T3;
+            
+            Wire.beginTransmission(addr);
+            Wire.write(0x88); // Inizio memoria calibrazione
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
+                dig_T1 = Wire.read() | (Wire.read() << 8);
+                dig_T2 = Wire.read() | (Wire.read() << 8);
+                dig_T3 = Wire.read() | (Wire.read() << 8);
+
+                // 2. Leggiamo il valore grezzo della temperatura
+                Wire.beginTransmission(addr);
+                Wire.write(0xFA); 
+                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                    int32_t adc_T = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
+
+                    // 3. FORMULA DI COMPENSAZIONE BOSCH (Semplificata ma precisa)
+                    float v1 = (((float)adc_T) / 16384.0f - ((float)dig_T1) / 1024.0f) * ((float)dig_T2);
+                    float v2 = ((((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f) *
+                               (((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f)) * ((float)dig_T3);
+                    
+                    currentTemp = (v1 + v2) / 5120.0f;
+                }
+            }
+        }
+        
+        // --- 8. MLX90614 (IR) (0x5A) ---
+        else if (addr == 0x5A) {
+            Wire.beginTransmission(addr);
+            Wire.write(0x07); 
+            if (Wire.endTransmission(false) == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                uint16_t raw = Wire.read() | (Wire.read() << 8);
+                currentTemp = (raw * 0.02f) - 273.15f;
             }
         }
 
-        // --- AGGIORNAMENTO DATI E LOGICA VENTOLA ---
-        if (currentTemp > -50.0) {
+        // --- APPLICAZIONE LOGICA ---
+        if (currentTemp > -55.0f && currentTemp < 155.0f) {
             fanTemp = currentTemp; 
-
             #ifdef FAN_RELAY_PIN
                 pinMode(FAN_RELAY_PIN, OUTPUT);
-                if (currentTemp >= FAN_TEMP_START) {
-                    digitalWrite(FAN_RELAY_PIN, HIGH);
-                } 
-                else if (currentTemp <= FAN_TEMP_STOP) {
-                    digitalWrite(FAN_RELAY_PIN, LOW);
-                }
+                if (fanTemp >= FAN_TEMP_START) digitalWrite(FAN_RELAY_PIN, HIGH);
+                else if (fanTemp <= FAN_TEMP_STOP) digitalWrite(FAN_RELAY_PIN, LOW);
             #endif
-        } 
-        else {
-            fanTemp = -100.0; // Segnala errore al modulo Telemetry
         }
     #endif
 }
