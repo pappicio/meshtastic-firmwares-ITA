@@ -109,7 +109,7 @@ class MeshService
     MeshService();
 
     void init();
-
+    void initHardwarePins(); // <--- AGGIUNGI QUESTA RIGA QUI!
     /// Do idle processing (mostly processing messages which have been queued from the radio)
     void loop();
 

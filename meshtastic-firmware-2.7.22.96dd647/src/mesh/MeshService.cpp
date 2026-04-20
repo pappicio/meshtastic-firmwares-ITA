@@ -24,8 +24,30 @@
 #include <string>
 #include "../detect/ScanI2C.h"
 #include <Wire.h>
+#include "MeshService.h"
+// ... altri include ...
+
+// 1. DICHIARAZIONI GLOBALI (Devono stare PRIMA di initHardwarePins)
+// 1. PRIMA GLI INCLUDE DELLE LIBRERIE
+#ifdef ONEWIRE_TEMP_PIN
+  #include <OneWire.h>
+  #include <DallasTemperature.h>
+#endif
+
+#ifdef DHT_TEMP_PIN
+  #include <DHT.h>
+#endif
 
 
+// 2. POI LE DICHIARAZIONI DELLE VARIABILI (Riga 32-33)
+#ifdef ONEWIRE_TEMP_PIN
+  OneWire _oneWire(ONEWIRE_TEMP_PIN);
+  DallasTemperature _owSensors(&_oneWire);
+#endif
+
+#ifdef DHT_TEMP_PIN
+  DHT _dht(DHT_TEMP_PIN, DHT11);
+#endif
 // --- DICHIARAZIONI GLOBALI UNICHE (PULITE) ---
 
 // Diciamo che 'service' e 'fanTemp' esistono già in main.cpp
@@ -78,10 +100,13 @@ MeshService::MeshService()
 
 void MeshService::init()
 {
+    
 #if HAS_GPS
     if (gps)
         gpsObserver.observe(&gps->newStatus);
 #endif
+
+initHardwarePins(); // La tua nuova sub-routine di boot
 
     // --- AGGIUNTA PER VENTOLA ---
 #ifdef I2C_FAN_SENSOR_ADDR
@@ -134,18 +159,51 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
     return 0;
 }
 
+// =========================================================================
+// GESTIONE HARDWARE PERSONALIZZATA - START
+// =========================================================================
 
+/**
+ * Inizializzazione dei Pin (Chiamata una sola volta nel setup)
+ */
+void MeshService::initHardwarePins() {  
+    LOG_INFO("HARDWARE: Inizializzazione Pin personalizzati...");
 
+    // Setup Relay e Ventola (Output)
+    #ifdef FAN_RELAY_PIN
+        pinMode(FAN_RELAY_PIN, OUTPUT);
+        digitalWrite(FAN_RELAY_PIN, LOW);
+    #endif
+
+    #ifdef RELAY_1_PIN
+        pinMode(RELAY_1_PIN, OUTPUT);
+        digitalWrite(RELAY_1_PIN, LOW);
+    #endif
+
+    #ifdef RELAY_2_PIN
+        pinMode(RELAY_2_PIN, OUTPUT);
+        digitalWrite(RELAY_2_PIN, LOW);
+    #endif
+
+    // Setup Sensori (Inizializzazione una tantum)
+    #ifdef ONEWIRE_TEMP_PIN
+        _owSensors.begin(); 
+    #endif
+
+    #ifdef DHT_TEMP_PIN
+        _dht.begin();
+    #endif
+
+    #ifdef ANALOG_TEMP_PIN
+        pinMode(ANALOG_TEMP_PIN, INPUT); 
+    #endif
+}
 
 // --- LETTURA ONEWIRE (DS18B20) ---
 #if defined(ONEWIRE_TEMP_PIN)
-#include <OneWire.h>
-#include <DallasTemperature.h>
-OneWire _oneWire(ONEWIRE_TEMP_PIN);
-DallasTemperature _owSensors(&_oneWire);
-
 float readOneWireTemp() {
-    _owSensors.begin();
+    // Nota: gli oggetti _oneWire e _owSensors devono essere definiti 
+    // SOLO in alto nel file, non qui dentro!
     _owSensors.requestTemperatures();
     float t = _owSensors.getTempCByIndex(0);
     return (t == DEVICE_DISCONNECTED_C) ? -999.0f : t;
@@ -154,12 +212,7 @@ float readOneWireTemp() {
 
 // --- LETTURA DHT (11/22) ---
 #if defined(DHT_TEMP_PIN)
-#include <DHT.h>
-// Nota: Se usi DHT22, cambia DHT11 in DHT22 qui sotto
-DHT _dht(DHT_TEMP_PIN, DHT11); 
-
 float readDHTTemp() {
-    _dht.begin();
     float t = _dht.readTemperature();
     return (isnan(t)) ? -999.0f : t;
 }
@@ -168,26 +221,26 @@ float readDHTTemp() {
 // --- LETTURA ANALOGICA (NTC 10k) ---
 #if defined(ANALOG_TEMP_PIN)
 float readAnalogTemp() {
-    // Media di 10 letture per stabilità
     long reading = 0;
     for(int i=0; i<10; i++) reading += analogRead(ANALOG_TEMP_PIN);
     float raw = reading / 10.0f;
     
     if (raw <= 0 || raw >= 4095) return -999.0f;
 
-    // Calcolo resistenza termistore (Partitore con R fissa 10k)
     float res = 10000.0f * ((4095.0f / raw) - 1.0f);
-    // Equazione Beta (Beta=3950, Temp_rif=25C, Res_rif=10k)
     float steinhart;
-    steinhart = res / 10000.0f;     // (R/Ro)
-    steinhart = log(steinhart);      // ln(R/Ro)
-    steinhart /= 3950.0f;            // 1/B * ln(R/Ro)
-    steinhart += 1.0f / (25.0f + 273.15f); // + (1/To)
-    steinhart = 1.0f / steinhart;    // Inverti
-    return steinhart - 273.15f;      // Converti in Celsius
+    steinhart = res / 10000.0f; 
+    steinhart = log(steinhart);
+    steinhart /= 3950.0f; 
+    steinhart += 1.0f / (25.0f + 273.15f);
+    steinhart = 1.0f / steinhart;
+    return steinhart - 273.15f; 
 }
 #endif
 
+// =========================================================================
+// GESTIONE HARDWARE PERSONALIZZATA - END
+// =========================================================================
 
 float readI2CTemp(uint8_t addr) {
     Wire.beginTransmission(addr);
