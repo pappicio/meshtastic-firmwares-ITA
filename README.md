@@ -78,9 +78,10 @@ Modifica queste macro per adattare il firmware al tuo hardware:
 
 ```cpp
 // --- SENSORI DI TEMPERATURA ---
-#define I2C_FAN_SENSOR_ADDR 0x76  // 0x76 o 0x77 per BME/BMP
-#define ONEWIRE_TEMP_PIN 4        // Pin per DS18B20 (opzionale)
-#define DHT_TEMP_PIN 14           // Pin per DHT11/22 (opzionale)
+#define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
+//#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
+//#define DHT_TEMP_PIN 5           // Pin per DHT11/22
+//#define ANALOG_TEMP_PIN 34       // Pin ADC per Termistore NTC, deve essere un pin analogico
 
 // --- SOGLIE TERMICHE ---
 #define FAN_TEMP_START 42.0f      // Accensione Ventola
