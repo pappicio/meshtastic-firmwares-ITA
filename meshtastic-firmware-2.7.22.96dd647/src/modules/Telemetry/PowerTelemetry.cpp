@@ -276,18 +276,42 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         m.variant.power_metrics.has_ch3_voltage = true;
         m.variant.power_metrics.ch3_voltage = fanTemp; 
         valid = true; // Forza l'invio anche se non ci sono sensori INA
-        #ifdef FAN_RELAY_PIN
-            m.variant.power_metrics.has_ch3_current = true;
-            m.variant.power_metrics.ch3_current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
-            valid = true;
-        #else
-            m.variant.power_metrics.has_ch3_current = true;
-            m.variant.power_metrics.ch3_current = -1.0f;
-            valid = true;
-        #endif
     }
     #endif
 
+
+
+    // --- 2. COSTRUZIONE CRUSCOTTO RELAY (CH3 Current) ---
+    float powerDisplayStatus = 0.0f;
+
+    // Cifra Centinaia: VENTOLA
+    #ifdef FAN_RELAY_PIN
+        powerDisplayStatus += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100.0f : 800.0f;
+    #else
+        powerDisplayStatus += 700.0f;
+    #endif
+
+    // Cifra Decine: RELAY 1
+    #ifdef RELAY_1_PIN
+        powerDisplayStatus += (digitalRead(RELAY_1_PIN) == HIGH) ? 10.0f : 80.0f;
+    #else
+        powerDisplayStatus += 70.0f;
+    #endif
+
+    // Cifra Unità: RELAY 2
+    #ifdef RELAY_2_PIN
+        powerDisplayStatus += (digitalRead(RELAY_2_PIN) == HIGH) ? 1.0f : 8.0f;
+    #else
+        powerDisplayStatus += 7.0f;
+    #endif
+
+    // Iniezione nel canale CH3 Current
+    m.variant.power_metrics.has_ch3_current = true;
+    m.variant.power_metrics.ch3_current = powerDisplayStatus;
+    valid = true;
+
+    LOG_INFO("POWER_METRICS: CH3_Temp=%.1f, CH3_Status=%.0f", 
+              m.variant.power_metrics.ch3_voltage, powerDisplayStatus);
 
 
 #endif

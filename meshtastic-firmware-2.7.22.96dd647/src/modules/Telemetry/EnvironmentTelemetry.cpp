@@ -612,13 +612,7 @@ for (TelemetrySensor *sensor : sensors) {
         m->variant.environment_metrics.has_voltage = true;
         m->variant.environment_metrics.voltage = fanTemp;
 
-        #ifdef FAN_RELAY_PIN
-            m->variant.environment_metrics.has_current = true;
-            m->variant.environment_metrics.current = (digitalRead(FAN_RELAY_PIN) == HIGH) ? 1.0f : 0.0f;
-        #else
-            m->variant.environment_metrics.has_current = true;
-            m->variant.environment_metrics.current = -1.0f;
-        #endif
+       
 /////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
 
         valid = true;
@@ -630,6 +624,38 @@ for (TelemetrySensor *sensor : sensors) {
         LOG_WARN("TELEMETRY: fanTemp non valida (%.1f), iniezione saltata", fanTemp);
     }
 #endif
+
+
+float displayStatus = 0.0f;
+
+// 1. Posizione Centinaia: VENTOLA
+#ifdef FAN_RELAY_PIN
+    displayStatus += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100.0f : 800.0f;
+#else
+    displayStatus += 700.0f; 
+#endif
+
+// 2. Posizione Decine: RELAY 1
+#ifdef RELAY_1_PIN
+    displayStatus += (digitalRead(RELAY_1_PIN) == HIGH) ? 10.0f : 80.0f;
+#else
+    displayStatus += 70.0f;
+#endif
+
+// 3. Posizione Unità: RELAY 2
+#ifdef RELAY_2_PIN
+    displayStatus += (digitalRead(RELAY_2_PIN) == HIGH) ? 1.0f : 8.0f;
+#else
+    displayStatus += 7.0f;
+#endif
+
+// --- INIEZIONE NELLE METRICHE ---
+m->variant.environment_metrics.has_current = true;
+m->variant.environment_metrics.current = displayStatus;
+
+
+
+
 
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
     return valid && hasSensor;

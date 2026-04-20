@@ -691,12 +691,55 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // IL SENSORE SARA TOTALMENTE INVISIBILE A MESHTASTIC CHE XO DARA INFO COME 
 // POWER TELEMETRI, con voltaggio1/corrente100 e Voltaggio0/corrente0 per indicare ventola accesa/spenta
 
-#define FAN_RELAY_PIN 1           // Pin fisico del modulo Relay, controllare se il pin prescento  possa essere libero gia, da IMPEGNI!
+// --- SORGENTE TEMPERATURA (Scegline UNA) ---
+#define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
+
+//#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
+//#define DHT_TEMP_PIN 5           // Pin per DHT11/22
+//#define ANALOG_TEMP_PIN 34       // Pin ADC per Termistore NTC
+
+
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
-#define I2C_FAN_SENSOR_ADDR 0x76 // = BME280  //0x76 0x40 = CY-21
+#define FAN_RELAY_PIN 1           // Pin fisico del modulo Relay, controllare se il pin prescento  possa essere libero gia, da IMPEGNI!
+
 #define FAN_TEMP_START 42.0       // Temperatura accensione (Soglia ON)
 #define FAN_TEMP_STOP 35.0        // Temperatura spegnimento (Soglia OFF)
+
+
+
+//////////////// INTERNAL /////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+// Inizializziamo il contatore a 0
+#define TOTAL_SENSORS 0
+
+#ifdef I2C_FAN_SENSOR_ADDR
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS 1
+#endif
+
+#ifdef ONEWIRE_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+
+#ifdef DHT_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+
+#ifdef ANALOG_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+
+// Controllo finale
+#if TOTAL_SENSORS > 1
+  #error "CONFIG ERROR: Troppi sensori di temperatura abilitati!"
+#endif
+/////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // --- CONFIGURAZIONE RELAY REMOTO ---

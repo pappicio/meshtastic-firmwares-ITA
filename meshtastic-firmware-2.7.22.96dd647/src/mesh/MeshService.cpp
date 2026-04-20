@@ -137,142 +137,208 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
 
 
 
- 
- 
+// --- LETTURA ONEWIRE (DS18B20) ---
+#if defined(ONEWIRE_TEMP_PIN)
+#include <OneWire.h>
+#include <DallasTemperature.h>
+OneWire _oneWire(ONEWIRE_TEMP_PIN);
+DallasTemperature _owSensors(&_oneWire);
 
-// --- GESTIONE MANUTENZIONE AVANZATA (VENTOLA + SENSORI I2C) ---
-void checkInternalFan() {
-#ifdef I2C_FAN_SENSOR_ADDR
-    float currentTemp = -999.0;
-    uint8_t addr = I2C_FAN_SENSOR_ADDR;
+float readOneWireTemp() {
+    _owSensors.begin();
+    _owSensors.requestTemperatures();
+    float t = _owSensors.getTempCByIndex(0);
+    return (t == DEVICE_DISCONNECTED_C) ? -999.0f : t;
+}
+#endif
 
-    // Controllo presenza device sul bus
+// --- LETTURA DHT (11/22) ---
+#if defined(DHT_TEMP_PIN)
+#include <DHT.h>
+// Nota: Se usi DHT22, cambia DHT11 in DHT22 qui sotto
+DHT _dht(DHT_TEMP_PIN, DHT11); 
+
+float readDHTTemp() {
+    _dht.begin();
+    float t = _dht.readTemperature();
+    return (isnan(t)) ? -999.0f : t;
+}
+#endif
+
+// --- LETTURA ANALOGICA (NTC 10k) ---
+#if defined(ANALOG_TEMP_PIN)
+float readAnalogTemp() {
+    // Media di 10 letture per stabilità
+    long reading = 0;
+    for(int i=0; i<10; i++) reading += analogRead(ANALOG_TEMP_PIN);
+    float raw = reading / 10.0f;
+    
+    if (raw <= 0 || raw >= 4095) return -999.0f;
+
+    // Calcolo resistenza termistore (Partitore con R fissa 10k)
+    float res = 10000.0f * ((4095.0f / raw) - 1.0f);
+    // Equazione Beta (Beta=3950, Temp_rif=25C, Res_rif=10k)
+    float steinhart;
+    steinhart = res / 10000.0f;     // (R/Ro)
+    steinhart = log(steinhart);      // ln(R/Ro)
+    steinhart /= 3950.0f;            // 1/B * ln(R/Ro)
+    steinhart += 1.0f / (25.0f + 273.15f); // + (1/To)
+    steinhart = 1.0f / steinhart;    // Inverti
+    return steinhart - 273.15f;      // Converti in Celsius
+}
+#endif
+
+
+float readI2CTemp(uint8_t addr) {
     Wire.beginTransmission(addr);
-    if (Wire.endTransmission() == 0) {
-        switch (addr) {
-            // SHT3x / SHT4x / SHTC3 / STS3x
-            case 0x44: case 0x45: case 0x70:
-                Wire.beginTransmission(addr);
-                Wire.write(0x24); Wire.write(0x00);
-                if (Wire.endTransmission() == 0) {
-                    vTaskDelay(pdMS_TO_TICKS(20));
-                    if (Wire.requestFrom(addr, (uint8_t)6) >= 2) {
-                        uint16_t raw = (Wire.read() << 8) | Wire.read();
-                        currentTemp = -45.0f + 175.0f * (raw / 65535.0f);
-                        LOG_DEBUG("FAN: SHT rilevato a 0x%02x: %.1f C", addr, currentTemp);
-                    }
-                }
-                break;
+    if (Wire.endTransmission() != 0) return -999.0f;
 
-            // SHT2x / SI7021 / HTU21D
-            case 0x40:
-                Wire.beginTransmission(addr);
-                Wire.write(0xF3);
-                if (Wire.endTransmission() == 0) {
-                    vTaskDelay(pdMS_TO_TICKS(100));
-                    if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                        uint16_t raw = (Wire.read() << 8) | Wire.read();
-                        currentTemp = -46.85f + 175.72f * (raw / 65536.0f);
-                        LOG_DEBUG("FAN: SI7021 rilevato: %.1f C", currentTemp);
-                    }
-                }
-                break;
-
-            // AHT10 / AHT20 / AHT21
-            case 0x38:
-                Wire.beginTransmission(addr);
-                Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
-                Wire.endTransmission();
-                vTaskDelay(pdMS_TO_TICKS(80));
-                if (Wire.requestFrom(addr, (uint8_t)6) >= 6) {
-                    Wire.read(); // Skip status
-                    uint32_t rawTemp = ((uint32_t)(Wire.read() & 0x0F) << 16) | ((uint32_t)Wire.read() << 8) | Wire.read();
-                    currentTemp = (rawTemp / 1048576.0f) * 200.0f - 50.0f;
-                    LOG_DEBUG("FAN: AHT rilevato: %.1f C", currentTemp);
-                }
-                break;
-
-case 0x76: case 0x77:
-    {
-        // 1. FORZA IL SENSORE A FARE UNA MISURA (Power Mode: Forced)
-        // Scriviamo nel registro 0xF4 (ctrl_meas): 
-        // 0x21 significa: Oversampling Temp x1, Mode: Forced
-        Wire.beginTransmission(addr);
-        Wire.write(0xF4); 
-        Wire.write(0x21); 
-        Wire.endTransmission();
-        delay(10); // Aspetta che il sensore finisca la conversione
-
-        uint16_t dig_T1; int16_t dig_T2, dig_T3;
-        
-        // 2. LEGGI I COEFFICIENTI DI CALIBRAZIONE (Registro 0x88)
-        Wire.beginTransmission(addr);
-        Wire.write(0x88);
-        if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
-            dig_T1 = Wire.read() | (Wire.read() << 8);
-            dig_T2 = Wire.read() | (Wire.read() << 8);
-            dig_T3 = Wire.read() | (Wire.read() << 8);
-
-            // 3. LEGGI I DATI RAW DELLA TEMPERATURA (Registro 0xFA)
+    switch (addr) {
+        // --- SHT3x / SHT4x / SHTC3 / STS3x ---
+        case 0x44: case 0x45: case 0x70: {
             Wire.beginTransmission(addr);
-            Wire.write(0xFA);
-            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
-                int32_t adc_T = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
-                
-                // Formula Bosch compensata (Floating point)
-                float v1 = (((float)adc_T) / 16384.0f - ((float)dig_T1) / 1024.0f) * ((float)dig_T2);
-                float v2 = ((((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f) *
-                           (((float)adc_T) / 131072.0f - ((float)dig_T1) / 8192.0f)) * ((float)dig_T3);
-                
-                currentTemp = (v1 + v2) / 5120.0f;
-                LOG_INFO("FAN: Lettura manuale 0x%02x: %.1f C", addr, currentTemp);
+            Wire.write(0x24); Wire.write(0x00);
+            Wire.endTransmission();
+            vTaskDelay(pdMS_TO_TICKS(20));
+            if (Wire.requestFrom(addr, (uint8_t)6) >= 2) {
+                uint16_t raw = (Wire.read() << 8) | Wire.read();
+                return -45.0f + 175.0f * (raw / 65535.0f);
             }
+            break;
+        }
+
+        // --- SI7021 / HTU21D / GY-21 / SHT2x ---
+        case 0x40: {
+            Wire.beginTransmission(addr);
+            Wire.write(0xF3);
+            Wire.endTransmission();
+            vTaskDelay(pdMS_TO_TICKS(100));
+            if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                uint16_t raw = (Wire.read() << 8) | Wire.read();
+                return -46.85f + 175.72f * (raw / 65536.0f);
+            }
+            break;
+        }
+
+        // --- AHT10 / AHT20 / AHT21 / AHT25 ---
+        case 0x38: {
+            Wire.beginTransmission(addr);
+            Wire.write(0xAC); Wire.write(0x33); Wire.write(0x00);
+            Wire.endTransmission();
+            vTaskDelay(pdMS_TO_TICKS(80));
+            if (Wire.requestFrom(addr, (uint8_t)6) >= 6) {
+                Wire.read(); // skip status
+                uint32_t raw = ((uint32_t)(Wire.read() & 0x0F) << 16) | ((uint32_t)Wire.read() << 8) | Wire.read();
+                return (raw / 1048576.0f) * 200.0f - 50.0f;
+            }
+            break;
+        }
+
+        // --- MCP9808 (Alta precisione) ---
+        case 0x18: {
+            Wire.beginTransmission(addr);
+            Wire.write(0x05); // Registro Ambient Temp
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                uint16_t raw = (Wire.read() << 8) | Wire.read();
+                float t = (raw & 0x0FFF) / 16.0f;
+                if (raw & 0x1000) t -= 256.0f;
+                return t;
+            }
+            break;
+        }
+
+        // --- LM75 / TMP102 / Generic I2C Temp ---
+        case 0x48: case 0x49: case 0x4A: {
+            if (Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                int16_t raw = (Wire.read() << 8) | Wire.read();
+                return (raw >> 4) * 0.0625f; // 12-bit resolution
+            }
+            break;
+        }
+
+        // --- MLX90614 (Infrarossi / Contactless) ---
+        case 0x5A: case 0x5B: {
+            Wire.beginTransmission(addr);
+            Wire.write(0x07); // Ambient Temp (0x06 per Object Temp)
+            if (Wire.endTransmission(false) == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                uint16_t raw = Wire.read() | (Wire.read() << 8);
+                Wire.read(); // PEC (Packet Error Code)
+                return (raw * 0.02f) - 273.15f;
+            }
+            break;
+        }
+
+        // --- DS1621 / DS1624 ---
+        case 0x4F: {
+            Wire.beginTransmission(addr);
+            Wire.write(0xAA); // Read Temp command
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
+                int8_t h = Wire.read();
+                uint8_t l = Wire.read();
+                return h + (l >> 7) * 0.5f;
+            }
+            break;
+        }
+
+        // --- Bosch BME280 / BMP280 / BME680 ---
+        case 0x76: case 0x77: {
+            // Trigger Forced Measurement
+            Wire.beginTransmission(addr);
+            Wire.write(0xF4); Wire.write(0x21); 
+            Wire.endTransmission();
+            vTaskDelay(pdMS_TO_TICKS(10));
+
+            // Lettura calibrazione T1, T2, T3
+            uint16_t t1; int16_t t2, t3;
+            Wire.beginTransmission(addr);
+            Wire.write(0x88);
+            if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)6) == 6) {
+                t1 = Wire.read() | (Wire.read() << 8);
+                t2 = Wire.read() | (Wire.read() << 8);
+                t3 = Wire.read() | (Wire.read() << 8);
+
+                // Lettura ADC Temp
+                Wire.beginTransmission(addr);
+                Wire.write(0xFA);
+                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
+                    int32_t adc = (uint32_t)Wire.read() << 12 | (uint32_t)Wire.read() << 4 | (uint32_t)Wire.read() >> 4;
+                    float v1 = ((float)adc / 16384.0f - (float)t1 / 1024.0f) * (float)t2;
+                    float v2 = (((float)adc / 131072.0f - (float)t1 / 8192.0f) * ((float)adc / 131072.0f - (float)t1 / 8192.0f)) * (float)t3;
+                    return (v1 + v2) / 5120.0f;
+                }
+            }
+            break;
+        }
+        
+        // --- DPS310 (Pressione e Temperatura) ---
+        case 0x75: {
+            // Qui servirebbe una logica molto complessa simile a Bosch. 
+            // Se lo usi, conviene usare la sua libreria, ma per ora lo lasciamo come placeholder.
+            break;
         }
     }
-    break;
 
-            // MLX90614
-            case 0x5A: case 0x5B:
-                Wire.beginTransmission(addr);
-                Wire.write(0x07);
-                if (Wire.endTransmission(false) == 0 && Wire.requestFrom(addr, (uint8_t)3) == 3) {
-                    uint16_t raw = Wire.read() | (Wire.read() << 8);
-                    (void)Wire.read(); // Legge PEC e pulisce buffer (no warning)
-                    currentTemp = (raw * 0.02f) - 273.15f;
-                    LOG_DEBUG("FAN: MLX rilevato: %.1f C", currentTemp);
-                }
-                break;
+    return -999.0f; // Se arriviamo qui, l'indirizzo è riconosciuto ma la lettura è fallita
+}
 
-            // DS1621 / DS1624
-            case 0x4F:
-                Wire.beginTransmission(addr);
-                Wire.write(0xAA);
-                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                    int8_t h = Wire.read(); uint8_t l = Wire.read();
-                    currentTemp = h + (l >> 7) * 0.5f;
-                    LOG_DEBUG("FAN: DS1621 rilevato: %.1f C", currentTemp);
-                }
-                break;
 
-            // MCP9808 / LM75
-            case 0x18: case 0x48:
-                Wire.beginTransmission(addr);
-                Wire.write(addr == 0x18 ? 0x05 : 0x00);
-                if (Wire.endTransmission() == 0 && Wire.requestFrom(addr, (uint8_t)2) == 2) {
-                    uint16_t raw = (Wire.read() << 8) | Wire.read();
-                    if (addr == 0x18) {
-                        uint16_t t = raw & 0x0FFF;
-                        currentTemp = t / 16.0f;
-                        if (raw & 0x1000) currentTemp -= 256.0f;
-                    } else {
-                        currentTemp = (int16_t)raw * 0.0078125f;
-                    }
-                    LOG_DEBUG("FAN: MCP/LM rilevato: %.1f C", currentTemp);
-                }
-                break;
-        }
-    }
+void checkInternalFan() {
+ 
+    float currentTemp = -999.0f;
 
+    // Selettore dinamico basato su cosa hai compilato
+    #if defined(I2C_FAN_SENSOR_ADDR)
+        currentTemp = readI2CTemp(I2C_FAN_SENSOR_ADDR);
+    #elif defined(ONEWIRE_TEMP_PIN)
+        currentTemp = readOneWireTemp();
+    #elif defined(DHT_TEMP_PIN)
+        currentTemp = readDHTTemp();
+    #elif defined(ANALOG_TEMP_PIN)
+        currentTemp = readAnalogTemp();
+    #endif
+
+   
+ 
     // --- ATTUAZIONE RELAY ---
     LOG_INFO("FAN: prima di if-then: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
 
@@ -289,7 +355,7 @@ case 0x76: case 0x77:
             LOG_INFO("FAN_RELAY_PIN: OUTPUT attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
 
             bool currentState = digitalRead(FAN_RELAY_PIN);
- LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+            LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
 
             if (fanTemp >= FAN_TEMP_START) {
                 LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
@@ -309,7 +375,7 @@ case 0x76: case 0x77:
         // Se arrivi qui, il sensore è tornato a -999 o errore
         LOG_ERROR("FAN_CHECK: Lettura sensore NON VALIDA (%.1f)", currentTemp);
     }
-#endif
+ 
 }
 
  
