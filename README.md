@@ -95,7 +95,7 @@ Modifica queste macro per adattare il firmware al tuo hardware:
 I pin sono stati scelti per garantire la massima stabilità ed evitare conflitti con il display OLED e i sensori interni dell'Heltec:
 * **Cooling Fan:** `GPIO 1`
 * **Relay 1 (Luce):** `GPIO 2`
-* **Relay 2 (Pompa):** `GPIO 5`
+* **Relay 2 (Pompa):** `GPIO 5`...
 
 ---
 
