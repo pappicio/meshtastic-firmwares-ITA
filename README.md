@@ -92,6 +92,8 @@ I dati vengono ***iniettati*** nei pacchetti standard di Meshtastic per essere v
 
 ---
 ***"Perché un box che monitora se stesso è un box che non ti lascerà mai a piedi."***
+
+
 ⚡ Ottimizzazioni di Sistema
 Regione: EU_868 (Italia/Europa).
 
