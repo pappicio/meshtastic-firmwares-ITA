@@ -46,7 +46,7 @@
 #endif
 
 #ifdef DHT_TEMP_PIN
-  DHT _dht(DHT_TEMP_PIN, DHT11);
+  DHT _dht(DHT_TEMP_PIN, DHTTYPE);
 #endif
 // --- DICHIARAZIONI GLOBALI UNICHE (PULITE) ---
 
@@ -221,20 +221,18 @@ float readDHTTemp() {
 // --- LETTURA ANALOGICA (NTC 10k) ---
 #if defined(ANALOG_TEMP_PIN)
 float readAnalogTemp() {
-    long reading = 0;
-    for(int i=0; i<10; i++) reading += analogRead(ANALOG_TEMP_PIN);
-    float raw = reading / 10.0f;
-    
+    int raw = analogRead(ANALOG_TEMP_PIN);
     if (raw <= 0 || raw >= 4095) return -999.0f;
 
-    float res = 10000.0f * ((4095.0f / raw) - 1.0f);
-    float steinhart;
-    steinhart = res / 10000.0f; 
-    steinhart = log(steinhart);
-    steinhart /= 3950.0f; 
-    steinhart += 1.0f / (25.0f + 273.15f);
-    steinhart = 1.0f / steinhart;
-    return steinhart - 273.15f; 
+    // Calcola la resistenza attuale del sensore
+    // Nota: Assumiamo che la resistenza di pull-up sia uguale a NTC_RES_NOMINAL
+    float resistance = NTC_RES_NOMINAL / ((4095.0f / (float)raw) - 1.0f);
+
+    // Steinhart-Hart super-compressa
+    float t = log(resistance / NTC_RES_NOMINAL); // ln(R/Ro)
+    t = (t / NTC_BETA) + (1.0f / 298.15f);       // + 1/To (25°C)
+
+    return (1.0f / t) - 273.15f;                 // Risultato in Celsius
 }
 #endif
 

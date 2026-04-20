@@ -691,13 +691,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // IL SENSORE SARA TOTALMENTE INVISIBILE A MESHTASTIC CHE XO DARA INFO COME 
 // POWER TELEMETRI, con voltaggio1/corrente100 e Voltaggio0/corrente0 per indicare ventola accesa/spenta
 
-// --- SORGENTE TEMPERATURA (Scegline UNA) ---
+/////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
 #define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 
 //#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
-//#define DHT_TEMP_PIN 5           // Pin per DHT11/22
-//#define ANALOG_TEMP_PIN 34       // Pin ADC per Termistore NTC
 
+/////////////// --- SENSORI DHT (11/22) ---
+//#define DHT_TEMP_PIN 13     // Pin GPIO per DHT11 o DHT22
+//#define DHTTYPE DHT22       // Definisci se DHT11 o DHT22
+
+//////////// --- SENSORE ANALOGICO (NTC 10k) ---
+//#define ANALOG_TEMP_PIN 34  // Pin ADC (solo pin che supportano analogRead, es. GPIO 34)
+//#define NTC_RES_NOMINAL 10000.0f  // Metti 10000 per NTC 10k, 100000 per NTC 100k
+//#define NTC_BETA 3950.0f          // Beta (di solito 3950 per 10k, 4200 o 3950 per 100k)
 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
