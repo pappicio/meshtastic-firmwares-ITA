@@ -28,10 +28,70 @@ Relay 2 ("pompa"): GPIO 5.
 Comandi: Utilizza le password preimpostate ApritiSesamo_123! e ChiuditiSesamo_123!.
 
 ❄️ Cooling System  
-Ventola su GPIO 1: Attivazione automatica a 42°C e spegnimento a 35°C.
+### ❄️ Sistema di Raffreddamento Intelligente
+Il cuore del progetto è la gestione dinamica della temperatura per evitare il ***thermal throttling*** dei componenti (ESP32/LoRa) all'interno di box stagni esposti al sole.
 
-Sensore I2C: Supporto indirizzo 0x76 (BME280/BMP280).
+* **Controllo Isteresi:** Attivazione automatica ventola a **42°C** e spegnimento a **35°C** (previene cicli ON/OFF troppo brevi).
+* **Fail-Safe Logic:** In caso di errore del sensore, il sistema logga l'anomalia e mantiene lo stato di sicurezza per proteggere l'hardware.
+* **Hardware:** Testato su **Heltec V3/V4** con ventole 5V/12V tramite transistor o modulo relay su ***GPIO 1***.
 
+---
+
+### 📡 Matrice Sensori I2C (Rilevamento Automatico)
+Il firmware esegue uno scanning del bus I2C all'avvio, supportando nativamente una vasta gamma di sensori senza necessità di ricompilazione. Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
+
+| Indirizzo I2C | Sensori Supportati | Caratteristiche |
+| :--- | :--- | :--- |
+| **0x76 / 0x77** | **BME280 / BMP280** | Pressione, Umidità e Temperatura (Alta precisione). |
+| **0x44 / 0x45** | **SHT3x (SHT30/31/35)** | Sensori professionali Sensirion, i migliori per esterni. |
+| **0x38** | **AHT10 / AHT20 / AHT21** | Calibrazione di fabbrica, lettura rapida e stabile. |
+| **0x40** | **SI7021 / HTU21D** | Ottima stabilità termica e ingombro ridotto. |
+
+---
+
+### 🔌 Supporto Sensori Legacy e Alternativi
+Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimentata da:
+* **OneWire (DS18B20):** Ideale per sonde digitali cablate su lunghe distanze.
+* **Analogico (NTC / LM35):** Lettura diretta tramite ADC per setup a basso costo.
+* **DHT Series (DHT11 / DHT22):** Supporto per i classici sensori "single-wire".
+
+---
+
+### 📊 Dashboard "1-8-7" su App Meshtastic
+Abbiamo rivoluzionato il modo di leggere i dati dall'app. Il campo **Current (A)** della telemetria non mostra milliampere casuali, ma funge da ***display di stato digitale a 3 cifre***.
+
+Ogni posizione numerica rappresenta un dispositivo:
+**Cifra 1: Ventola (Centinaia) | Cifra 2: Relay 1 - Luce (Decine) | Cifra 3: Relay 2 - Pompa (Unità)**
+
+#### 💡 Legenda Codici:
+* **1**: **ON** (Dispositivo acceso/attivo)
+* **8**: **OFF** (Dispositivo spento/riposo)
+* **7**: **INATTIVO** (Pin non configurato nel firmware o sensore assente)
+
+> **Esempio di lettura nell'App:**
+> Se vedi **187.0 A**:
+> * **1**: Ventola in funzione.
+> * **8**: Relay 1 (Luce) spento.
+> * **7**: Relay 2 non configurato (N/A).
+
+---
+
+### 🛠️ Configurazione GPIO (Ottimizzata)
+I pin sono stati scelti per garantire la massima stabilità ed evitare conflitti con il display OLED e i sensori interni dell'Heltec:
+* **Cooling Fan:** `GPIO 1`
+* **Relay 1 (Luce):** `GPIO 2`
+* **Relay 2 (Pompa):** `GPIO 5`
+
+---
+
+### 🔗 Integrazione Telemetria
+I dati vengono ***iniettati*** nei pacchetti standard di Meshtastic per essere visibili ovunque:
+1.  **Voltage Field:** Mostra la temperatura reale del box in °C (es. `45.2 V` = 45.2°C).
+2.  **Current Field:** Mostra la Dashboard di stato dei Relay (es. `111 A` = Tutto acceso).
+3.  **Piena compatibilità:** Funziona con App Meshtastic, MQTT, Grafana e i log seriali.
+
+---
+***"Perché un box che monitora se stesso è un box che non ti lascerà mai a piedi."***
 ⚡ Ottimizzazioni di Sistema
 Regione: EU_868 (Italia/Europa).
 
