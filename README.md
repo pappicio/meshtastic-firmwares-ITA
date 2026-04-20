@@ -96,7 +96,7 @@ I pin sono stati scelti per garantire la massima stabilità ed evitare conflitti
 * **Cooling Fan:** `GPIO 1`
 * **Relay 1 (Luce):** `GPIO 2`
 * **Relay 2 (Pompa):** `GPIO 5`
-` ` `
+```
 ---
 
 ### 🔗 Integrazione Telemetria
