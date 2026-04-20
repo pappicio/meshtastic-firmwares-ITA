@@ -25,6 +25,7 @@
 #include "../detect/ScanI2C.h"
 #include <Wire.h>
 #include "MeshService.h"
+
 // ... altri include ...
 
 // 1. DICHIARAZIONI GLOBALI (Devono stare PRIMA di initHardwarePins)

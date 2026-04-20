@@ -797,9 +797,15 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
         }
 
         // Check if a type was found for the enumerated device - save, if so
+        // Check if a type was found for the enumerated device - save, if so
         if (type != NONE) {
+            LOG_INFO("REGISTRO: 0x%02x come tipo %d", (uint8_t)addr.address, (int)type);
             deviceAddresses[type] = addr;
             foundDevices[addr] = type;
+        } else {
+            // Se arriviamo qui, il bus ha risposto (err == 0) ma Meshtastic 
+            // NON ha assegnato un tipo (type è rimasto NONE)
+            LOG_WARN("SCARTATO: Dispositivo a 0x%02x trovato ma NON riconosciuto (type è NONE)", (uint8_t)addr.address);
         }
     }
 }
