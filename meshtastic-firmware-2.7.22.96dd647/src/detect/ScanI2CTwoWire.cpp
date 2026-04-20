@@ -98,7 +98,7 @@ uint16_t ScanI2CTwoWire::getRegisterValue(const ScanI2CTwoWire::RegisterLocation
         i2cBus->write((int)0);
         i2cBus->write((int)0);
     }
-    i2cBus->endTransmission();
+    i2cBus->endTransmission(false);
     delay(20); ////////////////////////////delay 20          fix
     i2cBus->requestFrom(registerLocation.i2cAddress.address, responseWidth);
     if (i2cBus->available() > 1) {
@@ -114,6 +114,7 @@ uint16_t ScanI2CTwoWire::getRegisterValue(const ScanI2CTwoWire::RegisterLocation
             i2cBus->read();
     }
     LOG_DEBUG("Register value from 0x%x: 0x%x", registerLocation.i2cAddress.address, value);
+    LOG_INFO ("CHECK MIO: value from 0x%x: 0x%x", registerLocation.i2cAddress.address, value);
     return value;
 }
 
