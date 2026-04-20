@@ -91,12 +91,13 @@ Modifica queste macro per adattare il firmware al tuo hardware:
 #define RELAY_1_PIN 2             // Posizione 2 della Dashboard
 #define RELAY_2_PIN 5             // Posizione 3 della Dashboard
 
+```
+
 ### 🛠️ Configurazione GPIO (Ottimizzata)
 I pin sono stati scelti per garantire la massima stabilità ed evitare conflitti con il display OLED e i sensori interni dell'Heltec:
 * **Cooling Fan:** `GPIO 1`
 * **Relay 1 (Luce):** `GPIO 2`
 * **Relay 2 (Pompa):** `GPIO 5`
-```
 ---
 
 ### 🔗 Integrazione Telemetria
