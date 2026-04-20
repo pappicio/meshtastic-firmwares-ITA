@@ -43,12 +43,12 @@ Il firmware esegue uno scanning del bus I2C all'avvio, supportando nativamente u
 | Indirizzo I2C | Sensori Supportati | Caratteristiche |
 | :--- | :--- | :--- |
 | **0x76 / 0x77** | **BME280 / BMP280** | Pressione, Umidità e Temperatura (Alta precisione). |
-| **0x44 / 0x45** | **SHT3x (SHT30/31/35)** | Sensori professionali Sensirion, i migliori per esterni. |
+| **0x44 / 0x45** | **SHT3x (SHT30/31/35)** | Sensori professionali Sensirion, ideali per esterni. |
 | **0x38** | **AHT10 / AHT20 / AHT21** | Calibrazione di fabbrica, lettura rapida e stabile. |
 | **0x40** | **SI7021 / HTU21D** | Ottima stabilità termica e ingombro ridotto. |
 
+ 
 ---
-
 ### 🔌 Supporto Sensori Legacy e Alternativi
 Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimentata da:
 * **OneWire (DS18B20):** Ideale per sonde digitali cablate su lunghe distanze.
@@ -58,23 +58,38 @@ Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimen
 ---
 
 ### 📊 Dashboard "1-8-7" su App Meshtastic
-Abbiamo rivoluzionato il modo di leggere i dati dall'app. Il campo **Current (A)** della telemetria non mostra milliampere casuali, ma funge da ***display di stato digitale a 3 cifre***.
+Abbiamo rivoluzionato il campo **Current (A)** della telemetria. Non leggerai milliampere casuali, ma un ***display di stato digitale a 3 cifre***.
 
 Ogni posizione numerica rappresenta un dispositivo:
-**Cifra 1: Ventola (Centinaia) | Cifra 2: Relay 1 - Luce (Decine) | Cifra 3: Relay 2 - Pompa (Unità)**
+**Cifra 1: Ventola | Cifra 2: Relay 1 (Luce) | Cifra 3: Relay 2 (Pompa)**
 
 #### 💡 Legenda Codici:
-* **1**: **ON** (Dispositivo acceso/attivo)
-* **8**: **OFF** (Dispositivo spento/riposo)
-* **7**: **INATTIVO** (Pin non configurato nel firmware o sensore assente)
+* **1**: **ON** (Dispositivo attivo)
+* **8**: **OFF** (Dispositivo spento)
+* **7**: **INATTIVO** (Pin non configurato o sensore assente)
 
-> **Esempio di lettura nell'App:**
-> Se vedi **187.0 A**:
-> * **1**: Ventola in funzione.
-> * **8**: Relay 1 (Luce) spento.
-> * **7**: Relay 2 non configurato (N/A).
+> **Esempio:** Se l'app mostra **187.0 A**, significa: Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
 
 ---
+
+### ⚙️ Guida alla Configurazione (src/configuration.h)
+
+Modifica queste macro per adattare il firmware al tuo hardware:
+
+```cpp
+// --- SENSORI DI TEMPERATURA ---
+#define I2C_FAN_SENSOR_ADDR 0x76  // 0x76 o 0x77 per BME/BMP
+#define ONEWIRE_TEMP_PIN 4        // Pin per DS18B20 (opzionale)
+#define DHT_TEMP_PIN 14           // Pin per DHT11/22 (opzionale)
+
+// --- SOGLIE TERMICHE ---
+#define FAN_TEMP_START 42.0f      // Accensione Ventola
+#define FAN_TEMP_STOP 35.0f       // Spegnimento Ventola
+
+// --- MAPPING GPIO RELAY ---
+#define FAN_RELAY_PIN 1           // Posizione 1 della Dashboard
+#define RELAY_1_PIN 2             // Posizione 2 della Dashboard
+#define RELAY_2_PIN 5             // Posizione 3 della Dashboard
 
 ### 🛠️ Configurazione GPIO (Ottimizzata)
 I pin sono stati scelti per garantire la massima stabilità ed evitare conflitti con il display OLED e i sensori interni dell'Heltec:
