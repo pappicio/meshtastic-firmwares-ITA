@@ -697,20 +697,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
 
 /////////////// --- SENSORI DHT (11/22) ---
-//#define DHT_TEMP_PIN 13     // Pin GPIO per DHT11 o DHT22
-//#define DHTTYPE DHT22       // Definisci se DHT11 o DHT22
+//#define DHT_TEMP_PIN 3
+#if defined(DHT_TEMP_PIN)
+    #ifndef DHTTYPE
+        #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
+    #endif
+#endif
 
-//////////// --- SENSORE ANALOGICO (NTC 10k) ---
+
+//////////// --- CONFIGURAZIONE NTC ANALOGICO ---
 //#define ANALOG_TEMP_PIN 34  // Pin ADC (solo pin che supportano analogRead, es. GPIO 34)
-//#define NTC_RES_NOMINAL 10000.0f  // Metti 10000 per NTC 10k, 100000 per NTC 100k
-//#define NTC_BETA 3950.0f          // Beta (di solito 3950 per 10k, 4200 o 3950 per 100k)
+#if defined(ANALOG_TEMP_PIN)
+    // Se l'utente non ha definito i parametri, usiamo i default per un 10k standard
+    #ifndef NTC_RES_NOMINAL
+        #define NTC_RES_NOMINAL 10000.0f  // Metti 10000 per NTC 10k, 100000 per NTC 100k
+    #endif
+    #ifndef NTC_BETA
+        #define NTC_BETA 3950.0f  // Beta (di solito 3950 per 10k, 4200 o 3950 per 100k)
+    #endif
+#endif
 
+ 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
 #define FAN_RELAY_PIN 1           // Pin fisico del modulo Relay, controllare se il pin prescento  possa essere libero gia, da IMPEGNI!
 
-#define FAN_TEMP_START 42.0       // Temperatura accensione (Soglia ON)
-#define FAN_TEMP_STOP 35.0        // Temperatura spegnimento (Soglia OFF)
+#if defined(FAN_RELAY_PIN)
+    // Soglie di temperatura per l'isteresi
+    #ifndef FAN_TEMP_START
+        #define FAN_TEMP_START 42.0f      // Accende a 42 gradi
+    #endif
+
+    #ifndef FAN_TEMP_STOP
+        #define FAN_TEMP_STOP 35.0f       // Spegne quando scende a 35
+    #endif
+#endif
 
 
 
