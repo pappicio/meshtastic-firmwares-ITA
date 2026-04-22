@@ -2,6 +2,11 @@
 #include "configuration.h"
 #include "detect/ScanI2C.h"
 
+// ... altri include ...
+
+ 
+std::map<std::string, uint8_t> discoveredDevicesMap;
+
 #if !MESHTASTIC_EXCLUDE_I2C
 
 #include "concurrency/LockGuard.h"
@@ -114,7 +119,7 @@ uint16_t ScanI2CTwoWire::getRegisterValue(const ScanI2CTwoWire::RegisterLocation
             i2cBus->read();
     }
     LOG_DEBUG("Register value from 0x%x: 0x%x", registerLocation.i2cAddress.address, value);
-    LOG_INFO ("CHECK MIO: value from 0x%x: 0x%x", registerLocation.i2cAddress.address, value);
+    
     return value;
 }
 
@@ -226,6 +231,9 @@ bool detectSHT21SerialNumber(TwoWire *i2cBus, uint8_t address)
 
 void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
 {
+
+    /////////ScanI2C::discoveredDevices.clear();
+
     concurrency::LockGuard guard((concurrency::Lock *)&lock);
 
     LOG_DEBUG("Scan for I2C devices on port %d", port);
@@ -833,8 +841,14 @@ size_t ScanI2CTwoWire::countDevices() const
     return foundDevices.size();
 }
 
-void ScanI2CTwoWire::logFoundDevice(const char *device, uint8_t address)
-{
+void ScanI2CTwoWire::logFoundDevice(const char *device, uint8_t address) {
     LOG_INFO("%s found at address 0x%x", device, address);
+    if (device != nullptr) {
+        discoveredDevicesMap[std::string(device)] = address;
+        LOG_DEBUG("MAPPA-SAVE: Registrato %s a 0x%02x (Size: %d)", device, address, (int)discoveredDevicesMap.size());
+    }
 }
+
+
+
 #endif

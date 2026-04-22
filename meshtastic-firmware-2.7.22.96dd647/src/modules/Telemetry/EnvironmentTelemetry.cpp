@@ -140,6 +140,8 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 
 static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
 
+EnvironmentTelemetryModule *EnvironmentTelemetryModule::instance = nullptr;
+
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
@@ -247,6 +249,7 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 
 int32_t EnvironmentTelemetryModule::runOnce()
 {
+    // 1. Gestione Deep Sleep (Codice originale)
     if (sleepOnNextExecution == true) {
         sleepOnNextExecution = false;
         uint32_t nightyNightMs = Default::getConfiguredOrDefaultMs(moduleConfig.telemetry.environment_update_interval,
@@ -257,79 +260,103 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
     uint32_t result = UINT32_MAX;
 
+    // 2. CONTROLLO SOPRAVVIVENZA: Impedisce al modulo di chiudersi
     if (!(moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled ||
-          ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE)) {
-        // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
+          ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
+#ifdef I2C_FAN_SENSOR_ADDR
+          || true // Forza il modulo a restare acceso per la ventola
+#endif
+        )) {
         return disable();
     }
 
+    // 3. PRIMA ESECUZIONE (Inizializzazione sensori)
     if (firstTime) {
-        // This is the first time the OSThread library has called this function, so do some setup
         firstTime = 0;
 
-        if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+        // Entra nell'init se abilitato o se serve alla ventola
+        if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 
+#ifdef I2C_FAN_SENSOR_ADDR
+            || true 
+#endif
+        ) {
+#ifdef I2C_FAN_SENSOR_ADDR
+            LOG_INFO("BOX FAN: Telemetria forzata (Istanza attiva)");
+#else
             LOG_INFO("Environment Telemetry: init");
+#endif
 
-            // check if we have at least one sensor
             if (!sensors.empty()) {
                 result = DEFAULT_SENSOR_MINIMUM_WAIT_TIME_BETWEEN_READS;
             }
 
 #ifdef T1000X_SENSOR_EN
+            // (Codice specifico T1000 se presente)
 #elif !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
-            if (ina219Sensor.hasSensor())
-                result = ina219Sensor.runOnce();
-            if (ina260Sensor.hasSensor())
-                result = ina260Sensor.runOnce();
-            if (ina3221Sensor.hasSensor())
-                result = ina3221Sensor.runOnce();
-            if (max17048Sensor.hasSensor())
-                result = max17048Sensor.runOnce();
-                // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
-                // sensormap here.
+            if (ina219Sensor.hasSensor()) result = ina219Sensor.runOnce();
+            if (ina260Sensor.hasSensor()) result = ina260Sensor.runOnce();
+            if (ina3221Sensor.hasSensor()) result = ina3221Sensor.runOnce();
+            if (max17048Sensor.hasSensor()) result = max17048Sensor.runOnce();
 #ifdef HAS_RAKPROT
-            if (rak9154Sensor.hasSensor())
-                result = rak9154Sensor.runOnce();
+            if (rak9154Sensor.hasSensor()) result = rak9154Sensor.runOnce();
 #endif
 #endif
-        }
-        // it's possible to have this module enabled, only for displaying values on the screen.
-        // therefore, we should only enable the sensor loop if measurement is also enabled
-        return result == UINT32_MAX ? disable() : setStartDelay();
-    } else {
-        // if we somehow got to a second run of this module with measurement disabled, then just wait forever
-        if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
-            return disable();
         }
 
+        // Se abbiamo la ventola, non permettiamo MAI il disable() qui
+#ifdef I2C_FAN_SENSOR_ADDR
+        return setStartDelay();
+#else
+        return result == UINT32_MAX ? disable() : setStartDelay();
+#endif
+
+    } else {
+        // 4. CICLO CONTINUO
+        if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+#ifndef I2C_FAN_SENSOR_ADDR
+            return disable(); 
+#endif
+        }
+
+        // Lettura sensori
         for (TelemetrySensor *sensor : sensors) {
             uint32_t delay = sensor->runOnce();
-            if (delay < result) {
-                result = delay;
-            }
+            if (delay < result) result = delay;
         }
 
+
+ 
+        // 5. INVIO RADIO (Mesh remota - protetta dal filtro leggisolouno)
         uint32_t lastTelemetry =
             transmitHistory ? transmitHistory->getLastSentToMeshMillis(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY) : 0;
-        if (((lastTelemetry == 0) ||
+            
+        // Correzione: usiamo moduleConfig invece di config
+        if (!leggisolouno && moduleConfig.telemetry.environment_measurement_enabled && 
+            ((lastTelemetry == 0) ||
              !Throttle::isWithinTimespanMs(lastTelemetry, Default::getConfiguredOrDefaultMsScaled(
                                                               moduleConfig.telemetry.environment_update_interval,
                                                               default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
             airTime->isTxAllowedChannelUtil(config.device.role != meshtastic_Config_DeviceConfig_Role_SENSOR) &&
             airTime->isTxAllowedAirUtil()) {
-            sendTelemetry();
+            
+            sendTelemetry(); 
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY);
-        } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
+
+        // 6. INVIO LOCALE (Bluetooth al tuo telefono)
+        } else if (moduleConfig.telemetry.environment_measurement_enabled && 
+                   ((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
-            // Just send to phone when it's not our time to send to mesh yet
-            // Only send while queue is empty (phone assumed connected)
-            sendTelemetry(NODENUM_BROADCAST, true);
+            
+            sendTelemetry(NODENUM_BROADCAST, true); 
             lastSentToPhone = millis();
         }
     }
+
     return min(sendToPhoneIntervalMs, result);
 }
+
+
 
 bool EnvironmentTelemetryModule::wantUIFrame()
 {
@@ -524,6 +551,14 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
 
 
 
+void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
+    meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
+    leggisolouno=true;
+    // Chiamiamo la tua funzione "buona"
+    // Lei farà il giro dei sensori e aggiornerà la variabile globale fanTemp
+    getEnvironmentTelemetry(&m); 
+     leggisolouno=false;
+}
 
 bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m)
 {
@@ -541,10 +576,24 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     
 for (TelemetrySensor *sensor : sensors) {
         // Chiamata singola: recupera l'indirizzo già corretto dal .h
-        uint8_t currentAddr = sensor->getAddr();
+          uint8_t currentAddr = sensor->getAddr();
 
-       
+        if (leggisolouno) {
+            // LOG DI DEBUG: Vediamo se il ciclo almeno parte
+            LOG_DEBUG("FAN CHECK: Controllo sensore all'indirizzo 0x%02x", currentAddr);
 
+            if (currentAddr == I2C_FAN_SENSOR_ADDR) {
+                if (sensor->getMetrics(m)) {
+                    fanTemp = m->variant.environment_metrics.temperature;
+                    LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f", fanTemp);
+                    return true; 
+                } else {
+                    LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!");
+                }
+            }
+            continue; 
+        }
+        // ... qui segue il resto della funzione normale ...
 
 
 

@@ -2,10 +2,16 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <map>      // <--- FONDAMENTALE
+#include <string>   // <--- FONDAMENTALE
+
+extern std::map<std::string, uint8_t> discoveredDevicesMap;
 
 class ScanI2C
 {
   public:
+
+  
     typedef enum DeviceType {
         NONE,
         SCREEN_SSD1306,
@@ -154,6 +160,8 @@ class ScanI2C
     virtual bool exists(DeviceType) const;
 
     virtual size_t countDevices() const;
+
+   
 
   protected:
     virtual FoundDevice firstOfOrNONE(size_t, DeviceType[]) const;

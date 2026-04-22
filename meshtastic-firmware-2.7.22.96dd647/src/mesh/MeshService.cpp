@@ -26,6 +26,10 @@
 #include <Wire.h>
 #include "MeshService.h"
 
+
+#include "modules/Telemetry/EnvironmentTelemetry.h"
+
+
 // ... altri include ...
 
 // 1. DICHIARAZIONI GLOBALI (Devono stare PRIMA di initHardwarePins)
@@ -52,8 +56,13 @@
 // --- DICHIARAZIONI GLOBALI UNICHE (PULITE) ---
 
 // Diciamo che 'service' e 'fanTemp' esistono già in main.cpp
+
+
 extern float fanTemp; 
- 
+extern EnvironmentTelemetryModule *environmentTelemetryModule;
+
+
+
 
 // scanI2C esiste già nel firmware
 extern ScanI2C *scanI2C; 
@@ -242,6 +251,49 @@ float readAnalogTemp() {
 // =========================================================================
 
 float readI2CTemp(uint8_t addr) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+    // 1. Invece di usare il puntatore esterno che ti dava errore (undefined reference)
+    // usiamo il ServiceContext che è il "cuore" del firmware ed è sempre presente.
+   // Il compilatore ci suggerisce che l'oggetto si chiama 'service'
+    // Usiamo l'istanza statica della classe stessa
+    if (EnvironmentTelemetryModule::instance != nullptr) {
+        // La chiamiamo dritta in faccia
+        EnvironmentTelemetryModule::instance->aggiornaTemperaturaBox();
+        return fanTemp;
+    }
+    return -999.0f;
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     Wire.beginTransmission(addr);
     if (Wire.endTransmission() != 0) return -999.0f;
 
@@ -392,39 +444,42 @@ void checkInternalFan() {
    
  
     // --- ATTUAZIONE RELAY ---
-    LOG_INFO("FAN: prima di if-then: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
+    // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
+    LOG_INFO("FAN: Monitoraggio - Temp: %.1f C (Soglie: Start=%.1f, Stop=%.1f)", fanTemp, (float)FAN_TEMP_START, (float)FAN_TEMP_STOP);
 
-    if (currentTemp > -55.0f && currentTemp < 155.0f) {
+    // Controllo di sicurezza: processiamo solo se la temp è in un range umano
+    if (currentTemp > -50.0f && currentTemp < 150.0f) {
         fanTemp = currentTemp;
         
-        // LOG SEMPRE ATTIVO: Così vedi se il sensore sta leggendo!
-        LOG_INFO("FAN_CHECK: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
-
         #ifdef FAN_RELAY_PIN
-        LOG_INFO("FAN_RELAY_PIN: Temp attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
-
+            // Impostiamo il pin come output (meglio se fatto una volta nel setup, ma qui funziona)
             pinMode(FAN_RELAY_PIN, OUTPUT);
-            LOG_INFO("FAN_RELAY_PIN: OUTPUT attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
 
             bool currentState = digitalRead(FAN_RELAY_PIN);
-            LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
 
-            if (fanTemp >= FAN_TEMP_START) {
-                LOG_INFO("FAN_RELAY_PIN: digitalRead attuale: %.1f C (Start: %d, Stop: %d)", fanTemp, FAN_TEMP_START, FAN_TEMP_STOP);
-
-                if (!currentState) { // Era spenta, accendiamo
+            // LOGICA DI ACCENSIONE (Soglia START)
+            if (fanTemp >= (float)FAN_TEMP_START) {
+                if (!currentState) { // Se è LOW (spenta), accendiamo
                     digitalWrite(FAN_RELAY_PIN, HIGH);
-                    LOG_INFO("VENTOLA: STATO CAMBIATO -> ACCESA");
+                    LOG_INFO("VENTOLA: STATO CAMBIATO -> ACCESA (Temp: %.1f >= %.1f)", fanTemp, (float)FAN_TEMP_START);
                 }
-            } else if (fanTemp <= FAN_TEMP_STOP) {
-                if (currentState) { // Era accesa, spegniamo
+            } 
+            // LOGICA DI SPEGNIMENTO (Soglia STOP)
+            else if (fanTemp <= (float)FAN_TEMP_STOP) {
+                if (currentState) { // Se è HIGH (accesa), spegniamo
                     digitalWrite(FAN_RELAY_PIN, LOW);
-                    LOG_INFO("VENTOLA: STATO CAMBIATO -> SPENTA");
+                    LOG_INFO("VENTOLA: STATO CAMBIATO -> SPENTA (Temp: %.1f <= %.1f)", fanTemp, (float)FAN_TEMP_STOP);
                 }
             }
         #endif
     } else {
-        // Se arrivi qui, il sensore è tornato a -999 o errore
+        // Se il sensore impazzisce o scolleghi il cavo (-999), meglio spegnere la ventola per sicurezza
+        #ifdef FAN_RELAY_PIN
+            if (digitalRead(FAN_RELAY_PIN)) {
+                digitalWrite(FAN_RELAY_PIN, LOW);
+                LOG_ERROR("FAN_SAFETY: Temp non valida (%.1f). Ventola spenta per sicurezza.", currentTemp);
+            }
+        #endif
         LOG_ERROR("FAN_CHECK: Lettura sensore NON VALIDA (%.1f)", currentTemp);
     }
  
@@ -482,12 +537,12 @@ void checkAutoReboot() {
 void MeshService::fanControlTask(void *pvParameters) {
     LOG_INFO("TASK_MAINTENANCE: Avviato su Core 1");
     // Questo delay gira UNA SOLA VOLTA all'avvio del modulo
-    vTaskDelay(pdMS_TO_TICKS(3000));
+    vTaskDelay(pdMS_TO_TICKS(10000));
     for (;;) {
        
         checkInternalFan();
         checkAutoReboot();
-        vTaskDelay(pdMS_TO_TICKS(15000)); // Controllo ogni 15 sec
+        vTaskDelay(pdMS_TO_TICKS(30000)); // Controllo ogni 15 sec
     }
 }
 

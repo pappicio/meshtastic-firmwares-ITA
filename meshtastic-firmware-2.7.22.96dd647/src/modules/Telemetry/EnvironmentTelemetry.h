@@ -27,10 +27,19 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
                                                                                  &EnvironmentTelemetryModule::handleStatusUpdate);
 
   public:
+  
+  static EnvironmentTelemetryModule *instance; // Questo serve per trovarlo da fuori
+
+  void aggiornaTemperaturaBox(); // La sub del cazzo che richiama quella buona
+  bool leggisolouno = false; // L'interruttore
+
     EnvironmentTelemetryModule()
         : concurrency::OSThread("EnvironmentTelemetry"), ScanI2CConsumer(),
           ProtobufModule("EnvironmentTelemetry", meshtastic_PortNum_TELEMETRY_APP, &meshtastic_Telemetry_msg)
     {
+        // === AGGIUNGI QUESTA RIGA QUI ===
+        instance = this; 
+        // ===============================
         lastMeasurementPacket = nullptr;
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
         setIntervalFromNow(10 * 1000);

@@ -59,64 +59,65 @@ class TelemetrySensor
 
     const char *sensorName;
     
-   
-    virtual uint8_t getAddr() const { 
-        // 1. Log iniziale: vediamo cosa c'è registrato in memoria
-        LOG_DEBUG("I2C-CHECK: Richiesta addr per '%s'. Valore attuale in memoria: 0x%02x", 
-                  (sensorName ? sensorName : "Sconosciuto"), address);
 
-        if (this->address != 0x00) {
-            return this->address; 
-        }
+String cleanName(const char* name) const {
+    if (!name) return "";
+    String cleaned = name;
+    
+    // Rimuove tutto lo sporco tipico dei sensori temperatura
+    cleaned.replace("-", ""); 
+    cleaned.replace("_", ""); 
+    cleaned.replace(" ", ""); 
+    cleaned.replace("/", ""); 
+    cleaned.toUpperCase();
+    cleaned.trim();
 
-        // 2. Se l'indirizzo è 0x00, iniziamo la procedura di recupero basata sul nome
-        if (this->sensorName != nullptr) {
-            LOG_DEBUG("I2C-FIX: Indirizzo nullo per '%s', avvio scansione del nome...", sensorName);
-            uint8_t fixedAddr = 0x00;
-
-            if (strstr(sensorName, "SHT") || strstr(sensorName, "GY-21")) {
-                fixedAddr = (strstr(sensorName, "SHT3")) ? 0x44 : 0x40;
-            } 
-            else if (strstr(sensorName, "BME280") || strstr(sensorName, "BMP280") || strstr(sensorName, "DPS310")) {
-                fixedAddr = 0x76;
-            } 
-            else if (strstr(sensorName, "BME680") || strstr(sensorName, "BMP085") || strstr(sensorName, "BMP180") || strstr(sensorName, "BMP3")) {
-                fixedAddr = 0x77;
-            }
-            else if (strstr(sensorName, "AHT")) {
-                fixedAddr = 0x38;
-            }
-            else if (strstr(sensorName, "MCP9808")) {
-                fixedAddr = 0x18;
-            }
-            else if (strstr(sensorName, "PCT2075")) {
-                fixedAddr = 0x37;
-            }
-            else if (strstr(sensorName, "SCD30")) {
-                fixedAddr = 0x61;
-            }
-            else if (strstr(sensorName, "SCD4")) {
-                fixedAddr = 0x62;
-            }
-            else if (strstr(sensorName, "SEN5")) {
-                fixedAddr = 0x69;
-            }
-
-            // 3. Log dell'esito del fix
-            if (fixedAddr != 0x00) {
-                LOG_INFO("I2C-FIX: Recupero riuscito! '%s' forzato a 0x%02x", sensorName, fixedAddr);
-                return fixedAddr;
-            } else {
-                LOG_WARN("I2C-FIX: Nome '%s' non riconosciuto nel database dei fix", sensorName);
-            }
-        } else {
-            LOG_ERROR("I2C-FIX: Impossibile recuperare addr, sensorName e' NULL!");
-        }
-
-        // 4. Se siamo arrivati qui, ritorna comunque 0
-        LOG_DEBUG("I2C-CHECK: Fallimento totale. Ritorno 0x00 per sensore orfano.");
-        return this->address; 
+    // Taglia le X (SHTXX -> SHT, BMP3XX -> BMP3)
+    while (cleaned.length() > 2 && cleaned.endsWith("X")) {
+        cleaned = cleaned.substring(0, cleaned.length() - 1);
     }
+
+    return cleaned;
+}
+
+   
+virtual uint8_t getAddr() const {
+        // 1. Priorità assoluta all'indirizzo forzato manualmente (se presente)
+    if (this->address != 0) return this->address;
+
+    if (this->sensorName) {
+        // Puliamo il nome del sensore che la telemetria sta cercando
+        String searchName = cleanName(this->sensorName);
+        
+        // Logga il punto di partenza
+        LOG_DEBUG("I2C-SEARCH: Inizio ricerca per '%s' (Originale: %s)", searchName.c_str(), this->sensorName);
+
+        for (auto const& [name, addr] : discoveredDevicesMap) {
+            // Puliamo il nome trovato dallo scanner in questo ciclo
+            String mapName = cleanName(name.c_str());
+
+            // LOG atomico: vedi esattamente cosa viene confrontato in ogni secondo
+            LOG_DEBUG("I2C-COMPARE: [%s] vs [%s]", searchName.c_str(), mapName.c_str());
+
+            // Confronto a due vie: se uno contiene l'altro, abbiamo un vincitore
+            if (searchName.length() > 0 && mapName.length() > 0) { // Sicurezza contro stringhe vuote
+                if (searchName.indexOf(mapName) != -1 || mapName.indexOf(searchName) != -1) {
+                    LOG_INFO("I2C-MATCH: Trovato! %s (0x%02x) corrisponde a %s", 
+                             name.c_str(), addr, this->sensorName);
+                    return addr;
+                }
+            }
+        }
+        LOG_WARN("I2C-FAIL: Nessun dispositivo in mappa per '%s'", this->sensorName);
+    }
+    return 0;
+}
+
+
+
+
+
+ 
 
     // TODO: delete after migration
     bool hasSensor() { return nodeTelemetrySensorsMap[sensorType].first > 0; }
@@ -140,14 +141,7 @@ class TelemetrySensor
     virtual bool isRunning() { return status > 0; }
 
     virtual bool getMetrics(meshtastic_Telemetry *measurement) = 0;
-    
-virtual bool initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev) { 
-        if (dev) {
-            // Proviamo l'accesso diretto alla proprietà address dell'oggetto address
-            this->address = dev->address.address; 
-        }
-        return false; 
-    };
+    virtual bool initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev) { return false; };
 };
 
 #endif

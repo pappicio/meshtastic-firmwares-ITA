@@ -199,24 +199,35 @@ void setupModules()
 #if HAS_TELEMETRY
     new DeviceTelemetryModule();
 #endif
+
+
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
-    if (moduleConfig.has_telemetry &&
-        (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled)) {
+    // Modifica: Aggiunta la forzatura per la ventola tramite ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
+    if ((moduleConfig.has_telemetry &&
+        (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled)) 
+        || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) { 
+        
         new EnvironmentTelemetryModule();
     }
+#endif // Chiusura corretta per Environmental
+
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_AIR_QUALITY_SENSOR
     if (moduleConfig.has_telemetry &&
         (moduleConfig.telemetry.air_quality_enabled || moduleConfig.telemetry.air_quality_screen_enabled)) {
         new AirQualityTelemetryModule();
     }
-#endif
-#if !MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY
+#endif // Chiusura corretta per Air Quality
+
+#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY
     if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
         nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0) {
         new HealthTelemetryModule();
     }
 #endif
-#endif
+
+
+
+
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
     if (moduleConfig.has_telemetry &&
         (moduleConfig.telemetry.power_measurement_enabled || moduleConfig.telemetry.power_screen_enabled)) {
