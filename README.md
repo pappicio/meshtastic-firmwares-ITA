@@ -38,7 +38,7 @@ Il cuore del progetto è la gestione dinamica della temperatura per evitare il *
 ---
 
 ### 📡 Matrice Sensori I2C (Rilevamento Automatico)
-Il firmware esegue uno scanning del bus I2C all'avvio, supportando nativamente una vasta gamma di sensori senza necessità di ricompilazione. Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
+Il firmware esegue uno scanning del bus I2C all'avvio, supportando ***nativamente*** una vasta gamma di sensori senza necessità di ricompilazione. Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
 
 | Indirizzo I2C | Sensori Supportati | Caratteristiche |
 | :--- | :--- | :--- |
