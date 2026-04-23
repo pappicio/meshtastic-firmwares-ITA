@@ -165,10 +165,25 @@ Il nodo è progettato per gestire autonomamente il recupero dopo un blackout ene
 * **Check Isteresi**: Legge il voltaggio. Se la tensione è inferiore a **3.7V** (`FORCE_WAKEUP_MV`), il sistema capisce che la ricarica solare non è ancora sufficiente per sostenere il carico radio e torna immediatamente in Deep Sleep.
 * **Zero-Load Charging**: Questo metodo permette alla batteria di ricaricarsi molto più velocemente, poiché il nodo rimane spento (assorbimento $< 100\mu A$) durante tutto il processo di ricarica solare mattutino.
 
-### 🔌 Comportamento con Alimentazione Esterna
-Il sistema distingue tra batteria e fonti esterne (USB/Solar Pin):
-* Se rileva **VBus** (tensione in ingresso), il sistema sospende i controlli di shutdown anche se la batteria è sotto la soglia dei 3.4V.
-* Questo garantisce che, non appena arriva il sole o viene collegato un cavo, il nodo rimanga acceso per comunicare lo stato di ricarica e permettere l'accesso remoto via Bluetooth o Mesh.
+### 🔌 Comportamento con Alimentazione Esterna e Ripristino Solare
+
+Il sistema distingue tra un risveglio automatico (timer) e un intervento manuale (utente) per massimizzare la flessibilità:
+
+* **Risveglio dopo Deep Sleep (Automatico)**: 
+    Ogni 12 ore il nodo si sveglia per controllare lo stato. Se non rileva una fonte di ricarica attiva (Pannello/USB) e la batteria è ancora sotto la soglia di sicurezza (**3.7V**), il sistema torna immediatamente in Deep Sleep. Questo evita che il nodo si scarichi completamente durante i periodi di maltempo prolungato.
+
+* **Reset Manuale e Manutenzione (Intervento Utente)**: 
+    Se forzi l'accensione premendo il **tasto Reset** o collegando un **cavo USB**, il sistema entra in "Modalità Manuale". In questo stato, la protezione di spegnimento automatico rimane disattivata (lo stato non è ancora "Armato"). 
+    * Questo ti permette di configurare il nodo, aggiornare il firmware o fare test anche se la batteria è molto scarica (es. 3.2V), senza che il software ti spenga la macchina tra le mani.
+
+* **Logica di "Armamento"**:
+    La protezione automatica si attiva (diventa `[ARMED]`) solo quando si verifica una di queste condizioni:
+    1. La batteria viene caricata oltre i **3.7V**.
+    2. Viene rilevata una fonte di alimentazione esterna stabile.
+    
+Una volta armato, il sistema riprende a vigilare e interverrà con lo shutdown solo se il nodo tornerà a funzionare esclusivamente a batteria e questa scenderà sotto i **3.4V**.
+
+> **Vantaggio**: Hai il controllo totale. Se sei sul posto e resetti il nodo, lui resta acceso. Se lo abbandoni sul campo, lui pensa a proteggere la batteria autonomamente.
 
 > **Nota Tecnica**: La funzione `shutdown(uint32_t sleepMs)` è stata ottimizzata per supportare sia l'architettura ESP32 che NRF52, garantendo la compatibilità con i timer di risveglio hardware più precisi.
 ---
