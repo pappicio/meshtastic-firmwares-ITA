@@ -57,7 +57,7 @@ Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimen
 
 ---
 
-### 📊 Dashboard "1-8-7" su App Meshtastic
+### 📊 Dashboard "5-1-0-2" su App Meshtastic
 Abbiamo rivoluzionato il campo **Current (A)** della telemetria. Non leggerai milliampere casuali, ma un ***display di stato digitale a 3 cifre***.
 
 Ogni posizione numerica rappresenta un dispositivo:
@@ -65,33 +65,58 @@ Ogni posizione numerica rappresenta un dispositivo:
 
 #### 💡 Legenda Codici:
 * **1**: **ON** (Dispositivo attivo)
-* **8**: **OFF** (Dispositivo spento)
-* **7**: **INATTIVO** (Pin non configurato o sensore assente)
+* **0**: **OFF** (Dispositivo spento)
+* **2**: **INATTIVO** (Pin non configurato o sensore assente)
 
-> **Esempio:** Se l'app mostra **187.0 A**, significa: Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
+> **Esempio:** Se l'app mostra **5102.0 A**, significa: Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
 
 ---
 
-### ⚙️ Guida alla Configurazione (src/configuration.h)
+# 🚀 Caratteristiche Tecniche e Personalizzazioni
 
-Modifica queste macro per adattare il firmware al tuo hardware:
+Questo firmware implementa una gestione avanzata del risparmio energetico e del controllo termico, ottimizzata per nodi isolati e installazioni solari professionali.
+
+---
+
+## 🛠️ Guida alla Configurazione (`src/configuration.h`)
+
+Modifica queste macro nel file di configurazione per adattare il firmware al tuo hardware. Il sistema è progettato per essere **autonomo**: una volta impostato, gestisce energia e raffreddamento senza interventi esterni.
 
 ```cpp
-// --- SENSORI DI TEMPERATURA ---
-#define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
-//#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
-//#define DHT_TEMP_PIN 5           // Pin per DHT11/22
-//#define ANALOG_TEMP_PIN 34       // Pin ADC per Termistore NTC, deve essere un pin analogico
+// ============================================================
+// --- MANUTENZIONE & RADIO ---
+// ============================================================
+#define AUTO_REBOOT_DAYS 5      // Riavvio hardware automatico ogni 5 giorni
+#define DBI30 27                // Potenza TX (fino a 27-30 dBi, attenzione alle norme!)
 
-// --- SOGLIE TERMICHE ---
-#define FAN_TEMP_START 42.0f      // Accensione Ventola
-#define FAN_TEMP_STOP 35.0f       // Spegnimento Ventola
+// ============================================================
+// --- PROTEZIONE BATTERIA CON ISTERESI ---
+// ============================================================
+// Impedisce cicli di accensione/spegnimento continui (effetto brown-out)
+#define FORCE_SLEEP_MV 3400     // Shutdown profondo sotto i 3.4V
 
-// --- MAPPING GPIO RELAY ---
-#define FAN_RELAY_PIN 1           // Posizione 1 della Dashboard
-#define RELAY_1_PIN 2             // Posizione 2 della Dashboard
-#define RELAY_2_PIN 5             // Posizione 3 della Dashboard
+#ifdef FORCE_SLEEP_MV
+    #define FORCE_WAKEUP_MV 3700      // Soglia di sblocco/risveglio (3.7V)
+    #define FORCE_WAKEUP_HR 12        // Ore di Deep Sleep se la batteria è scarica
+    #define ABSOLUTE_SHUTDOWN_COUNT 3  // Numero di conferme voltaggio basso
+#endif
 
+// ============================================================
+// --- GESTIONE VENTOLA NATIVA (Core-Integrated) ---
+// ============================================================
+// Il sistema monitora la temperatura e pilota un relay in modo autonomo.
+// Il feedback viene inviato tramite Power Metrics (invisibile a Meshtastic).
+
+// 🌡️ SORGENTE TEMPERATURA (Abilitarne solo UNA)
+#define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (BME280, BMP280, AHT, etc.)
+//#define ONEWIRE_TEMP_PIN 4        // Sensore DS18B20
+//#define DHT_TEMP_PIN 3            // Sensore DHT11/22
+//#define ANALOG_TEMP_PIN 34        // Sensore NTC Analogico (ADC)
+
+// ⚙️ CONFIGURAZIONE RELAY E SOGLIE
+#define FAN_RELAY_PIN 1             // Pin fisico modulo Relay (Dashboard Pos. 1)
+#define FAN_TEMP_START 42.0f        // Accensione ventola a 42°C
+#define FAN_TEMP_STOP 35.0f         // Spegnimento per isteresi a 35°C
 ```
 
 ### 🛠️ Configurazione GPIO (Ottimizzata)
@@ -109,7 +134,44 @@ I dati vengono ***iniettati*** nei pacchetti standard di Meshtastic per essere v
 
 ---
 ***"Perché un box che monitora se stesso è un box che non ti lascerà mai a piedi."***
+## ❄️ Smart Thermal Control (Ventola)
 
+La gestione del calore è integrata direttamente nel core energetico per la massima affidabilità:
+
+* ***Feedback "Invisibile"***: Lo stato della ventola viene iniettato nelle **Power Metrics**. Vedrai picchi di voltaggio/corrente fittizi nell'app quando la ventola è attiva (ON), permettendoti di monitorare il raffreddamento senza dover abilitare o configurare moduli telemetria extra.
+* ***Efficienza Meccanica***: L'isteresi termica (42°C ON / 35°C OFF) evita accensioni intermittenti che logorano il relay e il motore della ventola quando la temperatura oscilla vicino alla soglia.
+* ***Safety Check***: Il compilatore blocca automaticamente la creazione del firmware se rileva l'attivazione accidentale di più sensori termici contemporaneamente nel file di configurazione.
+
+## 💾 Manutenzione Automatica & Radio
+
+* ***Auto-Healing***: Il riavvio programmato (`AUTO_REBOOT_DAYS`) assicura la pulizia periodica della RAM e previene potenziali blocchi software ("memory leaks" o glitch), garantendo un uptime costante per mesi senza interventi sul posto.
+* ***Gestione TX Power***: Supporto nativo per la regolazione fine della potenza di uscita, permettendo di sfruttare legalmente antenne ad alto guadagno (fino a 30 dBi) per link a lunghissima distanza.
+* ***Stato di Armamento***: Il sistema comunica tramite log seriali lo stato `[ARMED]`, confermando che la batteria ha superato la soglia critica e il nodo è ora in modalità di protezione attiva.
+
+---
+## 💤 Gestione Power & Deep Sleep (Advanced)
+
+Il sistema di gestione del sonno profondo è stato riscritto per trasformare il nodo in una sentinella a bassissimo consumo, capace di proteggere i componenti hardware durante i periodi di scarica.
+
+### 🛡️ Shutdown Strategico
+A differenza dello spegnimento standard, la procedura di questo firmware segue un protocollo rigoroso:
+1. **Flash Flush**: Forza la scrittura dei buffer circolari della memoria Flash per evitare la corruzione del database nodi.
+2. **Radio Silence**: Disattiva i finali di potenza LoRa e GPS prima del calo di tensione per prevenire spike elettromagnetici.
+3. **Deep Sleep Timer**: Il chip non si spegne "per sempre", ma entra in uno stato di sospensione hardware alimentato dal modulo RTC (Real Time Clock).
+
+### 🔄 Il Ciclo di Risveglio Solare
+Il nodo è progettato per gestire autonomamente il recupero dopo un blackout energetico:
+* **Timer di Controllo**: Ogni 12 ore (`FORCE_WAKEUP_HR`), il sistema si risveglia per una frazione di secondo.
+* **Check Isteresi**: Legge il voltaggio. Se la tensione è inferiore a **3.7V** (`FORCE_WAKEUP_MV`), il sistema capisce che la ricarica solare non è ancora sufficiente per sostenere il carico radio e torna immediatamente in Deep Sleep.
+* **Zero-Load Charging**: Questo metodo permette alla batteria di ricaricarsi molto più velocemente, poiché il nodo rimane spento (assorbimento $< 100\mu A$) durante tutto il processo di ricarica solare mattutino.
+
+### 🔌 Comportamento con Alimentazione Esterna
+Il sistema distingue tra batteria e fonti esterne (USB/Solar Pin):
+* Se rileva **VBus** (tensione in ingresso), il sistema sospende i controlli di shutdown anche se la batteria è sotto la soglia dei 3.4V.
+* Questo garantisce che, non appena arriva il sole o viene collegato un cavo, il nodo rimanga acceso per comunicare lo stato di ricarica e permettere l'accesso remoto via Bluetooth o Mesh.
+
+> **Nota Tecnica**: La funzione `shutdown(uint32_t sleepMs)` è stata ottimizzata per supportare sia l'architettura ESP32 che NRF52, garantendo la compatibilità con i timer di risveglio hardware più precisi.
+---
 
 ⚡ Ottimizzazioni di Sistema
 Regione: EU_868 (Italia/Europa).
