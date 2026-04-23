@@ -69,6 +69,7 @@ Ogni posizione numerica rappresenta un dispositivo:
 * **2**: **INATTIVO** (Pin non configurato o sensore assente)
 
 > **Esempio:** Se l'app mostra **5102.0 A**, significa: Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
+> 
 > **Anomalia:** Se l'app mostra **9***102.0 A, significa: Erroe nella lettira temperatira ventola, anche se Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
 
 ---
