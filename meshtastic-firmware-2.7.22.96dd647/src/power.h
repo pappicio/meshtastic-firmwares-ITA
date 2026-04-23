@@ -113,7 +113,11 @@ class Power : private concurrency::OSThread
     bool meshSolarInit();
     /// Setup a serial battery sensor
     bool serialBatteryInit();
-    void shutdown();
+
+    ////void shutdown();
+    void shutdown(uint32_t sleepMs = portMAX_DELAY);
+    bool systemArmed = false; // Aggiungi questa riga nella classe Power
+    
     void reboot();
   private:
  

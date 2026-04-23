@@ -795,44 +795,50 @@ void Power::reboot()
 #endif
 }
 
-void Power::shutdown()
+void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
 {
+    LOG_INFO("Shutting down for %u ms", sleepMs);
 
 #if HAS_SCREEN
     if (screen) {
 #ifdef T_DECK_PRO
-        screen->showSimpleBanner("Device is powered off.\nConnect USB to start!",
-                                 0); // T-Deck Pro has no power button
+        screen->showSimpleBanner("Device is powered off.\nConnect USB to start!", 0);
 #elif defined(USE_EINK)
-        screen->showSimpleBanner("Shutting Down...",
-                                 2250); // dismiss after 3 seconds to avoid the
-                                        // banner on the sleep screen
+        screen->showSimpleBanner("Shutting Down...", 2250);
 #else
-        screen->showSimpleBanner("Shutting Down...", 0); // stays on screen
+        screen->showSimpleBanner("Shutting Down...", 0); 
 #endif
     }
 #endif
+
 #if !defined(ARCH_STM32WL)
-    playShutdownMelody();
+    /////playShutdownMelody();
 #endif
+
+    // FONDAMENTALE: Salva i dati prima di dormire!
     nodeDB->saveToDisk();
 #if HAS_SCREEN
     messageStore.saveToFlash();
 #endif
+
 #if defined(ARCH_NRF52) || defined(ARCH_ESP32) || defined(ARCH_RP2040)
-#ifdef PIN_LED1
-    ledOff(PIN_LED1);
-#endif
-#ifdef PIN_LED2
-    ledOff(PIN_LED2);
-#endif
-#ifdef PIN_LED3
-    ledOff(PIN_LED3);
-#endif
-#ifdef LED_NOTIFICATION
-    ledOff(LED_NOTIFICATION);
-#endif
-    doDeepSleep(DELAY_FOREVER, true, true);
+    // Spegnimento LED
+    #ifdef PIN_LED1
+        ledOff(PIN_LED1);
+    #endif
+    #ifdef PIN_LED2
+        ledOff(PIN_LED2);
+    #endif
+    #ifdef PIN_LED3
+        ledOff(PIN_LED3);
+    #endif
+    #ifdef LED_NOTIFICATION
+        ledOff(LED_NOTIFICATION);
+    #endif
+
+    // Qui usiamo il TUO timer invece di DELAY_FOREVER
+    doDeepSleep(sleepMs, true, true); 
+
 #elif defined(ARCH_PORTDUINO)
     exit(EXIT_SUCCESS);
 #else
@@ -851,7 +857,6 @@ void Power::readPowerStatus()
     OptionalBool hasBattery = OptUnknown; // These must be static because NRF_APM
                                           // code doesn't run every time
     OptionalBool isChargingNow = OptUnknown;
-
     if (batteryLevel) {
         hasBattery = batteryLevel->isBatteryConnect() ? OptTrue : OptFalse;
 #ifndef NRF_APM
@@ -861,6 +866,56 @@ void Power::readPowerStatus()
         if (hasBattery) {
             batteryVoltageMv = batteryLevel->getBattVoltage();
             // If the AXP192 returns a valid battery percentage, use it
+
+
+
+
+        // ============================================================
+#ifdef FORCE_SLEEP_MV
+    // Rileviamo energia esterna (USB/Solar) e ricarica attiva
+    bool isExternalPower = (usbPowered == OptTrue);
+    bool isCharging = (isChargingNow == OptTrue);
+
+    // [FASE 1] ARMAMENTO: Si attiva se c'è ricarica o se superiamo i 3.7V
+    if (!systemArmed && (batteryVoltageMv >= FORCE_WAKEUP_MV || isExternalPower || isCharging)) {
+        systemArmed = true;
+        LOG_INFO("BATTERY: [ARMED] Protezione attiva (Soglia: %d mV)", FORCE_SLEEP_MV);
+    }
+
+    // [FASE 2] MONITORAGGIO: Solo se armato e NON collegato a fonti esterne
+    if (systemArmed) {
+        if (!isExternalPower && !isCharging) {
+            static uint8_t low_pwr_cnt = 0;
+
+            if (batteryVoltageMv > 500 && batteryVoltageMv <= FORCE_SLEEP_MV) {
+                low_pwr_cnt++;
+                LOG_WARN("BATTERY: Low Voltage %d mV (%u/%d)", batteryVoltageMv, low_pwr_cnt, ABSOLUTE_SHUTDOWN_COUNT);
+
+                if (low_pwr_cnt >= ABSOLUTE_SHUTDOWN_COUNT) {
+                    LOG_ERROR("BATTERY: Soglia critica! Shutdown for %d hours.", FORCE_WAKEUP_HR);
+                    systemArmed = false; // Reset per il prossimo riavvio manuale
+                    shutdown(FORCE_WAKEUP_HR * 3600 * 1000); 
+                    return; 
+                }
+            } else {
+                low_pwr_cnt = 0; // Reset se la tensione risale
+            }
+        }
+    } else {
+        // Log di cortesia se il sistema è in modalità manuale (non ancora armato)
+        static uint32_t lastManualLog = 0;
+        if (millis() - lastManualLog > 60000) { 
+            LOG_DEBUG("BATTERY: Manual Mode - Not armed yet (%d mV)", batteryVoltageMv);
+            lastManualLog = millis();
+        }
+    }
+#endif
+            // ============================================================
+
+
+
+
+
             if (batteryLevel->getBatteryPercent() >= 0) {
                 batteryChargePercent = batteryLevel->getBatteryPercent();
             } else {
