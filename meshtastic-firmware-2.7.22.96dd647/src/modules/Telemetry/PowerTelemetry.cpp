@@ -280,43 +280,63 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     #endif
 
 
-
-    // --- 2. COSTRUZIONE CRUSCOTTO RELAY (CH3 Current) ---
-    float powerDisplayStatus = 0.0f;
+// --- 2. COSTRUZIONE CRUSCOTTO RELAY AGGIORNATO (CH3 Current) ---
+    // Formato: 5XYZ (5=OK, 9=Errore) | 1=ON, 0=OFF, 2=Assente
+    int powerStatusMap = 5000;
 
     // Cifra Centinaia: VENTOLA
     #ifdef FAN_RELAY_PIN
-        powerDisplayStatus += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100.0f : 800.0f;
+        powerStatusMap += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100 : 0;
     #else
-        powerDisplayStatus += 700.0f;
+        powerStatusMap += 200;
     #endif
 
     // Cifra Decine: RELAY 1
     #ifdef RELAY_1_PIN
-        powerDisplayStatus += (digitalRead(RELAY_1_PIN) == HIGH) ? 10.0f : 80.0f;
+        powerStatusMap += (digitalRead(RELAY_1_PIN) == HIGH) ? 10 : 0;
     #else
-        powerDisplayStatus += 70.0f;
+        powerStatusMap += 20;
     #endif
 
     // Cifra Unità: RELAY 2
     #ifdef RELAY_2_PIN
-        powerDisplayStatus += (digitalRead(RELAY_2_PIN) == HIGH) ? 1.0f : 8.0f;
+        powerStatusMap += (digitalRead(RELAY_2_PIN) == HIGH) ? 1 : 0;
     #else
-        powerDisplayStatus += 7.0f;
+        powerStatusMap += 2;
     #endif
+
+    // Gestione Errore (Se la temperatura su CH3 è sballata, il 5 diventa 9)
+    if (m.variant.power_metrics.ch3_voltage <= -50.0f || m.variant.power_metrics.ch3_voltage >= 150.0f) {
+        powerStatusMap += 4000;
+    }
 
     // Iniezione nel canale CH3 Current
     m.variant.power_metrics.has_ch3_current = true;
-    m.variant.power_metrics.ch3_current = powerDisplayStatus;
+    m.variant.power_metrics.ch3_current = (float)powerStatusMap;
     valid = true;
 
-    LOG_INFO("POWER_METRICS: CH3_Temp=%.1f, CH3_Status=%.0f", 
-              m.variant.power_metrics.ch3_voltage, powerDisplayStatus);
-
+    LOG_INFO("POWER_METRICS: CH3_Temp=%.1f, Map_Status=%d", 
+              m.variant.power_metrics.ch3_voltage, powerStatusMap);
 
 #endif
 
     // 3. Logica di invio originale (usiamo 'valid' invece del solo getPowerTelemetry)
+
+    // --- LOGICA DI FILTRO SELETTIVO PER IL CANALE 3 ---
+// Se NON è definita OPPURE se è definita ma vale 0
+#if !defined(SHOW_ALSO_POWER_METRICS) || (SHOW_ALSO_POWER_METRICS == 0)
+    // Se la macro è 0, cancelliamo i dati del Canale 3 prima dell'invio
+    // ma lasciamo intatti gli altri (CH1, CH2, ecc.) provenienti da altri sensori
+    m.variant.power_metrics.has_ch3_voltage = false;
+    m.variant.power_metrics.ch3_voltage = 0.0f;
+    m.variant.power_metrics.has_ch3_current = false;
+    m.variant.power_metrics.ch3_current = 0.0f;
+    
+    LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ALSO_POWER_METRICS=0)");
+#endif
+
+
+
     if (valid) {
         LOG_INFO("Send Box Data: ch3_v=%f, ch3_i=%f",
                  m.variant.power_metrics.ch3_voltage, m.variant.power_metrics.ch3_current);

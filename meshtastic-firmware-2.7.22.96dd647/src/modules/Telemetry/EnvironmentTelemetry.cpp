@@ -146,9 +146,15 @@ extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
-    if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+    if (!moduleConfig.telemetry.environment_measurement_enabled && 
+        !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
+#ifdef I2C_FAN_SENSOR_ADDR
+        && false // Forza l'esecuzione della scansione se la ventola è definita
+#endif
+    ) {
         return;
     }
+    
     LOG_INFO("Environment Telemetry adding I2C devices...");
 
     /*
@@ -675,37 +681,46 @@ for (TelemetrySensor *sensor : sensors) {
 #endif
 
 
-float displayStatus = 0.0f;
+// --- NUOVA LOGICA STATUS PANEL (FAN & RELAYS) ---
+// Formato: 5XYZ (5=OK, 9=Errore Sensore)
+// X=Ventola, Y=Relay 1, Z=Relay 2 
+// Legenda: 1=ON, 0=OFF, 2=Non Configurato (Assente)
 
-// 1. Posizione Centinaia: VENTOLA
+int relayMap = 5000; 
+
+// 1. Cifra delle CENTINAIA: VENTOLA (X)
 #ifdef FAN_RELAY_PIN
-    displayStatus += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100.0f : 800.0f;
+    relayMap += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100 : 0;
 #else
-    displayStatus += 700.0f; 
+    relayMap += 200; 
 #endif
 
-// 2. Posizione Decine: RELAY 1
+// 2. Cifra delle DECINE: RELAY 1 (Y)
 #ifdef RELAY_1_PIN
-    displayStatus += (digitalRead(RELAY_1_PIN) == HIGH) ? 10.0f : 80.0f;
+    relayMap += (digitalRead(RELAY_1_PIN) == HIGH) ? 10 : 0;
 #else
-    displayStatus += 70.0f;
+    relayMap += 20;
 #endif
 
-// 3. Posizione Unità: RELAY 2
+// 3. Cifra delle UNITA': RELAY 2 (Z)
 #ifdef RELAY_2_PIN
-    displayStatus += (digitalRead(RELAY_2_PIN) == HIGH) ? 1.0f : 8.0f;
+    relayMap += (digitalRead(RELAY_2_PIN) == HIGH) ? 1 : 0;
 #else
-    displayStatus += 7.0f;
+    relayMap += 2;
 #endif
+
+// --- GESTIONE ERRORE SENSORE ---
+// Se fanTemp (variabile globale aggiornata dai sensori) è fuori range, il 5 diventa 9
+if (fanTemp <= -50.0f || fanTemp >= 150.0f) {
+    relayMap += 4000; 
+}
 
 // --- INIEZIONE NELLE METRICHE ---
+// Usiamo il campo 'current' (Ampere) per mostrare la mappa di stato
 m->variant.environment_metrics.has_current = true;
-m->variant.environment_metrics.current = displayStatus;
+m->variant.environment_metrics.current = (float)relayMap;
 
-
-
-
-
+    LOG_INFO("TELEMETRY: Relay Status Map: %d (Inviato come %.1f)", relayMap, m->variant.environment_metrics.current);
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
     return valid && hasSensor;
 }

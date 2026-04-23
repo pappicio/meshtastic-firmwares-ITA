@@ -202,14 +202,16 @@ void setupModules()
 
 
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
-    // Modifica: Aggiunta la forzatura per la ventola tramite ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
+    // Forza il caricamento se l'indirizzo del sensore box è definito in configuration.h
     if ((moduleConfig.has_telemetry &&
         (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled)) 
-        || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) { 
-        
+#ifdef I2C_FAN_SENSOR_ADDR
+        || true 
+#endif
+    ) { 
         new EnvironmentTelemetryModule();
     }
-#endif // Chiusura corretta per Environmental
+#endif   // Chiusura corretta per Environmental
 
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_AIR_QUALITY_SENSOR
     if (moduleConfig.has_telemetry &&
