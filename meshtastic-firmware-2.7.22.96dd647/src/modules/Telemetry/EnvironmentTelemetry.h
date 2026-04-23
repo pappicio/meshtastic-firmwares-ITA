@@ -30,7 +30,7 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
   
   static EnvironmentTelemetryModule *instance; // Questo serve per trovarlo da fuori
 
-  void aggiornaTemperaturaBox(); // La sub del cazzo che richiama quella buona
+  void aggiornaTemperaturaBox(); // La sub che richiama quella buona
   bool leggisolouno = false; // L'interruttore
 
     EnvironmentTelemetryModule()
