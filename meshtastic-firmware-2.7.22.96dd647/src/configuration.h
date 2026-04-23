@@ -780,7 +780,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Controllo finale
 #if TOTAL_SENSORS > 1
-  #error "CONFIG ERROR: Troppi sensori di temperatura abilitati!"
+  #error "CONFIG ERROR: Troppi sensori di temperatura VENTOLA abilitati!"
 #endif
 /////////////////////////////////////////////////////////////////////////////////////////
 
