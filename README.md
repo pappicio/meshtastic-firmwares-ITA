@@ -183,6 +183,15 @@ Il sistema distingue tra un risveglio automatico (timer) e un intervento manuale
     
 Una volta armato, il sistema riprende a vigilare e interverrà con lo shutdown solo se il nodo tornerà a funzionare esclusivamente a batteria e questa scenderà sotto i **3.4V**.
 
+
+### 🔧 Coesistenza dei Sistemi di Risparmio Energetico
+Il firmware gestisce due tipi di sospensione in modo intelligente:
+1. **Sospensione di Routine (Telemetry Sleep)**: Gestita dal modulo ambientale, mette in pausa i sensori tra una lettura e l'altra per ottimizzare il consumo durante il normale funzionamento.
+2. **Sospensione Critica (Emergency Deep Sleep)**: Gestita dal modulo Power, interviene sopra ogni altra funzione. Se la tensione scende sotto i 3.4V, il nodo ignora i cicli di telemetria e forza uno shutdown hardware di 12 ore.
+
+**Risultato**: La ventola e i sensori restano sempre attivi finché la batteria è sicura. Se la batteria è critica, la sicurezza energetica prende il controllo totale del processore.
+
+
 > **Vantaggio**: Hai il controllo totale. Se sei sul posto e resetti il nodo, lui resta acceso. Se lo abbandoni sul campo, lui pensa a proteggere la batteria autonomamente.
 
 > **Nota Tecnica**: La funzione `shutdown(uint32_t sleepMs)` è stata ottimizzata per supportare sia l'architettura ESP32 che NRF52, garantendo la compatibilità con i timer di risveglio hardware più precisi.
