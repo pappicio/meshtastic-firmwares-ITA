@@ -224,7 +224,8 @@ Tutte le impostazioni sopra citate sono cablate nel file configuration.h. Per mo
 Distribuito sotto licenza GPL v3.
 Basato sul codice originale di Meshtastic. Si ringrazia la community italiana per la definizione dei canali standard.
 
-🚀 Come installare
+🚀 Come installare.
+
 Scarica il sorgente.
 
 Apri con PlatformIO.
