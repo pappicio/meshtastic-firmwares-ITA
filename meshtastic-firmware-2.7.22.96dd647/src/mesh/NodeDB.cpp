@@ -198,7 +198,6 @@ NodeDB::NodeDB()
     loadFromDisk();
     cleanupMeshDB();
 
-    
     uint32_t devicestateCRC = crc32Buffer(&devicestate, sizeof(devicestate));
     uint32_t nodeDatabaseCRC = crc32Buffer(&nodeDatabase, sizeof(nodeDatabase));
     uint32_t configCRC = crc32Buffer(&config, sizeof(config));
@@ -252,11 +251,6 @@ NodeDB::NodeDB()
     // keep using that nodenum forever. Crummy guess at our nodenum (but we will check against the nodedb to avoid conflicts)
     pickNewNodeNum();
 
-
-
-
- 
- 
     // Set our board type so we can share it with others
     owner.hw_model = HW_VENDOR;
     // Ensure user (nodeinfo) role is set to whatever we're configured to

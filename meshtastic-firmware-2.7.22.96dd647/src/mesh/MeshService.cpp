@@ -382,7 +382,7 @@ void MeshService::fanControlTask(void *pvParameters) {
        
         checkInternalFan();
         checkAutoReboot();
-        vTaskDelay(pdMS_TO_TICKS(30000)); // Controllo ogni 15 sec
+        vTaskDelay(pdMS_TO_TICKS(30000)); // Controllo ogni 30 sec
     }
 }
 
@@ -391,8 +391,6 @@ void MeshService::fanControlTask(void *pvParameters) {
 /// Do idle processing (mostly processing messages which have been queued from the radio)
 void MeshService::loop()
 {
-    ////////////////checkAutoReboot(); // Aggiungi questo
-    //////////checkInternalFan(); // Gestisce la ventola in base alla temp interna
     if (lastQueueStatus.free == 0) { // check if there is now free space in TX queue
         meshtastic_QueueStatus qs = router->getQueueStatus();
         if (qs.free != lastQueueStatus.free)

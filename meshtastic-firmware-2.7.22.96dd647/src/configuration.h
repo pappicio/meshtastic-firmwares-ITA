@@ -685,15 +685,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //TX POWER
 #define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
-
-// --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
-#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
-
-#ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
-    #define FORCE_WAKEUP_HR 12           // Ore di sonno profondo
-    #define ABSOLUTE_SHUTDOWN_COUNT 3    // Numero letture di conferma prima dello spegnimento temporizzato
-#endif
+ 
 
 // --- GESTIONE VENTOLA INTERNA ---
 // IL SENSORE SARA TOTALMENTE INVISIBILE A MESHTASTIC CHE XO DARA INFO COME 
@@ -749,6 +741,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #endif
 #endif
 
+
+
+// --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
+#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
+
+#ifdef FORCE_SLEEP_MV
+    #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
+    #define FORCE_WAKEUP_HR 12           // Ore di sonno profondo
+    #define ABSOLUTE_SHUTDOWN_COUNT 3    // Numero letture di conferma prima dello spegnimento temporizzato
+#endif
 
 
 //////////////// INTERNAL /////////////////
