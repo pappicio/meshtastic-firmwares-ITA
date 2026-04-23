@@ -159,7 +159,7 @@ Il sistema di gestione del sonno profondo è stato riscritto per trasformare il 
 A differenza dello spegnimento standard, la procedura di questo firmware segue un protocollo rigoroso:
 1. **Flash Flush**: Forza la scrittura dei buffer circolari della memoria Flash per evitare la corruzione del database nodi.
 2. **Radio Silence**: Disattiva i finali di potenza LoRa e GPS prima del calo di tensione per prevenire spike elettromagnetici.
-3. **Deep Sleep Timer**: Il chip non si spegne "per sempre", ma entra in uno stato di sospensione hardware alimentato dal modulo RTC (Real Time Clock).
+3. **Deep Sleep Timer**: Il chip non si spegne "per sempre", ma entra in uno stato di sospensione hardware temporizzato.
 
 ### 🔄 Il Ciclo di Risveglio Solare
 Il nodo è progettato per gestire autonomamente il recupero dopo un blackout energetico:
