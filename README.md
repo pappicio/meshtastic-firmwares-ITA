@@ -68,10 +68,7 @@ Il firmware scansiona il bus I2C all'avvio e mappa automaticamente i sensori. Ec
 | **0x40** | **SHT2x / SI7013/20/21 / HTU21D** | Umidità e Temperatura (Alta stabilità). |
 | **0x44 / 0x45** | **SHT3x / SHT4x** | Precisione professionale, range esteso. |
 | **0x38 / 0x39** | **AHT10 / AHT20 / AHT21** | Ottimo rapporto qualità/prezzo, digitali. |
-| **0x23** | **BH1750** | Sensore di luminosità (Lux) per gestione pannelli. |
-| **0x1D / 0x53** | **ADXL345 / LIS3DH** | Accelerometri (Rilevamento urti/spostamento box). |
-| **0x48 / 0x49** | **ADS1115** | ADC esterno per sensori analogici (NTC/LM35). |
-| **0x41 / 0x44** | **INA219 / INA226** | Monitoraggio tensione batteria e corrente pannello. |
+
 
 ---
 
