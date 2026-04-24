@@ -58,7 +58,9 @@
 // Diciamo che 'service' e 'fanTemp' esistono già in main.cpp
 
 
-extern float fanTemp; 
+extern float fanTemp;
+//extern float fanHum; 
+ 
 extern EnvironmentTelemetryModule *environmentTelemetryModule;
 
 
