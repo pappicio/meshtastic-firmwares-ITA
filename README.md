@@ -9,6 +9,7 @@ Firmware Modificato - Pronto all'uso per meshtastic italia!
 Questo non è il solito firmware. È una versione "Zero Configuration" pensata per gli utenti italiani, che integra la potenza del mesh network con il controllo domotico avanzato.
 
 🔥 Cosa c'è "sotto il cofano"?
+
 🛰️ Canali Pre-Configurati (8 Slot)
 Dimentica la configurazione manuale. Al primo avvio troverai già impostati:
 
