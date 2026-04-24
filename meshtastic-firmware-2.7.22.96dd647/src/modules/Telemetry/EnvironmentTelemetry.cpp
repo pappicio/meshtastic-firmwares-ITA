@@ -405,9 +405,19 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     const auto &m = telemetry.variant.environment_metrics;
 
     // Check if any telemetry field has valid data
-    bool hasAny = m.has_temperature || m.has_relative_humidity || m.barometric_pressure != 0 || m.iaq != 0 || m.voltage != 0 ||
-                  m.current != 0 || m.lux != 0 || m.white_lux != 0 || m.weight != 0 || m.distance != 0 || m.radiation != 0;
+   bool hasAny = m.has_temperature ||                // OK: può essere negativa
+              m.relative_humidity > 0 ||          // OK: 0-100%
+              m.barometric_pressure > 0 ||        // <--- KILLER DEL BUG -57
+              m.iaq > 0 ||                        // OK: Indice qualità aria
+              m.voltage > 0 ||                    // OK: Volt batteria/Ghost
+              m.current != 0 ||                   // OK: Può essere negativa (scarica)
+              m.lux > 0 ||                        // OK: Luce
+              m.white_lux > 0 ||                  // OK: Luce bianca
+              m.weight > 0 ||                     // OK: Peso
+              m.distance > 0 ||                   // OK: Distanza
+              m.radiation > 0;                    // OK: Radiazioni
 
+              
     if (!hasAny) {
         display->drawString(x, currentY, "No Telemetry");
         return;
@@ -584,25 +594,29 @@ for (TelemetrySensor *sensor : sensors) {
         // Chiamata singola: recupera l'indirizzo già corretto dal .h
           uint8_t currentAddr = sensor->getAddr();
 
-        if (leggisolouno) {
-            // LOG DI DEBUG: Vediamo se il ciclo almeno parte
+if (leggisolouno) {
             LOG_DEBUG("FAN CHECK: Controllo sensore all'indirizzo 0x%02x", currentAddr);
+    if (currentAddr == I2C_FAN_SENSOR_ADDR) {
+        // Creiamo una struct temporanea locale solo per questa lettura
+        meshtastic_Telemetry tempMetrics = meshtastic_Telemetry_init_zero;
+        tempMetrics.which_variant = meshtastic_Telemetry_environment_metrics_tag;
 
-            if (currentAddr == I2C_FAN_SENSOR_ADDR) {
-                if (sensor->getMetrics(m)) {
-                    fanTemp = m->variant.environment_metrics.temperature;
-                    // CATTURIAMO L'UMIDITÀ QUI (serve per dopo)
-                    fanHum = m->variant.environment_metrics.relative_humidity; 
-                    
-                    LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f, Hum: %.1f", fanTemp, fanHum);
-                    return true; 
-                } else {
-                    LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!");
-                }
-            }
-
-            continue; 
+        if (sensor->getMetrics(&tempMetrics)) {
+            // Estraiamo i dati dalla struct temporanea
+            fanTemp = tempMetrics.variant.environment_metrics.temperature;
+            fanHum = tempMetrics.variant.environment_metrics.relative_humidity; 
+            
+            LOG_INFO("FAN CHECK: Lettura (Temp: %.1f, Hum: %.1f) da 0x%02x salvata internamente", fanTemp, fanHum, currentAddr);
+            
+            // NON tocchiamo l'oggetto 'm' originale, così rimane pulito (zero)
+            // Restituiamo true per dire che abbiamo finito
+            return true; 
+        } else {
+            LOG_ERROR("FAN CHECK: Lettura fallita su 0x%02x", currentAddr);
         }
+    }
+    continue; 
+}
         // ... qui segue il resto della funzione normale ...
 
 

@@ -123,6 +123,8 @@ initHardwarePins(); // La tua nuova sub-routine di boot
     // --- AGGIUNTA PER VENTOLA ---
 #ifdef I2C_FAN_SENSOR_ADDR
     if (fanTaskHandle == NULL) {
+#ifdef ESP32
+        // Logica per ESP32 (V3, ecc.)
         xTaskCreatePinnedToCore(
             this->fanControlTask,   // Funzione
             "FanControl",           // Nome
@@ -132,6 +134,17 @@ initHardwarePins(); // La tua nuova sub-routine di boot
             &fanTaskHandle,         // Handle
             1                       // Core 1
         );
+#else
+        // Logica per nRF52 (T114) e altri chip single core
+        xTaskCreate(
+            this->fanControlTask,   // Funzione
+            "FanControl",           // Nome
+            4096,                   // Stack
+            NULL,                   // Parametri
+            1,                      // Priorità
+            &fanTaskHandle          // Handle
+        );
+#endif
         LOG_INFO("Task Ventola inizializzato correttamente");
     }
 #endif
@@ -397,17 +410,24 @@ void checkAutoReboot() {
 }
 
 
-
 // Task di sistema per il loop di controllo
 void MeshService::fanControlTask(void *pvParameters) {
+#ifdef ESP32
     LOG_INFO("TASK_MAINTENANCE: Avviato su Core 1");
-    // Questo delay gira UNA SOLA VOLTA all'avvio del modulo
+#else
+    LOG_INFO("TASK_MAINTENANCE: Avviato (Single Core Mode)");
+#endif
+
+    // Delay iniziale per stabilizzazione sistema
     vTaskDelay(pdMS_TO_TICKS(10000));
+
     for (;;) {
-       
+        // Logica di controllo
         checkInternalFan();
         checkAutoReboot();
-        vTaskDelay(pdMS_TO_TICKS(30000)); // Controllo ogni 30 sec
+
+        // Rilascia il controllo per 30 secondi
+        vTaskDelay(pdMS_TO_TICKS(30000)); 
     }
 }
 

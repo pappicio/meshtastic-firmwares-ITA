@@ -694,14 +694,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
 #define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
-    #define SHOW_ALSO_POWER_METRICS 0
+    
     #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
     
+    #define SHOW_ALSO_POWER_METRICS 0
     // Se abbiamo definito un indirizzo per la ventola, 
 	////#define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
-    
-    // Messaggio di log durante la compilazione (opzionale, appare nel terminale di PlatformIO)
-    /////#pragma message "BOX FAN: Rilevato indirizzo I2C, forzo ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE a 1"
 #endif
 
 //#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
