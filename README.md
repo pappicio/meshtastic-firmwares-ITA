@@ -38,18 +38,62 @@ Il cuore del progetto è la gestione dinamica della temperatura per evitare il *
 
 ---
 
-### 📡 Matrice Sensori I2C (Rilevamento Automatico)
-Il firmware esegue uno scanning del bus I2C all'avvio, supportando ***nativamente*** una vasta gamma di sensori senza necessità di ricompilazione. Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
+### 🌡️ Ghost Telemetry: Iniezione Dati Combinati (Temp + Hum)
 
-| Indirizzo I2C | Sensori Supportati | Caratteristiche |
-| :--- | :--- | :--- |
-| **0x76 / 0x77** | **BME280 / BMP280** | Pressione, Umidità e Temperatura (Alta precisione). |
-| **0x44 / 0x45** | **SHT3x (SHT30/31/35)** | Sensori professionali Sensirion, ideali per esterni. |
-| **0x38** | **AHT10 / AHT20 / AHT21** | Calibrazione di fabbrica, lettura rapida e stabile. |
-| **0x40** | **SI7021 / HTU21D** | Ottima stabilità termica e ingombro ridotto. |
+Il sistema utilizza una tecnica di **"Data Injection"** per trasmettere simultaneamente temperatura e umidità all'interno di un singolo pacchetto di telemetria standard, ottimizzando il traffico mesh e garantendo la compatibilità con tutte le app Meshtastic.
 
- 
+#### 📊 Come leggere il dato (Campo Voltage)
+Quando la funzionalità è attiva, il valore visualizzato nel campo **Volt (V)** della telemetria non indica una tensione elettrica, ma una stringa numerica composta:
+
+* **Parte Intera (Gradi):** Rappresenta la temperatura della Box in °C.
+* **Parte Decimale (Umidità):** Rappresenta la percentuale di umidità relativa (HR%).
+
+> ***Esempio di lettura:***
+> Se leggi **`32.65 V`** sul display o sull'app, significa:
+> * **Temperatura Box:** 32°C
+> * **Umidità:** 65%
+
 ---
+
+
+### 📡 Matrice Sensori I2C Supportati (Auto-Discovery)0
+
+Il firmware esegue uno scanning del bus I2C all'avvio, supportando ***nativamente*** una vasta gamma di sensori (in pratica tutti quello gia supportati nativamente da meshtastic!). 
+Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
+Il firmware scansiona il bus I2C all'avvio e mappa automaticamente i sensori. Ecco la lista dei sensori compatibili e i relativi indirizzi predefiniti:
+
+| Indirizzo | Sensore / Serie | Caratteristiche Principali |
+| :--- | :--- | :--- |
+| **0x76 / 0x77** | **BME280 / BMP280** | Pressione, Temperatura (BME: +Umidità). |
+| **0x40** | **SHT2x / SI7013/20/21 / HTU21D** | Umidità e Temperatura (Alta stabilità). |
+| **0x44 / 0x45** | **SHT3x / SHT4x** | Precisione professionale, range esteso. |
+| **0x38 / 0x39** | **AHT10 / AHT20 / AHT21** | Ottimo rapporto qualità/prezzo, digitali. |
+
+
+---
+
+### 💡 Nota Tecnica sugli Indirizzi
+Alcuni sensori (come il BME280 o l'SHT3x) permettono di cambiare indirizzo tramite un ponticello (saldatura) sul retro del modulo:
+* **0x76** è solitamente l'indirizzo di default per i moduli cinesi del BMP/BME.
+* **0x77** viene attivato collegando il pin `SDO` a `VCC`.
+
+***Il sistema è progettato per dare priorità all'indirizzo definito in `I2C_FAN_SENSOR_ADDR` per il controllo termico della ventola, utilizzando gli altri sensori rilevati per la telemetria ambientale generale.***
+
+---
+
+### 🛠️ Configurazione Logica (Macro `HAS_HUMIDITY`)
+
+Il comportamento dell'iniezione dipende dalla configurazione hardware tramite macro:
+
+1.  ***HAS_HUMIDITY = 1***
+    * **Con sensore Umidità (es. SHT21 o BME280):** Il valore è combinato (es. `25.60` = 25°C e 60% HR).
+    * **Senza sensore Umidità (es. BMP280):** Il valore mostrerà `.00` nei decimali (es. `25.00`).
+2.  ***HAS_HUMIDITY = 0***
+    * La funzione umidità viene disabilitata.
+    * Il sistema torna a mostrare la **temperatura reale come numero intero** (es. `25.0 V` = 25.85°C).
+    * 
+---
+
 ### 🔌 Supporto Sensori Legacy e Alternativi
 Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimentata da:
 * **OneWire (DS18B20):** Ideale per sonde digitali cablate su lunghe distanze.
