@@ -59,8 +59,12 @@ Quando la funzionalità è attiva, il valore visualizzato nel campo **Volt (V)**
 ### 📡 Matrice Sensori I2C Supportati (Auto-Discovery)0
 
 Il firmware esegue uno scanning del bus I2C all'avvio, supportando ***nativamente*** una vasta gamma di sensori (in pratica tutti quello gia supportati nativamente da meshtastic!). 
+
 Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
-Il firmware scansiona il bus I2C all'avvio e mappa automaticamente i sensori. Ecco la lista dei sensori compatibili e i relativi indirizzi predefiniti:
+
+Il firmware scansiona il bus I2C all'avvio e mappa automaticamente i sensori. 
+
+Ecco la lista dei sensori compatibili e i relativi indirizzi predefiniti:
 
 | Indirizzo | Sensore / Serie | Caratteristiche Principali |
 | :--- | :--- | :--- |
