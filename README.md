@@ -146,7 +146,7 @@ La gestione del calore è integrata direttamente nel core energetico per la mass
 
 ## 💾 Manutenzione Automatica & Radio
 
-* ***Auto-Healing***: Il riavvio programmato (`AUTO_REBOOT_DAYS`) assicura la pulizia periodica della RAM e previene potenziali blocchi software ("memory leaks" o glitch), garantendo un uptime costante per mesi senza interventi sul posto.
+* ***Auto-Healing***: Il riavvio programmato (`AUTO_REBOOT_DAYS`) assicura la pulizia periodica della RAM e previene potenziali blocchi software ("memory leaks" o glitch), garantendo un uptime costante per mesi senza interventi sul posto, oltretutto pochi istanti prima del reboot programmato, elimina anche tutto il db dei nodi, cosi si prevengono anche i blocchi dovuti dalla corposità della lista nodi.
 * ***Gestione TX Power***: Supporto nativo per la regolazione fine della potenza di uscita, permettendo di sfruttare legalmente antenne ad alto guadagno (fino a 30 dBi) per link a lunghissima distanza.
 * ***Stato di Armamento***: Il sistema comunica tramite log seriali lo stato `[ARMED]`, confermando che la batteria ha superato la soglia critica e il nodo è ora in modalità di protezione attiva.
 
