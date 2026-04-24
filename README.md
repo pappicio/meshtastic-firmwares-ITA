@@ -90,7 +90,7 @@ Il comportamento dell'iniezione dipende dalla configurazione hardware tramite ma
     * **Senza sensore Umidità (es. BMP280):** Il valore mostrerà `.00` nei decimali (es. `25.00`).
 2.  ***HAS_HUMIDITY = 0***
     * La funzione umidità viene disabilitata.
-    * Il sistema torna a mostrare la **temperatura reale con i suoi decimali originali** (es. `25.85 V` = 25.85°C).
+    * Il sistema torna a mostrare la **temperatura reale come numero intero** (es. `25.0 V` = 25.85°C).
     * 
 ---
 
