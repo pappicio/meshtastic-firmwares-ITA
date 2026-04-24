@@ -72,7 +72,6 @@ Il firmware scansiona il bus I2C all'avvio e mappa automaticamente i sensori. Ec
 | **0x1D / 0x53** | **ADXL345 / LIS3DH** | Accelerometri (Rilevamento urti/spostamento box). |
 | **0x48 / 0x49** | **ADS1115** | ADC esterno per sensori analogici (NTC/LM35). |
 | **0x41 / 0x44** | **INA219 / INA226** | Monitoraggio tensione batteria e corrente pannello. |
-| **0x3C** | **OLED SSD1306 / SH1106** | Display di stato locale. |
 
 ---
 
