@@ -680,7 +680,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_CONFIG_SMART_POSITION_ENABLED true
 #define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 900
 
-#define AUTO_REBOOT_DAYS 5
+#define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
 //TX POWER
 #define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!

@@ -330,21 +330,29 @@ void checkInternalFan() {
 
 
 void checkAutoReboot() {
-// Esegui tutto solo se la macro è definita e maggiore di 0
+    // Esegui tutto solo se la macro è definita e maggiore di 0
 #if defined(AUTO_REBOOT_DAYS) && (AUTO_REBOOT_DAYS > 0)
 
-    // Calcolo soglia a 64bit per evitare casini (86.400.000 ms in un giorno)
+    // Calcolo soglia a 64bit (86.400.000 ms in un giorno)
     static const uint64_t threshold = (uint64_t)AUTO_REBOOT_DAYS * 86400000ULL;
 
     if (millis() > threshold) {
-        LOG_INFO("GHOST: Uptime limit reached (%d days). Rebooting...", AUTO_REBOOT_DAYS);
+        LOG_INFO("GHOST: Uptime limit reached (%d days). Cleaning DB and Rebooting...", AUTO_REBOOT_DAYS);
+        
+        // --- 1. PULIZIA DATABASE (Essenziale per il reset totale) ---
+        if (nodeDB) {
+            LOG_INFO("GHOST: Resetting NodeDB (including favorites)...");
+            // resetNodes(bool keepFavorites)
+            // Passiamo 'false' per eliminare anche i preferiti
+            nodeDB->resetNodes(false); 
+            
+            delay(1000); // Tempo per il salvataggio su disco
+        }
+
         delay(1000); 
 
-        // --- IL CUORE DEL REBOOT (Copiato dalla funzione ufficiale) ---
+        // --- 2. REBOOT SPECIFICO PER ARCHITETTURA ---
         
-        // Se possibile, avvisiamo il sistema (opzionale, se dà errore commenta la riga sotto)
-        // notifyReboot.notifyObservers(NULL);
-
         #if defined(ARCH_ESP32) || defined(ESP32)
             ESP.restart();
 
@@ -355,21 +363,32 @@ void checkAutoReboot() {
             rp2040.reboot();
 
         #elif defined(ARCH_PORTDUINO)
-            // Se lo stai facendo girare su Linux/PC
-            LOG_DEBUG("final reboot!");
-            ::reboot(0); 
+            // Su Linux/PC il comando reboot(0) spesso fallisce senza root.
+            // exit(0) chiude il processo e il service manager (systemd) lo riavvia subito.
+            LOG_DEBUG("GHOST: Portduino exit triggered.");
+            exit(0); 
 
         #elif defined(ARCH_STM32WL)
+            // Comando specifico per chip STM32 con LoRa integrato (es. Wio-E5)
             HAL_NVIC_SystemReset();
+
+        #elif defined(ARCH_STM32)
+            // Per altri STM32 generici
+            NVIC_SystemReset();
 
         #else
             // Fallback universale per processori ARM (incluso il T114)
             NVIC_SystemReset();
         #endif
+
+        // --- 3. ULTIMA SPIAGGIA (Se il reboot software si incanta) ---
+        // Se dopo 5 secondi siamo ancora qui, forziamo un loop infinito 
+        // per far scattare il Watchdog hardware
+        delay(5000);
+        while(1) { (void)0; }
     }
 #endif
 }
-
 
 
 
