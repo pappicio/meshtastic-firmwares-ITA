@@ -27,7 +27,7 @@ static constexpr uint16_t TX_HISTORY_KEY_POWER_TELEMETRY = 0x8005;
 
 
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
-
+extern float fanHum;
 namespace graphics
 {
 extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const char *titleStr, bool force_no_invert,
@@ -271,13 +271,35 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     // 2. INIEZIONE DATI BOX (Qui forziamo valid = true se abbiamo il nostro sensore)
 #if defined(I2C_FAN_SENSOR_ADDR) || defined(FAN_RELAY_PIN)
     
-    #ifdef I2C_FAN_SENSOR_ADDR
+#ifdef I2C_FAN_SENSOR_ADDR
+#if HAS_HUMIDITY
+    LOG_DEBUG("GHOST: Controllo CH3 (Temp: %.1f C, Hum: %.1f %%)", fanTemp, fanHum);
+#else
+    LOG_DEBUG("GHOST: Controllo CH3 (Temp: %.1f C)", fanTemp);
+#endif
+
     if (fanTemp > -50.0f) { 
+        float finalVal;
+        float tempIntera = (float)((int)fanTemp); // Forza 23.8 -> 23.0
+
+#if HAS_HUMIDITY
+        // Mescola Umidità nei decimali (es. 23.65)
+        finalVal = tempIntera + (std::min(std::max(fanHum, 0.0f), 99.0f) / 100.0f);
+#else
+        // Solo temperatura intera (es. 23.00)
+        finalVal = tempIntera;
+#endif
+
         m.variant.power_metrics.has_ch3_voltage = true;
-        m.variant.power_metrics.ch3_voltage = fanTemp; 
-        valid = true; // Forza l'invio anche se non ci sono sensori INA
+        m.variant.power_metrics.ch3_voltage = finalVal; 
+        
+        valid = true; 
+        LOG_INFO("GHOST: CH3 Injected -> %.2fV", finalVal);
+    } else {
+        LOG_WARN("GHOST: fanTemp non valida, salto iniezione CH3");
     }
-    #endif
+#endif
+
 
 
 // --- 2. COSTRUZIONE CRUSCOTTO RELAY AGGIORNATO (CH3 Current) ---

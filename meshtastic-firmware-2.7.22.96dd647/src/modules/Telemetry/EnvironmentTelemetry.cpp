@@ -143,7 +143,7 @@ static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
 EnvironmentTelemetryModule *EnvironmentTelemetryModule::instance = nullptr;
 
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
-
+extern float fanHum;
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
     if (!moduleConfig.telemetry.environment_measurement_enabled && 
@@ -591,12 +591,16 @@ for (TelemetrySensor *sensor : sensors) {
             if (currentAddr == I2C_FAN_SENSOR_ADDR) {
                 if (sensor->getMetrics(m)) {
                     fanTemp = m->variant.environment_metrics.temperature;
-                    LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f", fanTemp);
+                    // CATTURIAMO L'UMIDITÀ QUI (serve per dopo)
+                    fanHum = m->variant.environment_metrics.relative_humidity; 
+                    
+                    LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f, Hum: %.1f", fanTemp, fanHum);
                     return true; 
                 } else {
                     LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!");
                 }
             }
+
             continue; 
         }
         // ... qui segue il resto della funzione normale ...
@@ -660,25 +664,43 @@ for (TelemetrySensor *sensor : sensors) {
 // ... (restano i check per INA219, INA260, ecc. come nel tuo codice) ...
     // --- INIEZIONE FINALE DATI BOX ---
 #ifdef I2C_FAN_SENSOR_ADDR
+#if HAS_HUMIDITY
+    LOG_DEBUG("TELEMETRY: Controllo iniezione fanTemp (Attuale: %.1f C, Hum: %.1f %%)", fanTemp, fanHum);
+#else
     LOG_DEBUG("TELEMETRY: Controllo iniezione fanTemp (Attuale: %.1f C)", fanTemp);
-///////////////// COMMENTARE DA QUI A....
+#endif
+
+    //////////////// COMMENTARE DA QUI A....
     if (fanTemp > -50.0f) {
+        float ghostVoltage;
+        float tempIntera = (float)((int)fanTemp); // Forza 23.85 -> 23.0
+
+#if HAS_HUMIDITY
+        // Se attiva, mette l'umidità nei decimali (es. 23.65)
+        ghostVoltage = tempIntera + (std::min(std::max(fanHum, 0.0f), 99.0f) / 100.0f);
+#else
+        // Se disattivata, rimane l'intero pulito (es. 23.00)
+        ghostVoltage = tempIntera;
+#endif
+
         // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
         m->variant.environment_metrics.has_voltage = true;
-        m->variant.environment_metrics.voltage = fanTemp;
+        m->variant.environment_metrics.voltage = ghostVoltage;
 
-       
-/////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
+/////////////////// a qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
 
         valid = true;
         hasSensor = true;
 
-        LOG_INFO("TELEMETRY: Iniezione finale riuscita! Voltage=%.1f (Temp Box), Current=%.0f", 
+        LOG_INFO("TELEMETRY: Iniezione finale riuscita! Voltage=%.2f (Temp Box), Current=%.0f", 
                   m->variant.environment_metrics.voltage, m->variant.environment_metrics.current);
     } else {
         LOG_WARN("TELEMETRY: fanTemp non valida (%.1f), iniezione saltata", fanTemp);
     }
 #endif
+
+
+
 
 
 // --- NUOVA LOGICA STATUS PANEL (FAN & RELAYS) ---

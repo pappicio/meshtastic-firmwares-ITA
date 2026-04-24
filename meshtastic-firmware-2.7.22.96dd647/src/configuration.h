@@ -695,6 +695,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
     #define SHOW_ALSO_POWER_METRICS 0
+    #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
+    
     // Se abbiamo definito un indirizzo per la ventola, 
 	////#define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
     

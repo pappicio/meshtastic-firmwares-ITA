@@ -59,7 +59,7 @@
 
 
 extern float fanTemp;
-//extern float fanHum; 
+extern float fanHum; 
  
 extern EnvironmentTelemetryModule *environmentTelemetryModule;
 
@@ -271,7 +271,7 @@ float readI2CTemp(uint8_t addr) {
 void checkInternalFan() {
  
     float currentTemp = -999.0f;
-
+    fanHum=0.0f;
     // Selettore dinamico basato su cosa hai compilato
     #if defined(I2C_FAN_SENSOR_ADDR)
         currentTemp = readI2CTemp(I2C_FAN_SENSOR_ADDR);
@@ -287,8 +287,12 @@ void checkInternalFan() {
  
     // --- ATTUAZIONE RELAY ---
     // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
-    LOG_INFO("FAN: Monitoraggio - Temp: %.1f C (Soglie: Start=%.1f, Stop=%.1f)", fanTemp, (float)FAN_TEMP_START, (float)FAN_TEMP_STOP);
-
+    LOG_INFO("FAN: Monitoraggio - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
+          fanTemp, 
+          fanHum, 
+          (float)FAN_TEMP_START, 
+          (float)FAN_TEMP_STOP);
+          
     // Controllo di sicurezza: processiamo solo se la temp è in un range umano
     if (currentTemp > -50.0f && currentTemp < 150.0f) {
         fanTemp = currentTemp;
