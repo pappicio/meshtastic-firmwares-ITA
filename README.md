@@ -38,7 +38,7 @@ Il cuore del progetto è la gestione dinamica della temperatura per evitare il *
 ---
 
 ### 📡 Matrice Sensori I2C (Rilevamento Automatico)
-Il firmware esegue uno scanning del bus I2C all'avvio, supportando nativamente una vasta gamma di sensori senza necessità di ricompilazione. Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
+Il firmware esegue uno scanning del bus I2C all'avvio, supportando ***nativamente*** una vasta gamma di sensori senza necessità di ricompilazione. Il sistema riconosce gli indirizzi e adatta l'algoritmo di lettura:
 
 | Indirizzo I2C | Sensori Supportati | Caratteristiche |
 | :--- | :--- | :--- |
@@ -69,6 +69,8 @@ Ogni posizione numerica rappresenta un dispositivo:
 * **2**: **INATTIVO** (Pin non configurato o sensore assente)
 
 > **Esempio:** Se l'app mostra **5102.0 A**, significa: Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
+> 
+> **Anomalia:** Se l'app mostra **9**102.0 A, significa: Errore nella lettura temperatura ventola, anche se Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
 
 ---
 
@@ -157,7 +159,7 @@ Il sistema di gestione del sonno profondo è stato riscritto per trasformare il 
 A differenza dello spegnimento standard, la procedura di questo firmware segue un protocollo rigoroso:
 1. **Flash Flush**: Forza la scrittura dei buffer circolari della memoria Flash per evitare la corruzione del database nodi.
 2. **Radio Silence**: Disattiva i finali di potenza LoRa e GPS prima del calo di tensione per prevenire spike elettromagnetici.
-3. **Deep Sleep Timer**: Il chip non si spegne "per sempre", ma entra in uno stato di sospensione hardware alimentato dal modulo RTC (Real Time Clock).
+3. **Deep Sleep Timer**: Il chip non si spegne "per sempre", ma entra in uno stato di sospensione hardware temporizzato.
 
 ### 🔄 Il Ciclo di Risveglio Solare
 Il nodo è progettato per gestire autonomamente il recupero dopo un blackout energetico:
@@ -222,7 +224,8 @@ Tutte le impostazioni sopra citate sono cablate nel file configuration.h. Per mo
 Distribuito sotto licenza GPL v3.
 Basato sul codice originale di Meshtastic. Si ringrazia la community italiana per la definizione dei canali standard.
 
-🚀 Come installare
+🚀 Come installare.
+
 Scarica il sorgente.
 
 Apri con PlatformIO.
