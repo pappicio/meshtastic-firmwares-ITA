@@ -404,18 +404,9 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 
     const auto &m = telemetry.variant.environment_metrics;
 
-   // Check if any telemetry field has valid data
-   bool hasAny = m.has_temperature ||                // OK: può essere negativa
-              m.relative_humidity > 0 ||          // OK: 0-100%
-              m.barometric_pressure > 0 ||        // <--- KILLER DEL BUG -57
-              m.iaq > 0 ||                        // OK: Indice qualità aria
-              m.voltage > 0 ||                    // OK: Volt batteria/Ghost
-              m.current != 0 ||                   // OK: Può essere negativa (scarica)
-              m.lux > 0 ||                        // OK: Luce
-              m.white_lux > 0 ||                  // OK: Luce bianca
-              m.weight > 0 ||                     // OK: Peso
-              m.distance > 0 ||                   // OK: Distanza
-              m.radiation > 0;                    // OK: Radiazioni
+    // Check if any telemetry field has valid data
+    bool hasAny = m.has_temperature || m.has_relative_humidity || m.barometric_pressure != 0 || m.iaq != 0 || m.voltage != 0 ||
+                  m.current != 0 || m.lux != 0 || m.white_lux != 0 || m.weight != 0 || m.distance != 0 || m.radiation != 0;
 
     if (!hasAny) {
         display->drawString(x, currentY, "No Telemetry");
@@ -534,6 +525,7 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Telemetry *t)
 {
     if (t->which_variant == meshtastic_Telemetry_environment_metrics_tag) {
+        
 #if defined(DEBUG_PORT) && !defined(DEBUG_MUTE)
         const char *sender = getSenderShortName(mp);
 
@@ -762,6 +754,84 @@ meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()
         if (decoded->which_variant == meshtastic_Telemetry_environment_metrics_tag) {
             meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
             if (getEnvironmentTelemetry(&m)) {
+
+
+// --- BONIFICA TOTALE E SPEGNIMENTO FLAG ---
+        
+        // 1. PRESSIONE
+        if (m.variant.environment_metrics.barometric_pressure < 0) {
+            m.variant.environment_metrics.barometric_pressure = 0;
+            m.variant.environment_metrics.has_barometric_pressure = false;
+        }
+
+        // 2. UMIDITÀ RELATIVA
+        if (m.variant.environment_metrics.relative_humidity < 0) {
+            m.variant.environment_metrics.relative_humidity = 0;
+            m.variant.environment_metrics.has_relative_humidity = false;
+        }
+
+        // 3. IAQ (è unsigned, non può essere < 0, quindi controlliamo se è 0 o quello che vuoi)
+        // Se vuoi che sparisca quando è 0:
+        if (m.variant.environment_metrics.iaq == 0) {
+            m.variant.environment_metrics.has_iaq = false;
+        }
+
+        // 4. VOLTAGGIO
+        if (m.variant.environment_metrics.voltage < 0) {
+            m.variant.environment_metrics.voltage = 0;
+            m.variant.environment_metrics.has_voltage = false;
+        }
+
+        // 5. LUX (Luce)
+        if (m.variant.environment_metrics.lux < 0) {
+            m.variant.environment_metrics.lux = 0;
+            m.variant.environment_metrics.has_lux = false;
+        }
+
+        // 6. WHITE LUX
+        if (m.variant.environment_metrics.white_lux < 0) {
+            m.variant.environment_metrics.white_lux = 0;
+            m.variant.environment_metrics.has_white_lux = false;
+        }
+
+        // 7. PESO (Weight)
+        if (m.variant.environment_metrics.weight < 0) {
+            m.variant.environment_metrics.weight = 0;
+            m.variant.environment_metrics.has_weight = false;
+        }
+
+        // 8. DISTANZA
+        if (m.variant.environment_metrics.distance < 0) {
+            m.variant.environment_metrics.distance = 0;
+            m.variant.environment_metrics.has_distance = false;
+        }
+
+        // 9. RADIAZIONI
+        if (m.variant.environment_metrics.radiation < 0) {
+            m.variant.environment_metrics.radiation = 0;
+            m.variant.environment_metrics.has_radiation = false;
+        }
+
+        // 10. RESISTENZA GAS
+        if (m.variant.environment_metrics.gas_resistance < 0) {
+            m.variant.environment_metrics.gas_resistance = 0;
+            m.variant.environment_metrics.has_gas_resistance = false;
+        }
+
+        // 11. VELOCITÀ VENTO
+        if (m.variant.environment_metrics.wind_speed < 0) {
+            m.variant.environment_metrics.wind_speed = 0;
+            m.variant.environment_metrics.has_wind_speed = false;
+        }
+
+        // 12. UMIDITÀ SUOLO (anche questa è unsigned)
+        if (m.variant.environment_metrics.soil_moisture == 0) {
+            m.variant.environment_metrics.has_soil_moisture = false;
+        }
+        // ------------------------------------------
+       
+ 
+
                 LOG_INFO("Environment telemetry reply to request");
                 return allocDataProtobuf(m);
             } else {
@@ -779,6 +849,81 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     m.time = getTime();
 
     if (getEnvironmentTelemetry(&m)) {
+
+// --- BONIFICA TOTALE E SPEGNIMENTO FLAG ---
+        
+        // 1. PRESSIONE
+        if (m.variant.environment_metrics.barometric_pressure < 0) {
+            m.variant.environment_metrics.barometric_pressure = 0;
+            m.variant.environment_metrics.has_barometric_pressure = false;
+        }
+
+        // 2. UMIDITÀ RELATIVA
+        if (m.variant.environment_metrics.relative_humidity < 0) {
+            m.variant.environment_metrics.relative_humidity = 0;
+            m.variant.environment_metrics.has_relative_humidity = false;
+        }
+
+        // 3. IAQ (è unsigned, non può essere < 0, quindi controlliamo se è 0 o quello che vuoi)
+        // Se vuoi che sparisca quando è 0:
+        if (m.variant.environment_metrics.iaq == 0) {
+            m.variant.environment_metrics.has_iaq = false;
+        }
+
+        // 4. VOLTAGGIO
+        if (m.variant.environment_metrics.voltage < 0) {
+            m.variant.environment_metrics.voltage = 0;
+            m.variant.environment_metrics.has_voltage = false;
+        }
+
+        // 5. LUX (Luce)
+        if (m.variant.environment_metrics.lux < 0) {
+            m.variant.environment_metrics.lux = 0;
+            m.variant.environment_metrics.has_lux = false;
+        }
+
+        // 6. WHITE LUX
+        if (m.variant.environment_metrics.white_lux < 0) {
+            m.variant.environment_metrics.white_lux = 0;
+            m.variant.environment_metrics.has_white_lux = false;
+        }
+
+        // 7. PESO (Weight)
+        if (m.variant.environment_metrics.weight < 0) {
+            m.variant.environment_metrics.weight = 0;
+            m.variant.environment_metrics.has_weight = false;
+        }
+
+        // 8. DISTANZA
+        if (m.variant.environment_metrics.distance < 0) {
+            m.variant.environment_metrics.distance = 0;
+            m.variant.environment_metrics.has_distance = false;
+        }
+
+        // 9. RADIAZIONI
+        if (m.variant.environment_metrics.radiation < 0) {
+            m.variant.environment_metrics.radiation = 0;
+            m.variant.environment_metrics.has_radiation = false;
+        }
+
+        // 10. RESISTENZA GAS
+        if (m.variant.environment_metrics.gas_resistance < 0) {
+            m.variant.environment_metrics.gas_resistance = 0;
+            m.variant.environment_metrics.has_gas_resistance = false;
+        }
+
+        // 11. VELOCITÀ VENTO
+        if (m.variant.environment_metrics.wind_speed < 0) {
+            m.variant.environment_metrics.wind_speed = 0;
+            m.variant.environment_metrics.has_wind_speed = false;
+        }
+
+        // 12. UMIDITÀ SUOLO (anche questa è unsigned)
+        if (m.variant.environment_metrics.soil_moisture == 0) {
+            m.variant.environment_metrics.has_soil_moisture = false;
+        }
+        // ------------------------------------------
+
         LOG_INFO("Send: barometric_pressure=%f, current=%f, gas_resistance=%f, relative_humidity=%f, temperature=%f",
                  m.variant.environment_metrics.barometric_pressure, m.variant.environment_metrics.current,
                  m.variant.environment_metrics.gas_resistance, m.variant.environment_metrics.relative_humidity,
