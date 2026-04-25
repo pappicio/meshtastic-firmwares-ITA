@@ -38,20 +38,17 @@ Il cuore del progetto è la gestione dinamica della temperatura per evitare il *
 
 ---
 
-### 🌡️ Ghost Telemetry: Iniezione Dati Combinati (Temp + Hum)
+### 🌡️ Telemetry: Iniezione Dati Combinati (Temp)
 
-Il sistema utilizza una tecnica di **"Data Injection"** per trasmettere simultaneamente temperatura e umidità all'interno di un singolo pacchetto di telemetria standard, ottimizzando il traffico mesh e garantendo la compatibilità con tutte le app Meshtastic.
+Il sistema utilizza una tecnica di **"Data Injection"** per trasmettere la temperatura all'interno di un singolo pacchetto di telemetria standard, ottimizzando il traffico mesh e garantendo la compatibilità con tutte le app Meshtastic.
 
 #### 📊 Come leggere il dato (Campo Voltage)
 Quando la funzionalità è attiva, il valore visualizzato nel campo **Volt (V)** della telemetria non indica una tensione elettrica, ma una stringa numerica composta:
-
-* **Parte Intera (Gradi):** Rappresenta la temperatura della Box in °C.
-* **Parte Decimale (Umidità):** Rappresenta la percentuale di umidità relativa (HR%).
-
+ 
 > ***Esempio di lettura:***
 > Se leggi **`32.65 V`** sul display o sull'app, significa:
-> * **Temperatura Box:** 32°C
-> * **Umidità:** 65%
+> * **Temperatura Box:** 32.65°C
+
 
 ---
 
