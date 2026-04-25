@@ -38,17 +38,20 @@ Il cuore del progetto è la gestione dinamica della temperatura per evitare il *
 
 ---
 
-### 🌡️ Telemetry: Iniezione Dati Combinati (Temp)
+### 🌡️ Ghost Telemetry: Iniezione Dati Combinati (Temp + Hum)
 
-Il sistema utilizza una tecnica di **"Data Injection"** per trasmettere la temperatura all'interno di un singolo pacchetto di telemetria standard, ottimizzando il traffico mesh e garantendo la compatibilità con tutte le app Meshtastic.
+Il sistema utilizza una tecnica di **"Data Injection"** per trasmettere simultaneamente temperatura e umidità all'interno di un singolo pacchetto di telemetria standard, ottimizzando il traffico mesh e garantendo la compatibilità con tutte le app Meshtastic.
 
 #### 📊 Come leggere il dato (Campo Voltage)
 Quando la funzionalità è attiva, il valore visualizzato nel campo **Volt (V)** della telemetria non indica una tensione elettrica, ma una stringa numerica composta:
- 
+
+* **Parte Intera (Gradi):** Rappresenta la temperatura della Box in °C.
+* **Parte Decimale (Umidità):** Rappresenta la percentuale di umidità relativa (HR%).
+
 > ***Esempio di lettura:***
 > Se leggi **`32.65 V`** sul display o sull'app, significa:
-> * **Temperatura Box:** 32.65°C
-
+> * **Temperatura Box:** 32°C
+> * **Umidità:** 65%
 
 ---
 
@@ -82,7 +85,18 @@ Alcuni sensori (come il BME280 o l'SHT3x) permettono di cambiare indirizzo trami
 
 ---
 
- 
+### 🛠️ Configurazione Logica (Macro `HAS_HUMIDITY`)
+
+Il comportamento dell'iniezione dipende dalla configurazione hardware tramite macro:
+
+1.  ***HAS_HUMIDITY = 1***
+    * **Con sensore Umidità (es. SHT21 o BME280):** Il valore è combinato (es. `25.60` = 25°C e 60% HR).
+    * **Senza sensore Umidità (es. BMP280):** Il valore mostrerà `.00` nei decimali (es. `25.00`).
+2.  ***HAS_HUMIDITY = 0***
+    * La funzione umidità viene disabilitata.
+    * Il sistema torna a mostrare la **temperatura reale come numero intero** (es. `25.0 V` = 25.85°C).
+    * 
+---
 
 ### 🔌 Supporto Sensori Legacy e Alternativi
 Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimentata da:
@@ -380,5 +394,8 @@ This project is a customized version of the **Meshtastic** firmware.
 
 ### About this project
 This repository includes specific modifications and hardware optimizations and some config customizations.
+
+---
+
 
 ---
