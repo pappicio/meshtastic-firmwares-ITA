@@ -396,3 +396,6 @@ This project is a customized version of the **Meshtastic** firmware.
 This repository includes specific modifications and hardware optimizations and some config customizations.
 
 ---
+
+
+---
