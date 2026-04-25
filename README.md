@@ -82,18 +82,7 @@ Alcuni sensori (come il BME280 o l'SHT3x) permettono di cambiare indirizzo trami
 
 ---
 
-### 🛠️ Configurazione Logica (Macro `HAS_HUMIDITY`)
-
-Il comportamento dell'iniezione dipende dalla configurazione hardware tramite macro:
-
-1.  ***HAS_HUMIDITY = 1***
-    * **Con sensore Umidità (es. SHT21 o BME280):** Il valore è combinato (es. `25.60` = 25°C e 60% HR).
-    * **Senza sensore Umidità (es. BMP280):** Il valore mostrerà `.00` nei decimali (es. `25.00`).
-2.  ***HAS_HUMIDITY = 0***
-    * La funzione umidità viene disabilitata.
-    * Il sistema torna a mostrare la **temperatura reale come numero intero** (es. `25.0 V` = 25.85°C).
-    * 
----
+ 
 
 ### 🔌 Supporto Sensori Legacy e Alternativi
 Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimentata da:
