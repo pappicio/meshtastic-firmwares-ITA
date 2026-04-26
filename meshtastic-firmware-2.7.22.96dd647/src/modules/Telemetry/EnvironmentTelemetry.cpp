@@ -144,6 +144,10 @@ EnvironmentTelemetryModule *EnvironmentTelemetryModule::instance = nullptr;
 
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 
+
+static bool isTelemetryBusy = false;
+
+
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
     if (!moduleConfig.telemetry.environment_measurement_enabled && 
@@ -559,16 +563,26 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
 
 
 void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
-    meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
     leggisolouno=true;
+    meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
     // Chiamiamo la tua funzione "buona"
     // Lei farà il giro dei sensori e aggiornerà la variabile globale fanTemp
     getEnvironmentTelemetry(&m); 
-     leggisolouno=false;
+    leggisolouno=false;
 }
 
 bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m)
 {
+
+    // 2. The Gatekeeper: if busy, exit immediately to prevent I2C collision
+    if (isTelemetryBusy) {
+        LOG_WARN("TELEMETRY: Resource busy, skipping to avoid WDT reset");
+        return false; 
+    }
+
+    // 3. Lock the resource
+    isTelemetryBusy = true;
+
     LOG_DEBUG("TELEMETRY: Avvio getEnvironmentTelemetry");
 
     bool valid = false;
@@ -593,6 +607,8 @@ for (TelemetrySensor *sensor : sensors) {
                 if (sensor->getMetrics(m)) {
                     fanTemp = m->variant.environment_metrics.temperature;
                     LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f", fanTemp);
+                    // 3. Lock the resource
+                    isTelemetryBusy = false;
                     return true; 
                 } else {
                     LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!");
@@ -723,6 +739,7 @@ m->variant.environment_metrics.current = (float)relayMap;
 
     LOG_INFO("TELEMETRY: Relay Status Map: %d (Inviato come %.1f)", relayMap, m->variant.environment_metrics.current);
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
+    isTelemetryBusy = false;
     return valid && hasSensor;
 }
 
