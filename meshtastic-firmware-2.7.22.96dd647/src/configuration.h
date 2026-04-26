@@ -649,7 +649,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /**
  * Se definita a 1, abilita la modalità "Solar Ghost".
  * Lo schermo rimarrà spento durante la ricezione di messaggi radio e al distacco dell'alimentazione USB.
- * Si accenderà solo tramite pressione del tasto fisico o al collegamento di una fonte USB (manutenzione).
+ * Si accenderà solo tramite pressione del tasto fisico.
  */
 #define KEEP_SCREEN_OFF 1
 
