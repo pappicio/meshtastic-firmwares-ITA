@@ -208,9 +208,21 @@ void Screen::showNodePicker(const char *message, uint32_t durationMs, std::funct
     NotificationRenderer::curSelected = 0;
     NotificationRenderer::current_notification_type = notificationTypeEnum::node_picker;
 
+
     static OverlayCallback overlays[] = {graphics::UIRenderer::drawNavigationBar, NotificationRenderer::drawBannercallback};
+// ... parte iniziale ...
     ui->setOverlays(overlays, sizeof(overlays) / sizeof(overlays[0]));
+ 
+#ifdef KEEP_SCREEN_OFF
+    // Se lo schermo è spento e non è un pairing, gira a 1 FPS per risparmiare
+    if (!screenOn) { 
+        ui->setTargetFPS(1); 
+    } else {
+        ui->setTargetFPS(60);
+    }
+#else
     ui->setTargetFPS(60);
+#endif
     ui->update();
 }
 
@@ -1489,19 +1501,22 @@ int Screen::handleStatusUpdate(const meshtastic::Status *arg)
         nodeDB->updateGUI = false;
         break;
 
+
+        
+
 case STATUS_TYPE_POWER: {
         bool currentUSB = powerStatus->getHasUSB();
+        bool hasBattery = powerStatus->getHasBattery();
+
         if (currentUSB != lastPowerUSBState) {
-            
             #ifdef KEEP_SCREEN_OFF
-                if (currentUSB) {
-                    // LOG DI DEBUG
-                    LOG_DEBUG("SOLAR DEBUG: USB ON rilevata (last was %d). Accendo.", lastPowerUSBState);
-                    setOn(true);    
-                    forceDisplay(true); 
-                } else {
-                    LOG_DEBUG("SOLAR DEBUG: USB OFF rilevata. Resto spento.");
+                // Accendiamo solo se c'è una batteria REALE e inseriamo il cavo.
+                // Se non c'è batteria, ignoriamo qualsiasi sbalzo della USB.
+                if (hasBattery && currentUSB && !lastPowerUSBState) {
+                    setOn(true);
+                    forceDisplay(true);
                 }
+                // Nessun LOG_DEBUG qui per evitare crash durante i cali di tensione
             #else
                 setOn(true);
                 forceDisplay(true);
@@ -1511,6 +1526,12 @@ case STATUS_TYPE_POWER: {
         }
         break;
     }
+
+
+
+
+
+
     }
     return 0;
 }
