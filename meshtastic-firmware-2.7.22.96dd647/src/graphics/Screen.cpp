@@ -151,29 +151,11 @@ void Screen::showSimpleBanner(const char *message, uint32_t durationMs)
 }
 
 // Called to trigger a banner with custom message and duration
-// Called to trigger a banner with custom message and duration
 void Screen::showOverlayBanner(BannerOverlayOptions banner_overlay_options)
 {
 #ifdef USE_EINK
     EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // Skip full refresh for all overlay menus
 #endif
-
-#ifdef KEEP_SCREEN_OFF
-    if (banner_overlay_options.message != nullptr) {
-        const char* msg = banner_overlay_options.message;
-        
-        // Lo schermo si accende SOLO se nel messaggio sono presenti 
-        // SIA riferimenti al Bluetooth SIA la richiesta del codice.
-        // Questo evita accensioni per altri banner di sistema.
-        if (strstr(msg, "lue") != nullptr && 
-            strstr(msg, "nter") != nullptr && 
-            strstr(msg, "ode") != nullptr) {
-            LOG_DEBUG("SOLAR DEBUG: Pairing rilevato (BT + Enter + Code). Sveglia!");
-            setOn(true);
-        }
-    }
-#endif
-
     // Store the message and set the expiration timestamp
     strncpy(NotificationRenderer::alertBannerMessage, banner_overlay_options.message, 255);
     NotificationRenderer::alertBannerMessage[255] = '\0'; // Ensure null termination
@@ -208,21 +190,9 @@ void Screen::showNodePicker(const char *message, uint32_t durationMs, std::funct
     NotificationRenderer::curSelected = 0;
     NotificationRenderer::current_notification_type = notificationTypeEnum::node_picker;
 
-
     static OverlayCallback overlays[] = {graphics::UIRenderer::drawNavigationBar, NotificationRenderer::drawBannercallback};
-// ... parte iniziale ...
     ui->setOverlays(overlays, sizeof(overlays) / sizeof(overlays[0]));
- 
-#ifdef KEEP_SCREEN_OFF
-    // Se lo schermo è spento e non è un pairing, gira a 1 FPS per risparmiare
-    if (!screenOn) { 
-        ui->setTargetFPS(1); 
-    } else {
-        ui->setTargetFPS(60);
-    }
-#else
     ui->setTargetFPS(60);
-#endif
     ui->update();
 }
 
@@ -1697,7 +1667,6 @@ int Screen::handleInputEvent(const InputEvent *event)
     LOG_INPUT("Screen Input event %u! kb %u", event->inputEvent, event->kbchar);
     // --- A COSI' (Versione Solar/Ninja) ---
     if (!screenOn) {
-        setOn(true); // FORZA l'accensione subito!
         return 0;    // Esci qui, così il primo click serve solo a svegliarlo
     }
     // -----------------------------------
