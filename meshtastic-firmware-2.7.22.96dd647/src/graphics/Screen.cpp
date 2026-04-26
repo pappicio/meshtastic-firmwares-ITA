@@ -753,7 +753,7 @@ void Screen::setOn(bool on, FrameCallback einkScreensaver)
     // Debug specifico per il Nodo Solare
 #ifdef KEEP_SCREEN_OFF
     if (on && !screenOn) {
-        LOG_DEBUG("SOLAR DEBUG: Rilevata chiamata a setOn(true) con KEEP_SCREEN_OFF attivo!");
+       //// LOG_DEBUG("SOLAR DEBUG: Rilevata chiamata a setOn(true) con KEEP_SCREEN_OFF attivo!");
     }
 #endif
 
@@ -1495,41 +1495,35 @@ int Screen::handleStatusUpdate(const meshtastic::Status *arg)
 {
     switch (arg->getStatusType()) {
     case STATUS_TYPE_NODE:
+    // Sotto KEEP_SCREEN_OFF, non vogliamo che l'arrivo di nuovi nodi svegli nulla
+    #ifndef KEEP_SCREEN_OFF
         if (showingNormalScreen && nodeStatus->getLastNumTotal() != nodeStatus->getNumTotal()) {
             setFrames(FOCUS_PRESERVE); 
         }
-        nodeDB->updateGUI = false;
-        break;
+    #endif
+    nodeDB->updateGUI = false; // Aggiorna i dati internamente ma non forzare il refresh video
+    break;
 
-
-        
 
 case STATUS_TYPE_POWER: {
-        bool currentUSB = powerStatus->getHasUSB();
-        bool hasBattery = powerStatus->getHasBattery();
+    bool currentUSB = powerStatus->getHasUSB();
+    // bool hasBattery = powerStatus->getHasBattery(); // Non ci serve più se non accendiamo
 
-        if (currentUSB != lastPowerUSBState) {
-            #ifdef KEEP_SCREEN_OFF
-                // Accendiamo solo se c'è una batteria REALE e inseriamo il cavo.
-                // Se non c'è batteria, ignoriamo qualsiasi sbalzo della USB.
-                if (hasBattery && currentUSB && !lastPowerUSBState) {
-                    setOn(true);
-                    forceDisplay(true);
-                }
-                // Nessun LOG_DEBUG qui per evitare crash durante i cali di tensione
-            #else
-                setOn(true);
-                forceDisplay(true);
-            #endif
-
+    if (currentUSB != lastPowerUSBState) {
+        #ifdef KEEP_SCREEN_OFF
+            // LOGICA "STICAZZI": 
+            // Aggiorniamo solo lo stato interno per la telemetria, 
+            // ma NON chiamiamo setOn(true). Lo schermo resta spento.
+            lastPowerUSBState = currentUSB; 
+        #else
+            // Comportamento standard Meshtastic
+            setOn(true);
+            forceDisplay(true);
             lastPowerUSBState = currentUSB;
-        }
-        break;
+        #endif
     }
-
-
-
-
+    break;
+}
 
 
     }
@@ -1701,20 +1695,12 @@ int Screen::handleUIFrameEvent(const UIFrameEvent *event)
 int Screen::handleInputEvent(const InputEvent *event)
 {
     LOG_INPUT("Screen Input event %u! kb %u", event->inputEvent, event->kbchar);
-
-    // Se lo schermo è spento...
+    // --- A COSI' (Versione Solar/Ninja) ---
     if (!screenOn) {
-#ifdef KEEP_SCREEN_OFF
-        // ...e siamo in modalità solare, il tasto deve ACCENDERLO
-        setOn(true);
-        return 0; // Usciamo così il primo click "sveglia" solo il display
-#else
-        // ...comportamento originale se la macro non c'è
-        return 0; 
-#endif
+        setOn(true); // FORZA l'accensione subito!
+        return 0;    // Esci qui, così il primo click serve solo a svegliarlo
     }
-
-    // -----------------------
+    // -----------------------------------
 
     // Se arriviamo qui, lo schermo è già acceso (o la macro non è attiva)
     // Procediamo con la logica originale di Meshtastic
