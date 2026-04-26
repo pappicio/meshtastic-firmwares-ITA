@@ -877,14 +877,23 @@ void Power::readPowerStatus()
     static bool wasManuallyReset = false; // <--- Nuova variabile per ricordarci del tasto
 
     // 1. ECCEZIONE MANUALE
+    // 1. ECCEZIONE MANUALE (IL TASTO)
     if (isFirstCycle) {
         isFirstCycle = false;
+        
         if (batteryVoltageMv < FORCE_SLEEP_MV) {
+            LOG_ERROR("BATTERY: Tensione insufficiente per avviom, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
             shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
             return;
         }
-        wasManuallyReset = true; // Ci segniamo che l'accensione è "voluta" dall'utente
-        LOG_INFO("BATTERY: Reset Manuale. Entro in zona grigia protetta.");
+
+        // Qui decidiamo che messaggio darti al boot
+        if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+            LOG_INFO("BATTERY: Reset Manuale OK. Batteria carica, zona VERDE (%d mV).", batteryVoltageMv);
+        } else {
+            wasManuallyReset = true; // Permesso speciale zona grigia
+            LOG_WARN("BATTERY: Reset Manuale in RISERVA, zona GRIGIA (%d mV). Avvio forzato.", batteryVoltageMv);
+        }
     }
 
     // 2. LOGICA ISTERESI
