@@ -151,11 +151,29 @@ void Screen::showSimpleBanner(const char *message, uint32_t durationMs)
 }
 
 // Called to trigger a banner with custom message and duration
+// Called to trigger a banner with custom message and duration
 void Screen::showOverlayBanner(BannerOverlayOptions banner_overlay_options)
 {
 #ifdef USE_EINK
     EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // Skip full refresh for all overlay menus
 #endif
+
+#ifdef KEEP_SCREEN_OFF
+    if (banner_overlay_options.message != nullptr) {
+        const char* msg = banner_overlay_options.message;
+        
+        // Lo schermo si accende SOLO se nel messaggio sono presenti 
+        // SIA riferimenti al Bluetooth SIA la richiesta del codice.
+        // Questo evita accensioni per altri banner di sistema.
+        if (strstr(msg, "lue") != nullptr && 
+            strstr(msg, "nter") != nullptr && 
+            strstr(msg, "ode") != nullptr) {
+            LOG_DEBUG("SOLAR DEBUG: Pairing rilevato (BT + Enter + Code). Sveglia!");
+            setOn(true);
+        }
+    }
+#endif
+
     // Store the message and set the expiration timestamp
     strncpy(NotificationRenderer::alertBannerMessage, banner_overlay_options.message, 255);
     NotificationRenderer::alertBannerMessage[255] = '\0'; // Ensure null termination
@@ -719,6 +737,14 @@ void Screen::setup()
 
 void Screen::setOn(bool on, FrameCallback einkScreensaver)
 {
+
+    // Debug specifico per il Nodo Solare
+#ifdef KEEP_SCREEN_OFF
+    if (on && !screenOn) {
+        LOG_DEBUG("SOLAR DEBUG: Rilevata chiamata a setOn(true) con KEEP_SCREEN_OFF attivo!");
+    }
+#endif
+
 #if defined(T_LORA_PAGER)
     if (cardKbI2cImpl)
         cardKbI2cImpl->toggleBacklight(on);
@@ -1458,22 +1484,37 @@ int Screen::handleStatusUpdate(const meshtastic::Status *arg)
     switch (arg->getStatusType()) {
     case STATUS_TYPE_NODE:
         if (showingNormalScreen && nodeStatus->getLastNumTotal() != nodeStatus->getNumTotal()) {
-            setFrames(FOCUS_PRESERVE); // Regen the list of screen frames (returning to same frame, if possible)
+            setFrames(FOCUS_PRESERVE); 
         }
         nodeDB->updateGUI = false;
         break;
-    case STATUS_TYPE_POWER: {
+
+case STATUS_TYPE_POWER: {
         bool currentUSB = powerStatus->getHasUSB();
         if (currentUSB != lastPowerUSBState) {
+            
+            #ifdef KEEP_SCREEN_OFF
+                if (currentUSB) {
+                    // LOG DI DEBUG
+                    LOG_DEBUG("SOLAR DEBUG: USB ON rilevata (last was %d). Accendo.", lastPowerUSBState);
+                    setOn(true);    
+                    forceDisplay(true); 
+                } else {
+                    LOG_DEBUG("SOLAR DEBUG: USB OFF rilevata. Resto spento.");
+                }
+            #else
+                setOn(true);
+                forceDisplay(true);
+            #endif
+
             lastPowerUSBState = currentUSB;
-            forceDisplay(true);
         }
         break;
     }
     }
-
     return 0;
 }
+
 
 // Handles when message is received; will jump to text message frame.
 int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
@@ -1484,35 +1525,35 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
             devicestate.has_rx_text_message = false;
             memset(&devicestate.rx_text_message, 0, sizeof(devicestate.rx_text_message));
             hiddenFrames.textMessage = true;
-            hasUnreadMessage = false; // Clear unread state when user replies
+            hasUnreadMessage = false; 
 
-            setFrames(FOCUS_PRESERVE); // Stay on same frame, silently update frame list
+            setFrames(FOCUS_PRESERVE); 
         } else {
             // Incoming message
-            devicestate.has_rx_text_message = true; // Needed to include the message frame
-            hasUnreadMessage = true;                // Enables mail icon in the header
-            setFrames(FOCUS_PRESERVE);              // Refresh frame list without switching view (no-op during text_input)
+            devicestate.has_rx_text_message = true; 
+            hasUnreadMessage = true;               
+            setFrames(FOCUS_PRESERVE);             
 
-            // Only wake/force display if the configuration allows it
+            // --- MODIFICA 1 ---
             if (shouldWakeOnReceivedMessage()) {
-                setOn(true);    // Wake up the screen first
-                forceDisplay(); // Forces screen redraw
+#ifndef KEEP_SCREEN_OFF
+                setOn(true);    // Sveglia lo schermo solo se NON siamo in modalità solare
+#endif
+                forceDisplay(); 
             }
-            // === Prepare banner/popup content ===
+            // ------------------
+
             const meshtastic_NodeInfoLite *node = nodeDB->getMeshNode(packet->from);
             const meshtastic_Channel channel =
                 channels.getByIndex(packet->channel ? packet->channel : channels.getPrimaryIndex());
             const char *longName = (node && node->has_user) ? node->user.long_name : nullptr;
-
             const char *msgRaw = reinterpret_cast<const char *>(packet->decoded.payload.bytes);
 
             char banner[256];
-
             bool isAlert = false;
 
             if (moduleConfig.external_notification.alert_bell || moduleConfig.external_notification.alert_bell_vibra ||
                 moduleConfig.external_notification.alert_bell_buzzer)
-                // Check for bell character to determine if this message is an alert
                 for (size_t i = 0; i < packet->decoded.payload.size && i < 100; i++) {
                     if (msgRaw[i] == ASCII_BELL) {
                         isAlert = true;
@@ -1520,28 +1561,24 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
                     }
                 }
 
-            // Unlike generic messages, alerts (when enabled via the ext notif module) ignore any
-            // 'mute' preferences set to any specific node or channel.
-            // If on-screen keyboard is active, show a transient popup over keyboard instead of interrupting it
             if (NotificationRenderer::current_notification_type == notificationTypeEnum::text_input) {
-                // Wake and force redraw so popup is visible immediately
+                // --- MODIFICA 2 ---
                 if (shouldWakeOnReceivedMessage()) {
-                    setOn(true);
+#ifndef KEEP_SCREEN_OFF
+                    setOn(true); // Sveglia lo schermo per popup sopra tastiera solo se NON in solare
+#endif
                     forceDisplay();
                 }
+                // ------------------
 
-                // Build popup: title = message source name, content = message text (sanitized)
-                // Title
                 char titleBuf[64] = {0};
                 if (longName && longName[0]) {
-                    // Sanitize sender name
                     std::string t = sanitizeString(longName);
                     strncpy(titleBuf, t.c_str(), sizeof(titleBuf) - 1);
                 } else {
                     strncpy(titleBuf, "Message", sizeof(titleBuf) - 1);
                 }
 
-                // Content: payload bytes may not be null-terminated, remove ASCII_BELL and sanitize
                 char content[256] = {0};
                 {
                     std::string raw;
@@ -1549,7 +1586,7 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
                     for (size_t i = 0; i < packet->decoded.payload.size; ++i) {
                         char c = msgRaw[i];
                         if (c == ASCII_BELL)
-                            continue; // strip bell
+                            continue; 
                         raw.push_back(c);
                     }
                     std::string sanitized = sanitizeString(raw);
@@ -1558,7 +1595,6 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
 
                 NotificationRenderer::showKeyboardMessagePopupWithTitle(titleBuf, content, 3000);
 
-// Maintain existing buzzer behavior on M5 if applicable
 #if defined(M5STACK_UNITC6L)
                 if (config.device.buzzer_mode != meshtastic_Config_DeviceConfig_BuzzerMode_DIRECT_MSG_ONLY ||
                     (isAlert && moduleConfig.external_notification.alert_bell_buzzer) ||
@@ -1567,7 +1603,6 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
                 }
 #endif
             } else {
-                // No keyboard active: use regular banner flow, respecting mute settings
                 if (isAlert) {
                     if (longName && longName[0]) {
                         snprintf(banner, sizeof(banner), "Alert Received from\n%s", longName);
@@ -1586,14 +1621,15 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
                         strcpy(banner, "New Message");
                     }
 #if defined(M5STACK_UNITC6L)
+                    // --- MODIFICA 3 ---
+#ifndef KEEP_SCREEN_OFF
                     screen->setOn(true);
+#endif
+                    // ------------------
                     screen->showSimpleBanner(banner, 1500);
                     if (config.device.buzzer_mode != meshtastic_Config_DeviceConfig_BuzzerMode_DIRECT_MSG_ONLY ||
                         (isAlert && moduleConfig.external_notification.alert_bell_buzzer) ||
                         (!isBroadcast(packet->to) && isToUs(packet))) {
-                        // Beep if not in DIRECT_MSG_ONLY mode or if in DIRECT_MSG_ONLY mode and either
-                        // - packet contains an alert and alert bell buzzer is enabled
-                        // - packet is a non-broadcast that is addressed to this node
                         playLongBeep();
                     }
 #else
@@ -1603,7 +1639,6 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
             }
         }
     }
-
     return 0;
 }
 
@@ -1645,8 +1680,23 @@ int Screen::handleUIFrameEvent(const UIFrameEvent *event)
 int Screen::handleInputEvent(const InputEvent *event)
 {
     LOG_INPUT("Screen Input event %u! kb %u", event->inputEvent, event->kbchar);
-    if (!screenOn)
-        return 0;
+
+    // Se lo schermo è spento...
+    if (!screenOn) {
+#ifdef KEEP_SCREEN_OFF
+        // ...e siamo in modalità solare, il tasto deve ACCENDERLO
+        setOn(true);
+        return 0; // Usciamo così il primo click "sveglia" solo il display
+#else
+        // ...comportamento originale se la macro non c'è
+        return 0; 
+#endif
+    }
+
+    // -----------------------
+
+    // Se arriviamo qui, lo schermo è già acceso (o la macro non è attiva)
+    // Procediamo con la logica originale di Meshtastic
 
     // Handle text input notifications specially - pass input to virtual keyboard
     if (NotificationRenderer::current_notification_type == notificationTypeEnum::text_input) {
@@ -1866,6 +1916,16 @@ bool shouldWakeOnReceivedMessage()
     - If role is not CLIENT / CLIENT_MUTE / CLIENT_HIDDEN / CLIENT_BASE
     - If the battery level is very low
     */
+
+    // --- FIX NODO SOLARE ---
+    // Se la macro è definita, forziamo il ritorno a 'false'.
+    // Indipendentemente dal ruolo del nodo o dallo stato batteria,
+    // i messaggi radio NON sveglieranno lo schermo.
+#ifdef KEEP_SCREEN_OFF
+    return false;
+#endif
+    // -----------------------
+
     if (moduleConfig.external_notification.enabled) {
         return false;
     }
