@@ -872,74 +872,52 @@ void Power::readPowerStatus()
 
         // ============================================================
 #ifdef FORCE_SLEEP_MV
-    // Variabili statiche che sopravvivono tra i cicli di runOnce()
     static bool systemArmed = false; 
     static bool isFirstCycle = true; 
-    static uint8_t low_pwr_cnt = 0;
+    static bool wasManuallyReset = false; // <--- Nuova variabile per ricordarci del tasto
 
-    // Rilevamento stato energia esterna
-    bool isExternalPower = (usbPowered == OptTrue);
-    bool isCharging = (isChargingNow == OptTrue);
-
-    // ============================================================
-    // 1. GESTIONE ENERGIA ESTERNA (USB/CARICA)
-    // ============================================================
-    if (isExternalPower || isCharging) {
-        if (!systemArmed) {
-            systemArmed = true;
-            LOG_INFO("BATTERY: USB/Carica rilevata. Sistema ARMATO.");
-        }
+    // 1. ECCEZIONE MANUALE
+    if (isFirstCycle) {
         isFirstCycle = false;
-        low_pwr_cnt = 0; // Reset contatore errori
-        // Non eseguiamo shutdown se siamo alimentati
-    } 
-    else {
-        // ============================================================
-        // 2. LOGICA DI CONTROLLO (SOLO BATTERIA)
-        // ============================================================
-
-        // CASO A: PRIMO AVVIO (Reset Manuale col tasto)
-        if (isFirstCycle) {
-            if (batteryVoltageMv >= FORCE_SLEEP_MV) {
-                systemArmed = true;
-                isFirstCycle = false;
-                LOG_INFO("BATTERY: Reset Manuale OK (%d mV). Sistema operativo.", batteryVoltageMv);
-            } else {
-                LOG_ERROR("BATTERY: Reset fallito. Tensione troppo bassa (%d mV).", batteryVoltageMv);
-                shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-                return;
-            }
+        if (batteryVoltageMv < FORCE_SLEEP_MV) {
+            shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+            return;
         }
-        
-        // CASO B: RISVEGLIO AUTOMATICO (Dopo lo shutdown di 12h)
-        else if (!systemArmed) {
-            if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-                systemArmed = true;
-                LOG_INFO("BATTERY: Risveglio Solare riuscito (%d mV). ARMATO.", batteryVoltageMv);
-            } else {
-                LOG_WARN("BATTERY: Risveglio fallito (%d mV < %d mV). Torno a dormire.", batteryVoltageMv, FORCE_WAKEUP_MV);
-                shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-                return;
-            }
-        }
-
-        // CASO C: MONITORAGGIO DURANTE IL FUNZIONAMENTO
-        else {
-            if (batteryVoltageMv > 500 && batteryVoltageMv <= FORCE_SLEEP_MV) {
-                low_pwr_cnt++;
-                LOG_WARN("BATTERY: Tensione critica %d mV (%u/%d)", batteryVoltageMv, low_pwr_cnt, ABSOLUTE_SHUTDOWN_COUNT);
-
-                if (low_pwr_cnt >= ABSOLUTE_SHUTDOWN_COUNT) {
-                    LOG_ERROR("BATTERY: Shutdown preventivo per %d ore.", FORCE_WAKEUP_HR);
-                    systemArmed = false; // Reset per il prossimo avvio solare
-                    shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-                    return;
-                }
-            } else {
-                low_pwr_cnt = 0; // Reset se la tensione torna stabile
-            }
-        }
+        wasManuallyReset = true; // Ci segniamo che l'accensione è "voluta" dall'utente
+        LOG_INFO("BATTERY: Reset Manuale. Entro in zona grigia protetta.");
     }
+
+    // 2. LOGICA ISTERESI
+    
+    // CASO A: CADUTA (Sotto 3.4V)
+    if (batteryVoltageMv < FORCE_SLEEP_MV) {
+        systemArmed = false;
+        wasManuallyReset = false; // Anche se era manuale, ora è troppo bassa
+        LOG_ERROR("BATTERY: Limite invalicabile. Shutdown.");
+        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+        return;
+    }
+
+    // CASO B: ARMO (Sopra 3.7V)
+    if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+        systemArmed = true; 
+        // Una volta armati, non ci serve più sapere se è stato un reset manuale
+        wasManuallyReset = false; 
+    }
+
+    // CASO C: ZONA GRIGIA (Tra 3.4V e 3.7V)
+    if (!systemArmed && !wasManuallyReset) {
+        // QUI sta il trucco: spegne SOLO se non siamo armati 
+        // E NON è stato un reset manuale.
+        LOG_WARN("BATTERY: Risveglio automatico in zona grigia. Torno a nanna.");
+        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+        return;
+    }
+
+    // Se siamo qui:
+    // - O siamo ARMATI (perché abbiamo toccato i 3.7V)
+    // - O siamo in RESET MANUALE (tra 3.4V e 3.7V)
+    // In entrambi i casi, il nodo RESTA ACCESO.
 #endif
             // ============================================================
 
