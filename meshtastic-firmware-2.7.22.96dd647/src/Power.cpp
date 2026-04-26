@@ -872,41 +872,72 @@ void Power::readPowerStatus()
 
         // ============================================================
 #ifdef FORCE_SLEEP_MV
-    // Rileviamo energia esterna (USB/Solar) e ricarica attiva
+    // Variabili statiche che sopravvivono tra i cicli di runOnce()
+    static bool systemArmed = false; 
+    static bool isFirstCycle = true; 
+    static uint8_t low_pwr_cnt = 0;
+
+    // Rilevamento stato energia esterna
     bool isExternalPower = (usbPowered == OptTrue);
     bool isCharging = (isChargingNow == OptTrue);
 
-    // [FASE 1] ARMAMENTO: Si attiva se c'è ricarica o se superiamo i 3.7V
-    if (!systemArmed && (batteryVoltageMv >= FORCE_WAKEUP_MV || isExternalPower || isCharging)) {
-        systemArmed = true;
-        LOG_INFO("BATTERY: [ARMED] Protezione attiva (Soglia: %d mV)", FORCE_SLEEP_MV);
-    }
+    // ============================================================
+    // 1. GESTIONE ENERGIA ESTERNA (USB/CARICA)
+    // ============================================================
+    if (isExternalPower || isCharging) {
+        if (!systemArmed) {
+            systemArmed = true;
+            LOG_INFO("BATTERY: USB/Carica rilevata. Sistema ARMATO.");
+        }
+        isFirstCycle = false;
+        low_pwr_cnt = 0; // Reset contatore errori
+        // Non eseguiamo shutdown se siamo alimentati
+    } 
+    else {
+        // ============================================================
+        // 2. LOGICA DI CONTROLLO (SOLO BATTERIA)
+        // ============================================================
 
-    // [FASE 2] MONITORAGGIO: Solo se armato e NON collegato a fonti esterne
-    if (systemArmed) {
-        if (!isExternalPower && !isCharging) {
-            static uint8_t low_pwr_cnt = 0;
-
-            if (batteryVoltageMv > 500 && batteryVoltageMv <= FORCE_SLEEP_MV) {
-                low_pwr_cnt++;
-                LOG_WARN("BATTERY: Low Voltage %d mV (%u/%d)", batteryVoltageMv, low_pwr_cnt, ABSOLUTE_SHUTDOWN_COUNT);
-
-                if (low_pwr_cnt >= ABSOLUTE_SHUTDOWN_COUNT) {
-                    LOG_ERROR("BATTERY: Soglia critica! Shutdown for %d hours.", FORCE_WAKEUP_HR);
-                    systemArmed = false; // Reset per il prossimo riavvio manuale
-                    shutdown(FORCE_WAKEUP_HR * 3600 * 1000); 
-                    return; 
-                }
+        // CASO A: PRIMO AVVIO (Reset Manuale col tasto)
+        if (isFirstCycle) {
+            if (batteryVoltageMv >= FORCE_SLEEP_MV) {
+                systemArmed = true;
+                isFirstCycle = false;
+                LOG_INFO("BATTERY: Reset Manuale OK (%d mV). Sistema operativo.", batteryVoltageMv);
             } else {
-                low_pwr_cnt = 0; // Reset se la tensione risale
+                LOG_ERROR("BATTERY: Reset fallito. Tensione troppo bassa (%d mV).", batteryVoltageMv);
+                shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+                return;
             }
         }
-    } else {
-        // Log di cortesia se il sistema è in modalità manuale (non ancora armato)
-        static uint32_t lastManualLog = 0;
-        if (millis() - lastManualLog > 60000) { 
-            LOG_DEBUG("BATTERY: Manual Mode - Not armed yet (%d mV)", batteryVoltageMv);
-            lastManualLog = millis();
+        
+        // CASO B: RISVEGLIO AUTOMATICO (Dopo lo shutdown di 12h)
+        else if (!systemArmed) {
+            if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+                systemArmed = true;
+                LOG_INFO("BATTERY: Risveglio Solare riuscito (%d mV). ARMATO.", batteryVoltageMv);
+            } else {
+                LOG_WARN("BATTERY: Risveglio fallito (%d mV < %d mV). Torno a dormire.", batteryVoltageMv, FORCE_WAKEUP_MV);
+                shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+                return;
+            }
+        }
+
+        // CASO C: MONITORAGGIO DURANTE IL FUNZIONAMENTO
+        else {
+            if (batteryVoltageMv > 500 && batteryVoltageMv <= FORCE_SLEEP_MV) {
+                low_pwr_cnt++;
+                LOG_WARN("BATTERY: Tensione critica %d mV (%u/%d)", batteryVoltageMv, low_pwr_cnt, ABSOLUTE_SHUTDOWN_COUNT);
+
+                if (low_pwr_cnt >= ABSOLUTE_SHUTDOWN_COUNT) {
+                    LOG_ERROR("BATTERY: Shutdown preventivo per %d ore.", FORCE_WAKEUP_HR);
+                    systemArmed = false; // Reset per il prossimo avvio solare
+                    shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+                    return;
+                }
+            } else {
+                low_pwr_cnt = 0; // Reset se la tensione torna stabile
+            }
         }
     }
 #endif

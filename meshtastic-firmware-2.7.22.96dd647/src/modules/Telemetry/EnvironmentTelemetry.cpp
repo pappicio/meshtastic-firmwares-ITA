@@ -588,13 +588,10 @@ for (TelemetrySensor *sensor : sensors) {
         if (leggisolouno) {
             // LOG DI DEBUG: Vediamo se il ciclo almeno parte
             LOG_DEBUG("FAN CHECK: Controllo sensore all'indirizzo 0x%02x", currentAddr);
-    if (currentAddr == I2C_FAN_SENSOR_ADDR) {
-        // Creiamo una struct temporanea locale solo per questa lettura
-        meshtastic_Telemetry tempMetrics = meshtastic_Telemetry_init_zero;
-        tempMetrics.which_variant = meshtastic_Telemetry_environment_metrics_tag;
-        if (sensor->getMetrics(&tempMetrics)) {
-            // Estraiamo i dati dalla struct temporanea
-            fanTemp = tempMetrics.variant.environment_metrics.temperature;
+
+            if (currentAddr == I2C_FAN_SENSOR_ADDR) {
+                if (sensor->getMetrics(m)) {
+                    fanTemp = m->variant.environment_metrics.temperature;
                     LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f", fanTemp);
                     return true; 
                 } else {
@@ -611,7 +608,7 @@ for (TelemetrySensor *sensor : sensors) {
         // --- GESTIONE SENSORE BOX (BME280) ---
 #ifdef I2C_FAN_SENSOR_ADDR
         if (currentAddr == I2C_FAN_SENSOR_ADDR) {
-            LOG_DEBUG("TELEMETRY: Salto sensore Box all'indirizzo 0x%02x (verrà iniettato dopo)", currentAddr);
+            LOG_DEBUG("TELEMETRY: Salto sensore Box all'indirizzo 0x%02x (verra' iniettato dopo)", currentAddr);
             continue; 
         }
 #endif
