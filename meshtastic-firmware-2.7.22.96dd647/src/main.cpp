@@ -197,6 +197,8 @@ bool osk_found = false;
 float fanTemp = -100.0f;
 float fanHum = 0.0f;
 
+boolean onsleep=false;
+
 // The I2C address of the RTC Module (if found)
 ScanI2C::DeviceAddress rtc_found = ScanI2C::ADDRESS_NONE;
 // The I2C address of the Accelerometer (if found)

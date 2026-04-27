@@ -25,6 +25,14 @@
 #include "power/PowerHAL.h"
 #include "sleep.h"
 
+
+
+
+#include "modules/Telemetry/EnvironmentTelemetry.h"
+
+
+
+
 #if defined(ARCH_PORTDUINO)
 #include "api/WiFiServerAPI.h"
 #include "input/LinuxInputImpl.h"
@@ -148,6 +156,12 @@ XPowersPPM *PPM = NULL;
 #ifdef HAS_PMU
 XPowersLibInterface *PMU = NULL;
 #else
+
+extern boolean onsleep;
+
+extern EnvironmentTelemetryModule *environmentTelemetryModule;
+
+
 
 // Copy of the base class defined in axp20x.h.
 // I'd rather not include axp20x.h as it brings Wire dependency.
@@ -846,6 +860,39 @@ void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
 #endif
 }
 
+
+
+
+
+
+void sendlasttelemetry() {
+            // 1. Individuazione e spegnimento forzato dei GPIO definiti
+        #ifdef FAN_RELAY_PIN
+            pinMode(FAN_RELAY_PIN, OUTPUT);
+            digitalWrite(FAN_RELAY_PIN, LOW);
+        #endif
+
+        #ifdef RELAY_1_PIN
+            pinMode(RELAY_1_PIN, OUTPUT);
+            digitalWrite(RELAY_1_PIN, LOW); // Assumendo Active High
+        #endif
+
+        #ifdef RELAY_2_PIN
+            pinMode(RELAY_2_PIN, OUTPUT);
+            digitalWrite(RELAY_2_PIN, LOW);
+        #endif
+        
+        onsleep = true;
+        
+
+    if (EnvironmentTelemetryModule::instance != nullptr) {
+        // La chiamiamo dritta in faccia
+        EnvironmentTelemetryModule::instance->aggiornaTemperaturaBox();
+    }
+
+}
+
+
 /// Reads power status to powerStatus singleton.
 //
 // TODO(girts): move this and other axp stuff to power.h/power.cpp.
@@ -902,7 +949,11 @@ void Power::readPowerStatus()
     if (batteryVoltageMv < FORCE_SLEEP_MV) {
         systemArmed = false;
         wasManuallyReset = false; // Anche se era manuale, ora è troppo bassa
-        LOG_ERROR("BATTERY: Limite invalicabile. Shutdown.");
+        LOG_ERROR("BATTERY: Limite invalicabile. spengo tutto e Shutdown.");
+
+
+        sendlasttelemetry();
+
         shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
         return;
     }
@@ -922,6 +973,8 @@ void Power::readPowerStatus()
         shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
         return;
     }
+    
+    onsleep = false;
 
     // Se siamo qui:
     // - O siamo ARMATI (perché abbiamo toccato i 3.7V)

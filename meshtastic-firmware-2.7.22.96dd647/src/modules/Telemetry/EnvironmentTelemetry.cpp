@@ -144,6 +144,7 @@ EnvironmentTelemetryModule *EnvironmentTelemetryModule::instance = nullptr;
 
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 
+extern boolean onsleep;
 
 static bool isTelemetryBusy = false;
 
@@ -562,23 +563,51 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
 
 
 
+
+
 void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
-    leggisolouno=true;
+    // 1. Configurazione FLAG per la lettura
+    if (onsleep) {
+        // Se stiamo per morire, forziamo la lettura di TUTTI i sensori (SHT20, BMP280, OneWire)
+        // per avere il codice 8xxx (prefisso + stato relay) reale.
+        leggisolouno = false; 
+        LOG_INFO("BATTERY: Preparazione 'Ultimo Respiro'. Scansione totale sensori...");
+    } else {
+        // Lettura rapida solo per controllo ventola (solo BME/BMP)
+        leggisolouno = true; 
+    }
+
+    // 2. ESECUZIONE LETTURA: Popola fanTemp e prepara l'oggetto Telemetry
     meshtastic_Telemetry m = meshtastic_Telemetry_init_zero;
-    // Chiamiamo la tua funzione "buona"
-    // Lei farà il giro dei sensori e aggiornerà la variabile globale fanTemp
     getEnvironmentTelemetry(&m); 
-    leggisolouno=false;
+
+    // 3. INVIO DOPPIO: Spara i dati sia sulla Mesh che al Telefono
+    if (onsleep) {
+        // Invia alla rete LoRa (per gli altri nodi e MQTT)
+        sendTelemetry(); 
+
+        // Invia al Bluetooth (per l'App sul tuo telefono se sei vicino)
+        // Usiamo NODENUM_BROADCAST e true per forzare il pacchetto verso il BLE
+        sendTelemetry(NODENUM_BROADCAST, true); 
+
+        LOG_INFO("BATTERY: Telemetria finale inviata (LoRa + BLE). Addio.");
+    }
+
+    // 4. RIPRISTINO: Riporta il flag a false per il prossimo risveglio tra 12 ore
+    leggisolouno = false;
 }
+
+
+
 
 bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m)
 {
 
     // 2. The Gatekeeper: if busy, exit immediately to prevent I2C collision
-    if (isTelemetryBusy) {
-        LOG_WARN("TELEMETRY: Resource busy, skipping to avoid WDT reset");
-        return false; 
-    }
+    //////// if (isTelemetryBusy) {
+    ////////     LOG_WARN("TELEMETRY: Resource busy, skipping to avoid WDT reset");
+    ////////     return false; 
+    //////// }
 
     // 3. Lock the resource
     isTelemetryBusy = true;
@@ -600,22 +629,37 @@ for (TelemetrySensor *sensor : sensors) {
           uint8_t currentAddr = sensor->getAddr();
 
         if (leggisolouno) {
-            // LOG DI DEBUG: Vediamo se il ciclo almeno parte
+#ifdef I2C_FAN_SENSOR_ADDR
             LOG_DEBUG("FAN CHECK: Controllo sensore all'indirizzo 0x%02x", currentAddr);
 
             if (currentAddr == I2C_FAN_SENSOR_ADDR) {
                 if (sensor->getMetrics(m)) {
                     fanTemp = m->variant.environment_metrics.temperature;
-                    LOG_INFO("FAN CHECK: Lettura riuscita! Temp: %.1f", fanTemp);
-                    // 3. Lock the resource
+                    LOG_INFO("FAN CHECK: Lettura riuscita su 0x%02x! Temp: %.1f", currentAddr, fanTemp);
                     isTelemetryBusy = false;
-                    return true; 
+                    return true; // Missione compiuta, usciamo
                 } else {
-                    LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!");
+                    LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!", currentAddr);
+                    // Fallimento lettura: impostiamo errore e usciamo comunque
+                    fanTemp = -150.0f;
+                    isTelemetryBusy = false;
+                    return false;
                 }
             }
+            // Se non è l'indirizzo giusto, continua il ciclo per cercarlo
             continue; 
+#else
+            // SE NON È DEFINITO: Non possiamo sapere qual è il sensore giusto.
+            // Impostiamo il valore di errore, sblocchiamo e chiudiamo la funzione.
+            LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere box.");
+            fanTemp = -150.0f;
+            isTelemetryBusy = false;
+            return false; 
+#endif
         }
+
+
+        
         // ... qui segue il resto della funzione normale ...
 
 
@@ -731,6 +775,19 @@ int relayMap = 5000;
 if (fanTemp <= -50.0f || fanTemp >= 150.0f) {
     relayMap += 4000; 
 }
+
+if (onsleep) {
+    if (relayMap >= 9000) {
+        // Eravamo in errore (9), sottraiamo 1000 per portarlo a 8 (Sleep)
+        relayMap -= 1000; 
+    } else if (relayMap < 6000) {
+        // Eravamo regolari (5), sommiamo 3000 per portarlo a 8 (Sleep)
+        relayMap += 3000;
+    }
+    // NOTA: Se per qualche motivo relayMap fosse già 8xxx (es. doppio check), 
+    // queste condizioni lo lasciano invariato.
+}
+
 
 // --- INIEZIONE NELLE METRICHE ---
 // Usiamo il campo 'current' (Ampere) per mostrare la mappa di stato
