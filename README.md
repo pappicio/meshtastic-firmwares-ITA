@@ -456,7 +456,8 @@ Tutte le impostazioni sopra citate sono cablate nel file configuration.h. Per mo
 ### 🔍 Analisi Diagnostica: Gestione Sensori I2C e "Ghost Telemetry"
 
 In questa versione del firmware, il sistema gestisce in modo intelligente fino a 3 sensori I2C simultaneamente, distinguendo tra ambiente esterno e monitoraggio interno della box. Di seguito un esempio reale di log che illustra la logica di iniezione dei dati:
-'''
+
+```cpp
 
 
 LOG OPERATIVO:
@@ -471,7 +472,8 @@ LOG OPERATIVO:
 9. TELEMETRY: Fine procedura. Valid=YES
 
 
-'''
+```
+
 COSA SIGNIFICA QUESTA LOGICA:
 
 - ISOLAMENTO I2C: Il sistema riconosce che il sensore all'indirizzo 0x40 è montato dentro la box. Lo esclude dai dati meteo pubblici per evitare che il calore interno falsi le statistiche ambientali.
