@@ -109,6 +109,12 @@ Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimen
 ### 📊 Dashboard "5-1-0-2" su App Meshtastic
 Abbiamo rivoluzionato il campo **Current (A)** della telemetria. Non leggerai milliampere casuali, ma un ***display di stato digitale a 3 cifre***.
 
+The ***"Last Breath"*** Protocol (trasporto dell'Ultimo Dato)
+
+I nodi standard "muoiono" in silenzio quando la batteria finisce. Questo firmware ora esegue una **sequenza di shutdown cerimoniale**:
+
+nel senso che al raggiungimento del limite minimo di sopravvivenza batteria (di default 3400 mA) il dispoitico spegne tutti i relay ch epotrebbero essere attivi:Ventola e eventualmente gli altri 2 assegnati, invia un aggiorna,ento telemetria broadcast con codice 8xxx (8000, ad intendere ho spento tutto e mi accingo al riposo forzato per 12 ore).
+
 Ogni posizione numerica rappresenta un dispositivo:
 **Cifra 1: Ventola | Cifra 2: Relay 1 (Luce) | Cifra 3: Relay 2 (Pompa)**
 
@@ -121,6 +127,7 @@ Ogni posizione numerica rappresenta un dispositivo:
 > 
 > **Anomalia:** Se l'app mostra **9**102.0 A, significa: Errore nella lettura temperatura ventola, anche se Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
 
+> **Codice 8xxx:** Il campo *Current* viene impostato con il prefisso **8**, segnalando a tutta la rete che il nodo sta entrando in ibernazione controllata per 12 ore a causa della batteria scarica e non per un guasto hardware.
 ---
 
 # 🚀 Caratteristiche Tecniche e Personalizzazioni
@@ -134,40 +141,185 @@ Questo firmware implementa una gestione avanzata del risparmio energetico e del 
 Modifica queste macro nel file di configurazione per adattare il firmware al tuo hardware. Il sistema è progettato per essere **autonomo**: una volta impostato, gestisce energia e raffreddamento senza interventi esterni.
 
 ```cpp
+/*
+ * ========================================================================================
+ * ITALIA SMART POWER EDITION - CONFIGURATION FILE
+ * ========================================================================================
+ * Firmware Modificato v2.7.22 - Supporto Last Breath & Smart Recovery
+ */
+
+
+
+
+
+// --- INFO PROPRIETARIO ---
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO NODO"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MN01"
+
+ 
+// NUMERO DI HOPS DI DEFAULT
+#define HOPS_DEFAULT 4
+
+// NODES
+#define USERPREFS_MAX_NUM_NODES 100
+
+
+// RANDOM ID!
+#define RANDOM_ID_ON_FACTORY_RESET 0
+
+
+// Disabilitiamo led blink all'avvio 
+#define LED_DISABLED 1
+
+/**
+ * Se definita a 1, abilita la modalità "Solar Ghost".
+ * Lo schermo rimarrà spento durante la ricezione di messaggi radio e al distacco dell'alimentazione USB.
+ * Si accenderà solo tramite pressione del tasto fisico.
+ */
+#define KEEP_SCREEN_OFF 1
+
+// --- OEM E DISPLAY ---
+#define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
+
+#define USERPREFS_SPLASH_TEXT "MN01"
+
+// copia e incolla queste variabili in /src/configuration.h
+// Generato con 100% compatibilità Web Creator
+
+#define USERPREFS_SPLASH_IMAGE_WIDTH 128
+#define USERPREFS_SPLASH_IMAGE_HEIGHT 64
+#define USERPREFS_SPLASH_IMAGE_DATA 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, ecc... ecc... ecc... tutto in un' unica linea di hec codes!
+
+///////////////// fine codice immagine /////////////
+
+
+
+
+// FREQUENZA PREFERITA Convertire immagine B/N delle dimensioni sotto con: https://javl.github.io/image2cpp/ 
+// poi tutit i caratteri a capo vanno convertiti in spazi, usate 
+#define USERPREFS_MQTT_ROOT_TOPIC "msh/EU_868/IT"
+
+// RINGTONE
+#define USERPREFS_RINGTONE_RTTTL "24:d=32,o=5,b=565:f6,p,f6,4p,p,f6,p,f6,2p,p,b6,p,b6,p,b6,p,b6,p,b,p,b,p,b,p,b,p,b,p,b,p,b,p,b,1p.,2p.,p"
+
+// --- TIMEZONE ---
+#undef USERPREFS_TZ_STRING
+#define USERPREFS_TZ_STRING "GMT-1GMT,M3.5.0,M10.5.0/3" // Nota: Sostituito il segnaposto con TZ Italia corretta
+
+// --- RUOLO E TELEMETRIA ---
+#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+#define USERPREFS_CONFIG_SMART_POSITION_ENABLED true
+#define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 900
+
+
 // ============================================================
 // --- MANUTENZIONE & RADIO ---
 // ============================================================
-#define AUTO_REBOOT_DAYS 5      // Riavvio hardware automatico ogni 5 giorni
-#define DBI30 27                // Potenza TX (fino a 27-30 dBi, attenzione alle norme!)
+// Riavvio hardware automatico per pulizia NodeDB e RAM
+#define AUTO_REBOOT_DAYS 5      // Massimo 45 giorni per limiti variabili
+
+// Potenza di trasmissione LoRa
+#define DBI30 27                // Range: 0-30+ dBi (Attenzione alle norme locali)
 
 // ============================================================
-// --- PROTEZIONE BATTERIA CON ISTERESI ---
+// --- GESTIONE VENTOLA & SENSORI (COOLING SYSTEM) ---
 // ============================================================
-// Impedisce cicli di accensione/spegnimento continui (effetto brown-out)
-#define FORCE_SLEEP_MV 3400     // Shutdown profondo sotto i 3.4V
+// Il sensore sarà usato per il controllo termico e i dati iniettati 
+// nei campi Voltage (Temp/Hum) e Current (Status Dashboard).
 
-#ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700      // Soglia di sblocco/risveglio (3.7V)
-    #define FORCE_WAKEUP_HR 12        // Ore di Deep Sleep se la batteria è scarica
-    #define ABSOLUTE_SHUTDOWN_COUNT 3  // Numero di conferme voltaggio basso
+/////////////// --- SORGENTE TEMPERATURA (Abilitarne solo UNA) ---
+#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, etc.)
+
+#ifdef I2C_FAN_SENSOR_ADDR
+    #define HAS_HUMIDITY 1          // 1: Iniezione TT.HH (Temp+Umidità), 0: Solo Temp
+    #define SHOW_ALSO_POWER_METRICS 0 
+#endif
+
+//#define ONEWIRE_TEMP_PIN 4        // Sensore DS18B20
+
+/////////////// --- SENSORI DHT (11/22) ---
+//#define DHT_TEMP_PIN 3
+#if defined(DHT_TEMP_PIN)
+    #ifndef DHTTYPE
+        #define DHTTYPE DHT11       // O DHT22
+    #endif
+#endif
+
+/////////////// --- SENSORI NTC ANALOGICI ---
+//#define ANALOG_TEMP_PIN 34 
+#if defined(ANALOG_TEMP_PIN)
+    #ifndef NTC_RES_NOMINAL
+        #define NTC_RES_NOMINAL 10000.0f
+    #endif
+    #ifndef NTC_BETA
+        #define NTC_BETA 3950.0f
+    #endif
 #endif
 
 // ============================================================
-// --- GESTIONE VENTOLA NATIVA (Core-Integrated) ---
+// --- CONFIGURAZIONE RELAY VENTOLA & SOGLIE ---
 // ============================================================
-// Il sistema monitora la temperatura e pilota un relay in modo autonomo.
-// Il feedback viene inviato tramite Power Metrics (invisibile a Meshtastic).
+#define FAN_RELAY_PIN 1             // GPIO per il controllo ventola
 
-// 🌡️ SORGENTE TEMPERATURA (Abilitarne solo UNA)
-#define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (BME280, BMP280, AHT, etc.)
-//#define ONEWIRE_TEMP_PIN 4        // Sensore DS18B20
-//#define DHT_TEMP_PIN 3            // Sensore DHT11/22
-//#define ANALOG_TEMP_PIN 34        // Sensore NTC Analogico (ADC)
+#if defined(FAN_RELAY_PIN)
+    #define FAN_TEMP_START 42.0f    // Accensione (Isteresi superiore)
+    #define FAN_TEMP_STOP 35.0f     // Spegnimento (Isteresi inferiore)
+#endif
 
-// ⚙️ CONFIGURAZIONE RELAY E SOGLIE
-#define FAN_RELAY_PIN 1             // Pin fisico modulo Relay (Dashboard Pos. 1)
-#define FAN_TEMP_START 42.0f        // Accensione ventola a 42°C
-#define FAN_TEMP_STOP 35.0f         // Spegnimento per isteresi a 35°C
+// ============================================================
+// --- PROTEZIONE BATTERIA & SMART RECOVERY ---
+// ============================================================
+#define FORCE_SLEEP_MV 3400         // Soglia Shutdown (Trigger "Last Breath")
+
+#ifdef FORCE_SLEEP_MV
+    #define FORCE_WAKEUP_MV 3700    // Soglia di risveglio (Solar Recovery)
+    #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo tra i check
+    #define ABSOLUTE_SHUTDOWN_COUNT 3 // Letture di conferma prima dello spegnimento
+#endif
+
+// ============================================================
+// --- CONFIGURAZIONE RELAY REMOTI (DOMOTICA) ---
+// ============================================================
+// Gestione carichi via radio con protezione password
+#define CMD_RELAY_ON  "ApritiSesamo_123!"
+#define CMD_RELAY_OFF "ChiuditiSesamo_123!"
+
+#define RELAY_1_PIN 2               // GPIO Relay 1
+#define RELAY_1_NAME "luce"
+
+#define RELAY_2_PIN 5               // GPIO Relay 2
+#define RELAY_2_NAME "pompa"
+
+// ============================================================
+// --- LOGICA INTERNA (NON MODIFICARE) ---
+// --- Controllo conflitti sensori temperatura ---
+// ============================================
+#define TOTAL_SENSORS 0
+#ifdef I2C_FAN_SENSOR_ADDR
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS 1
+#endif
+#ifdef ONEWIRE_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+#ifdef DHT_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+#ifdef ANALOG_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+#if TOTAL_SENSORS > 1
+  #error "CONFIG ERROR: Troppi sensori di temperatura abilitati contemporaneamente!"
+#endif
+// ============================================================
+
+
+
+
+
 ```
 
 ### 🛠️ Configurazione GPIO (Ottimizzata)
@@ -200,6 +352,37 @@ La gestione del calore è integrata direttamente nel core energetico per la mass
 * ***Stato di Armamento***: Il sistema comunica tramite log seriali lo stato `[ARMED]`, confermando che la batteria ha superato la soglia critica e il nodo è ora in modalità di protezione attiva.
 
 ---
+
+# 🌑 Logica di Inibizione Display 
+
+Questa configurazione forza lo schermo a rimanere spento durante tutte le normali attività di rete (messaggi in arrivo, pacchetti di telemetria, beacon dei vicini), attivandosi **esclusivamente** per le funzioni di sicurezza critiche.
+
+---
+
+### 🚫 Comportamento del Display (Inibizione Autonoma)
+Abbiamo modificato la logica di gestione eventi per bloccare l'accensione automatica nei seguenti casi:
+* ***Messaggi Ricevuti***: Il display non si accende alla ricezione di testo via LoRa.
+* ***Telemetria Sensori***: Le letture del **BME680/BMP280** vengono inviate via radio senza attivare i pixel.
+* ***Attività di Routing***: Il passaggio di pacchetti per altri nodi avviene in modalità totalmente silente.
+
+---
+
+### 🔐 Eccezione: Codice di Pairing Bluetooth
+L'unica funzione che mantiene la priorità di accensione è la **visualizzazione del PIN di pairing**. 
+* Quando il T114 rileva una richiesta di accoppiamento BT, la variabile globale di blocco viene temporaneamente bypassata per permettere all'utente di leggere il codice di sicurezza.
+
+---
+
+### 💡 Vantaggi della Modalità "schermo spento"
+1.  ***Stabilità I2C***: Riducendo i refresh dello schermo durante i picchi di traffico radio, si eliminano le collisioni sul bus che portano all'**Errore -2**.
+2.  ***Discrezione***: Il nodo non attira l'attenzione accendendosi in autonomia durante la notte o in installazioni esterne.
+3.  ***Efficienza Termica***: Meno calore generato dal driver del display all'interno del box, a tutto vantaggio della precisione del sensore **AHT20/BME280**.
+
+---
+
+***Status: Modalità spento Attiva (Eccezione solo per Pairing PIN)***
+
+
 ## 💤 Gestione Power & Deep Sleep (Advanced)
 
 Il sistema di gestione del sonno profondo è stato riscritto per trasformare il nodo in una sentinella a bassissimo consumo, capace di proteggere i componenti hardware durante i periodi di scarica.
