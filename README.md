@@ -452,6 +452,41 @@ Ringtone: Suoneria personalizzata inclusa!
 🛠️ Note Tecniche per il Deploy
 Tutte le impostazioni sopra citate sono cablate nel file configuration.h. Per modificare le password o i nomi dei canali intervenire in quel file!
 
+
+### 🔍 Analisi Diagnostica: Gestione Sensori I2C e "Ghost Telemetry"
+
+In questa versione del firmware, il sistema gestisce in modo intelligente fino a 3 sensori I2C simultaneamente, distinguendo tra ambiente esterno e monitoraggio interno della box. Di seguito un esempio reale di log che illustra la logica di iniezione dei dati:
+'''
+
+
+LOG OPERATIVO:
+1. TELEMETRY: Avvio getEnvironmentTelemetry
+2. I2C-MATCH: Trovato! SHT2X (0x40) -> Identificato come sensore VENTOLA (BOX)
+3. TELEMETRY: Salto lettura standard per 0x40 (Dati riservati alla Ghost Telemetry)
+4. I2C-MATCH: Trovato! BMP-280 (0x77) -> Lettura Ambiente (T: 21.9 H: 0.0)
+5. I2C-MATCH: Trovato! AHT10 (0x38) -> Lettura Ambiente (T: 21.9 H: 61.9)
+6. TELEMETRY: Controllo iniezione fanTemp (Rilevato Interno: 22.5°C)
+7. TELEMETRY: Iniezione riuscita! Campo Voltage impostato a 22.5
+8. TELEMETRY: Dashboard Relay Status: 5022 (Inviato nel campo Current)
+9. TELEMETRY: Fine procedura. Valid=YES
+
+
+'''
+COSA SIGNIFICA QUESTA LOGICA:
+
+- ISOLAMENTO I2C: Il sistema riconosce che il sensore all'indirizzo 0x40 è montato dentro la box. Lo esclude dai dati meteo pubblici per evitare che il calore interno falsi le statistiche ambientali.
+
+- GHOST TELEMETRY: La temperatura interna (22.5°C) viene "iniettata" nel campo VOLTAGE. Sull'app Meshtastic, il valore dei Volt indicherà quindi i gradi centigradi della box.
+
+- DASHBOARD STATUS (5022): Il valore nel campo CURRENT (Corrente) comunica lo stato hardware in tempo reale:
+  * Cifra 5: Sistema operativo e armato (Stato OK).
+  * Cifra 0: Ventola spenta (Soglia termica non raggiunta).
+  * Cifra 2: Relay 1 non configurato o libero.
+  * Cifra 2: Relay 2 non configurato o libero.
+
+- MULTI-SENSOR STABILITY: Il firmware coordina 3 sensori diversi (SHT, BMP, AHT) senza conflitti sul bus, garantendo precisione sia per il raffreddamento interno che per la telemetria esterna.
+
+- 
 ⚖️ Licenza e Community
 Distribuito sotto licenza GPL v3.
 Basato sul codice originale di Meshtastic. Si ringrazia la community italiana per la definizione dei canali standard.
