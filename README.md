@@ -459,18 +459,33 @@ In questa versione del firmware, il sistema gestisce in modo intelligente fino a
 
 ```cpp
 
-
 LOG OPERATIVO:
-1. TELEMETRY: Avvio getEnvironmentTelemetry
-2. I2C-MATCH: Trovato! SHT2X (0x40) -> Identificato come sensore VENTOLA (BOX)
-3. TELEMETRY: Salto lettura standard per 0x40 (Dati riservati alla Ghost Telemetry)
-4. I2C-MATCH: Trovato! BMP-280 (0x77) -> Lettura Ambiente (T: 21.9 H: 0.0)
-5. I2C-MATCH: Trovato! AHT10 (0x38) -> Lettura Ambiente (T: 21.9 H: 61.9)
-6. TELEMETRY: Controllo iniezione fanTemp (Rilevato Interno: 22.5°C)
-7. TELEMETRY: Iniezione riuscita! Campo Voltage impostato a 22.5
-8. TELEMETRY: Dashboard Relay Status: 5022 (Inviato nel campo Current)
-9. TELEMETRY: Fine procedura. Valid=YES
 
+TELEMETRY: Avvio getEnvironmentTelemetry
+I2C-SEARCH: Inizio ricerca per 'SHT' (Originale: SHTXX)
+I2C-COMPARE: [SHT] vs [AHT10]
+I2C-COMPARE: [SHT] vs [BMP280]
+I2C-COMPARE: [SHT] vs [SHTXX(SHT2X)]
+I2C-MATCH: Trovato! SHTXX (SHT2X) (0x40) corrisponde a SHTXX
+TELEMETRY: Salto sensore Box all'indirizzo 0x40 (verra' iniettato dopo)
+I2C-SEARCH: Inizio ricerca per 'BMP280' (Originale: BMP280)
+I2C-COMPARE: [BMP280] vs [AHT10]
+I2C-COMPARE: [BMP280] vs [BMP280]
+I2C-MATCH: Trovato! BMP-280 (0x77) corrisponde a BMP280
+TELEMETRY: Lettura sensore ambiente all'indirizzo 0x77
+BMP280 getMetrics
+TELEMETRY: Dati letti correttamente da 0x77 (T: 21.9 H: 0.0)
+I2C-SEARCH: Inizio ricerca per 'AHT10' (Originale: AHT10)
+I2C-COMPARE: [AHT10] vs [AHT10]
+I2C-MATCH: Trovato! AHT10 (0x38) corrisponde a AHT10
+TELEMETRY: Lettura sensore ambiente all'indirizzo 0x38
+AHT10 getMetrics
+FromRadio=STATE_SEND_PACKETS
+TELEMETRY: Dati letti correttamente da 0x38 (T: 21.9 H: 61.9)
+TELEMETRY: Controllo iniezione fanTemp (Attuale: 22.5 C)
+TELEMETRY: Iniezione finale riuscita! Voltage=22.5 (Temp Box), Current=0
+TELEMETRY: Relay Status Map: 5022 (Inviato come 5022.0)
+TELEMETRY: Fine. Valid=YES, HasSensor=YES
 
 ```
 
