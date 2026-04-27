@@ -200,6 +200,37 @@ La gestione del calore è integrata direttamente nel core energetico per la mass
 * ***Stato di Armamento***: Il sistema comunica tramite log seriali lo stato `[ARMED]`, confermando che la batteria ha superato la soglia critica e il nodo è ora in modalità di protezione attiva.
 
 ---
+
+# 🌑 Logica di Inibizione Display 
+
+Questa configurazione forza lo schermo a rimanere spento durante tutte le normali attività di rete (messaggi in arrivo, pacchetti di telemetria, beacon dei vicini), attivandosi **esclusivamente** per le funzioni di sicurezza critiche.
+
+---
+
+### 🚫 Comportamento del Display (Inibizione Autonoma)
+Abbiamo modificato la logica di gestione eventi per bloccare l'accensione automatica nei seguenti casi:
+* ***Messaggi Ricevuti***: Il display non si accende alla ricezione di testo via LoRa.
+* ***Telemetria Sensori***: Le letture del **BME680/BMP280** vengono inviate via radio senza attivare i pixel.
+* ***Attività di Routing***: Il passaggio di pacchetti per altri nodi avviene in modalità totalmente silente.
+
+---
+
+### 🔐 Eccezione: Codice di Pairing Bluetooth
+L'unica funzione che mantiene la priorità di accensione è la **visualizzazione del PIN di pairing**. 
+* Quando il T114 rileva una richiesta di accoppiamento BT, la variabile globale di blocco viene temporaneamente bypassata per permettere all'utente di leggere il codice di sicurezza.
+
+---
+
+### 💡 Vantaggi della Modalità "schermo spento"
+1.  ***Stabilità I2C***: Riducendo i refresh dello schermo durante i picchi di traffico radio, si eliminano le collisioni sul bus che portano all'**Errore -2**.
+2.  ***Discrezione***: Il nodo non attira l'attenzione accendendosi in autonomia durante la notte o in installazioni esterne.
+3.  ***Efficienza Termica***: Meno calore generato dal driver del display all'interno del box, a tutto vantaggio della precisione del sensore **AHT20/BME280**.
+
+---
+
+***Status: Modalità spento Attiva (Eccezione solo per Pairing PIN)***
+
+
 ## 💤 Gestione Power & Deep Sleep (Advanced)
 
 Il sistema di gestione del sonno profondo è stato riscritto per trasformare il nodo in una sentinella a bassissimo consumo, capace di proteggere i componenti hardware durante i periodi di scarica.
