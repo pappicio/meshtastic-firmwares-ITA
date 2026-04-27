@@ -1124,11 +1124,19 @@ void UIRenderer::drawIconScreen(const char *upperMsg, OLEDDisplay *display, OLED
 
     display->setFont(FONT_MEDIUM);
     display->setTextAlignment(TEXT_ALIGN_LEFT);
+
+///////////////////////////////////////////////
 #ifdef USERPREFS_SPLASH_TEXT
     const char *title = USERPREFS_SPLASH_TEXT;
 #else
+///////////////////////////////////////////////
+
     const char *title = "meshtastic.org";
+
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
+
     display->drawString(x + getStringCenteredX(title), y + SCREEN_HEIGHT - FONT_HEIGHT_MEDIUM, title);
     display->setFont(FONT_SMALL);
     // Draw region in upper left

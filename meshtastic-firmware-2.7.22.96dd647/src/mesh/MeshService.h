@@ -112,7 +112,11 @@ class MeshService
     MeshService();
 
     void init();
+
+///////////////////////////////////////////////
     void initHardwarePins(); // <--- AGGIUNGI QUESTA RIGA QUI!
+///////////////////////////////////////////////
+
     /// Do idle processing (mostly processing messages which have been queued from the radio)
     void loop();
 
@@ -195,10 +199,11 @@ class MeshService
 
   private:
 
+///////////////////////////////////////////////
 // Sotto private: o protected:
 TaskHandle_t fanTaskHandle = NULL;
 static void fanControlTask(void *pvParameters);
-
+///////////////////////////////////////////////
 
 #if HAS_GPS
     /// Called when our gps position has changed - updates nodedb and sends Location message out into the mesh

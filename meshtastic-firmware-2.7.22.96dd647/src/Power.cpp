@@ -27,9 +27,9 @@
 
 
 
-
+///////////////////////////////////////////////
 #include "modules/Telemetry/EnvironmentTelemetry.h"
-
+///////////////////////////////////////////////
 
 
 
@@ -157,10 +157,11 @@ XPowersPPM *PPM = NULL;
 XPowersLibInterface *PMU = NULL;
 #else
 
+///////////////////////////////////////////////
 extern boolean onsleep;
 
 extern EnvironmentTelemetryModule *environmentTelemetryModule;
-
+///////////////////////////////////////////////
 
 
 // Copy of the base class defined in axp20x.h.
@@ -809,9 +810,11 @@ void Power::reboot()
 #endif
 }
 
+///////////////////////////////////////////////
 void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
 {
     LOG_INFO("Shutting down for %u ms", sleepMs);
+///////////////////////////////////////////////
 
 #if HAS_SCREEN
     if (screen) {
@@ -826,7 +829,9 @@ void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
 #endif
 
 #if !defined(ARCH_STM32WL)
+///////////////////////////////////////////////
     /////playShutdownMelody();
+///////////////////////////////////////////////
 #endif
 
     // FONDAMENTALE: Salva i dati prima di dormire!
@@ -850,8 +855,10 @@ void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
         ledOff(LED_NOTIFICATION);
     #endif
 
+///////////////////////////////////////////////
     // Qui usiamo il TUO timer invece di DELAY_FOREVER
     doDeepSleep(sleepMs, true, true); 
+///////////////////////////////////////////////
 
 #elif defined(ARCH_PORTDUINO)
     exit(EXIT_SUCCESS);
@@ -864,7 +871,7 @@ void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
 
 
 
-
+///////////////////////////////////////////////
 void sendlasttelemetry() {
             // 1. Individuazione e spegnimento forzato dei GPIO definiti
         #ifdef FAN_RELAY_PIN
@@ -891,6 +898,7 @@ void sendlasttelemetry() {
     }
 
 }
+///////////////////////////////////////////////
 
 
 /// Reads power status to powerStatus singleton.
@@ -916,7 +924,7 @@ void Power::readPowerStatus()
 
 
 
-
+///////////////////////////////////////////////
         // ============================================================
 #ifdef FORCE_SLEEP_MV
     static bool systemArmed = false; 
@@ -982,7 +990,7 @@ void Power::readPowerStatus()
     // In entrambi i casi, il nodo RESTA ACCESO.
 #endif
             // ============================================================
-
+///////////////////////////////////////////////
 
 
 

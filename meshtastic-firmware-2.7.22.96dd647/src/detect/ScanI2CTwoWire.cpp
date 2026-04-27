@@ -4,8 +4,9 @@
 
 // ... altri include ...
 
- 
+///////////////////////////////////////////////
 std::map<std::string, uint8_t> discoveredDevicesMap;
+///////////////////////////////////////////////
 
 #if !MESHTASTIC_EXCLUDE_I2C
 
@@ -103,8 +104,12 @@ uint16_t ScanI2CTwoWire::getRegisterValue(const ScanI2CTwoWire::RegisterLocation
         i2cBus->write((int)0);
         i2cBus->write((int)0);
     }
+	
+	///////////////////////////////////////////////
     i2cBus->endTransmission(false);
-    delay(20); ////////////////////////////delay 20          fix
+	///////////////////////////////////////////////
+	
+    delay(20);
     i2cBus->requestFrom(registerLocation.i2cAddress.address, responseWidth);
     if (i2cBus->available() > 1) {
         // Read MSB, then LSB
@@ -805,12 +810,17 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
         }
 
         // Check if a type was found for the enumerated device - save, if so
-        // Check if a type was found for the enumerated device - save, if so
         if (type != NONE) {
+		///////////////////////////////////////////////
             LOG_INFO("REGISTRO: 0x%02x come tipo %d", (uint8_t)addr.address, (int)type);
+		///////////////////////////////////////////////
             deviceAddresses[type] = addr;
             foundDevices[addr] = type;
+
+///////////////////////////////////////////////
         } else {
+///////////////////////////////////////////////
+
             // Se arriviamo qui, il bus ha risposto (err == 0) ma Meshtastic 
             // NON ha assegnato un tipo (type è rimasto NONE)
             //LOG_WARN("SCARTATO: Dispositivo a 0x%02x trovato ma NON riconosciuto (type è NONE)", (uint8_t)addr.address);
@@ -841,12 +851,15 @@ size_t ScanI2CTwoWire::countDevices() const
     return foundDevices.size();
 }
 
-void ScanI2CTwoWire::logFoundDevice(const char *device, uint8_t address) {
+void ScanI2CTwoWire::logFoundDevice(const char *device, uint8_t address) 
+{
     LOG_INFO("%s found at address 0x%x", device, address);
+///////////////////////////////////////////////
     if (device != nullptr) {
         discoveredDevicesMap[std::string(device)] = address;
         LOG_DEBUG("MAPPA-SAVE: Registrato %s a 0x%02x (Size: %d)", device, address, (int)discoveredDevicesMap.size());
     }
+///////////////////////////////////////////////
 }
 
 

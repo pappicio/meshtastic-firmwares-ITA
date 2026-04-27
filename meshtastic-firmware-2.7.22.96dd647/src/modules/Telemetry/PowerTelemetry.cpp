@@ -26,8 +26,11 @@
 static constexpr uint16_t TX_HISTORY_KEY_POWER_TELEMETRY = 0x8005;
 
 
+///////////////////////////////////////////////
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 extern float fanHum;
+///////////////////////////////////////////////
+
 namespace graphics
 {
 extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const char *titleStr, bool force_no_invert,
@@ -45,6 +48,7 @@ int32_t PowerTelemetryModule::runOnce()
         doDeepSleep(nightyNightMs, true, false);
     }
 
+///////////////////////////////////////////////
    // 2. FORZATURA TOTALE PER MONITORAGGIO BOX
     #if defined(FAN_RELAY_PIN) || defined(I2C_FAN_SENSOR_ADDR)
         // Se abbiamo hardware per la ventola/box, il modulo DEVE esistere
@@ -57,6 +61,7 @@ int32_t PowerTelemetryModule::runOnce()
         if(moduleConfig.telemetry.power_update_interval == 0) 
             moduleConfig.telemetry.power_update_interval = 60;
     #endif
+///////////////////////////////////////////////
 
 
     if (!(moduleConfig.telemetry.power_measurement_enabled)) {
@@ -81,11 +86,14 @@ int32_t PowerTelemetryModule::runOnce()
             if (ina3221Sensor.hasSensor()) result = ina3221Sensor.isInitialized() ? 0 : ina3221Sensor.runOnce();
             if (max17048Sensor.hasSensor()) result = max17048Sensor.isInitialized() ? 0 : max17048Sensor.runOnce();
 
+///////////////////////////////////////////////
             // FIX: Forziamo il successo se abbiamo il monitoraggio Box
             #if defined(I2C_FAN_SENSOR_ADDR) || defined(FAN_RELAY_PIN)
                 LOG_INFO("Power Telemetry: Monitor Box attivo, modulo abilitato.");
                 result = 0; 
             #endif
+///////////////////////////////////////////////
+
         }
         return result == UINT32_MAX ? disable() : setStartDelay();
 #else
@@ -93,13 +101,15 @@ int32_t PowerTelemetryModule::runOnce()
 #endif
     } else {
         // Logica di invio normale (invoca sendTelemetry() dove abbiamo i dati di CH3)
+///////////////////
+//////////////////
         uint32_t lastTelemetry = transmitHistory ? transmitHistory->getLastSentToMeshMillis(TX_HISTORY_KEY_POWER_TELEMETRY) : 0;
         
         if (((lastTelemetry == 0) || !Throttle::isWithinTimespanMs(lastTelemetry, sendToMeshIntervalMs)) &&
             airTime->isTxAllowedAirUtil()) {
-            
+///////////////////////////////////////////////
             sendTelemetry(); // Spedisce Temp e Stato Ventola
-            
+///////////////////////////////////////////////
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_POWER_TELEMETRY);
         } 
@@ -264,6 +274,7 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     m.which_variant = meshtastic_Telemetry_power_metrics_tag;
     m.time = getTime();
 
+///////////////////////////////////////////////
     // 1. Chiamata originale
     bool hasHardwarePower = getPowerTelemetry(&m);
     bool valid = hasHardwarePower;
@@ -356,12 +367,13 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     
     LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ALSO_POWER_METRICS=0)");
 #endif
+///////////////////////////////////////////////
 
-
-
+///////////////////////////////////////////////
     if (valid) {
         LOG_INFO("Send Box Data: ch3_v=%f, ch3_i=%f",
                  m.variant.power_metrics.ch3_voltage, m.variant.power_metrics.ch3_current);
+///////////////////////////////////////////////
 
         sensor_read_error_count = 0;
 

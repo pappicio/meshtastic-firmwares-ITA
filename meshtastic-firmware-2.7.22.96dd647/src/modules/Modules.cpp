@@ -202,6 +202,8 @@ void setupModules()
 
 
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+
+///////////////////////////////////////////////
     // Forza il caricamento se l'indirizzo del sensore box è definito in configuration.h
     if ((moduleConfig.has_telemetry &&
         (moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled)) 
@@ -209,9 +211,17 @@ void setupModules()
         || true 
 #endif
     ) { 
+///////////////////////////////////////////////
+
         new EnvironmentTelemetryModule();
+
+///////////////////////////////////////////////
     }
+	
+///////////////////////////////////////////////
 #endif   // Chiusura corretta per Environmental
+///////////////////////////////////////////////
+
 
 #if HAS_TELEMETRY && HAS_SENSOR && !MESHTASTIC_EXCLUDE_AIR_QUALITY_SENSOR
     if (moduleConfig.has_telemetry &&
@@ -220,12 +230,14 @@ void setupModules()
     }
 #endif // Chiusura corretta per Air Quality
 
+///////////////////////////////////////////////
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY
     if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
         nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0) {
         new HealthTelemetryModule();
     }
 #endif
+///////////////////////////////////////////////
 
 
 

@@ -720,12 +720,14 @@ void Screen::setup()
 void Screen::setOn(bool on, FrameCallback einkScreensaver)
 {
 
+///////////////////////////////////////////////
     // Debug specifico per il Nodo Solare
 #ifdef KEEP_SCREEN_OFF
     if (on && !screenOn) {
        //// LOG_DEBUG("SOLAR DEBUG: Rilevata chiamata a setOn(true) con KEEP_SCREEN_OFF attivo!");
     }
 #endif
+///////////////////////////////////////////////
 
 #if defined(T_LORA_PAGER)
     if (cardKbI2cImpl)
@@ -1465,12 +1467,20 @@ int Screen::handleStatusUpdate(const meshtastic::Status *arg)
 {
     switch (arg->getStatusType()) {
     case STATUS_TYPE_NODE:
+	
+///////////////////////////////////////////////
     // Sotto KEEP_SCREEN_OFF, non vogliamo che l'arrivo di nuovi nodi svegli nulla
     #ifndef KEEP_SCREEN_OFF
+///////////////////////////////////////////////
+
         if (showingNormalScreen && nodeStatus->getLastNumTotal() != nodeStatus->getNumTotal()) {
             setFrames(FOCUS_PRESERVE); 
         }
+
+///////////////////////////////////////////////
     #endif
+///////////////////////////////////////////////
+
     nodeDB->updateGUI = false; // Aggiorna i dati internamente ma non forzare il refresh video
     break;
 
@@ -1480,17 +1490,31 @@ case STATUS_TYPE_POWER: {
     // bool hasBattery = powerStatus->getHasBattery(); // Non ci serve più se non accendiamo
 
     if (currentUSB != lastPowerUSBState) {
+
+///////////////////////////////////////////////
         #ifdef KEEP_SCREEN_OFF
+///////////////////////////////////////////////
+
             // LOGICA "STICAZZI": 
             // Aggiorniamo solo lo stato interno per la telemetria, 
             // ma NON chiamiamo setOn(true). Lo schermo resta spento.
             lastPowerUSBState = currentUSB; 
+			
+///////////////////////////////////////////////
         #else
             // Comportamento standard Meshtastic
+
+///////////////////////////////////////////////
             setOn(true);
+///////////////////////////////////////////////
+
             forceDisplay(true);
+			
+///////////////////////////////////////////////
             lastPowerUSBState = currentUSB;
         #endif
+///////////////////////////////////////////////
+
     }
     break;
 }
@@ -1521,9 +1545,17 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
 
             // --- MODIFICA 1 ---
             if (shouldWakeOnReceivedMessage()) {
+
+///////////////////////////////////////////////
 #ifndef KEEP_SCREEN_OFF
+///////////////////////////////////////////////
+
                 setOn(true);    // Sveglia lo schermo solo se NON siamo in modalità solare
+
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
+
                 forceDisplay(); 
             }
             // ------------------
@@ -1549,9 +1581,17 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
             if (NotificationRenderer::current_notification_type == notificationTypeEnum::text_input) {
                 // --- MODIFICA 2 ---
                 if (shouldWakeOnReceivedMessage()) {
+				
+///////////////////////////////////////////////
 #ifndef KEEP_SCREEN_OFF
+///////////////////////////////////////////////
+
                     setOn(true); // Sveglia lo schermo per popup sopra tastiera solo se NON in solare
+
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
+
                     forceDisplay();
                 }
                 // ------------------
@@ -1606,11 +1646,19 @@ int Screen::handleTextMessage(const meshtastic_MeshPacket *packet)
                         strcpy(banner, "New Message");
                     }
 #if defined(M5STACK_UNITC6L)
+
+///////////////////////////////////////////////
                     // --- MODIFICA 3 ---
 #ifndef KEEP_SCREEN_OFF
+///////////////////////////////////////////////
+
                     screen->setOn(true);
+					
+///////////////////////////////////////////////
 #endif
-                    // ------------------
+///////////////////////////////////////////////
+// ------------------
+
                     screen->showSimpleBanner(banner, 1500);
                     if (config.device.buzzer_mode != meshtastic_Config_DeviceConfig_BuzzerMode_DIRECT_MSG_ONLY ||
                         (isAlert && moduleConfig.external_notification.alert_bell_buzzer) ||
@@ -1665,10 +1713,14 @@ int Screen::handleUIFrameEvent(const UIFrameEvent *event)
 int Screen::handleInputEvent(const InputEvent *event)
 {
     LOG_INPUT("Screen Input event %u! kb %u", event->inputEvent, event->kbchar);
-    // --- A COSI' (Versione Solar/Ninja) ---
-    if (!screenOn) {
+	
+    // ---  COSI' (Versione Solar/Ninja) ---
+///////////////////////////////////////////////
+    if (!screenOn) 
+	{
         return 0;    // Esci qui, così il primo click serve solo a svegliarlo
     }
+///////////////////////////////////////////////
     // -----------------------------------
 
     // Se arriviamo qui, lo schermo è già acceso (o la macro non è attiva)
@@ -1897,9 +1949,12 @@ bool shouldWakeOnReceivedMessage()
     // Se la macro è definita, forziamo il ritorno a 'false'.
     // Indipendentemente dal ruolo del nodo o dallo stato batteria,
     // i messaggi radio NON sveglieranno lo schermo.
+
+///////////////////////////////////////////////
 #ifdef KEEP_SCREEN_OFF
     return false;
 #endif
+///////////////////////////////////////////////
     // -----------------------
 
     if (moduleConfig.external_notification.enabled) {

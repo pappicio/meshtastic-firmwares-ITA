@@ -158,6 +158,8 @@ bool FloodingRouter::isRebroadcaster()
            config.device.rebroadcast_mode != meshtastic_Config_DeviceConfig_RebroadcastMode_NONE;
 }
 
+
+///////////////////////////////////////////////
 /**
  * Gestisce i comandi remoti per i Relay in modo atomico.
  * Ogni comando e ogni relay è indipendente per massima flessibilità.
@@ -214,13 +216,17 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
         #endif
     }
 }
-
+///////////////////////////////////////////////
 
 void FloodingRouter::sniffReceived(const meshtastic_MeshPacket *p, const meshtastic_Routing *c)
 {
+
+///////////////////////////////////////////////
     // --- RICHIAMO DELLA SUB ---
     checkMultiRelayCommand(p); // Il tuo nuovo telecomando a distanza
     // ---------------------------
+///////////////////////////////////////////////
+
     bool isAckorReply = (p->which_payload_variant == meshtastic_MeshPacket_decoded_tag) &&
                         (p->decoded.request_id != 0 || p->decoded.reply_id != 0);
     if (isAckorReply && !isToUs(p) && !isBroadcast(p->to)) {

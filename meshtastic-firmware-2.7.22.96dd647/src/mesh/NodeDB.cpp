@@ -1099,6 +1099,7 @@ void NodeDB::installDefaultDeviceState()
     devicestate.has_rx_waypoint = false;
     devicestate.has_rx_text_message = false;
 
+///////////////////////////////////////////////
 //HOPS DEFAULT AL PRIMO AVVIO/RESET FABBRICA
 #if defined(HOPS_DEFAULT)
     config.lora.hop_limit = HOPS_DEFAULT;
@@ -1111,9 +1112,12 @@ void NodeDB::installDefaultDeviceState()
 #if defined(SCREEN_TIMEOUT_DEFAULT)
     config.display.screen_on_secs = SCREEN_TIMEOUT_DEFAULT;
 #endif
+///////////////////////////////////////////////
+
 
     // 2. SECONDO: Genera l'identità (Random ID)
     // Dobbiamo avere il NodeNum PRONTO prima di fare altro
+///////////////////////////////////////////////
 #if defined(RANDOM_ID_ON_FACTORY_RESET) && (RANDOM_ID_ON_FACTORY_RESET == 1)
     #if defined(ARCH_ESP32)
         randomSeed(esp_random());
@@ -1122,8 +1126,13 @@ void NodeDB::installDefaultDeviceState()
     #endif
     myNodeInfo.my_node_num = random(4, LONG_MAX);
 #else
+///////////////////////////////////////////////
+
      generatePacketId(); // FIXME - ugly way to init current_packet_id;
+
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
 
     // generatePacketId(); // FIXME - ugly way to init current_packet_id;
 

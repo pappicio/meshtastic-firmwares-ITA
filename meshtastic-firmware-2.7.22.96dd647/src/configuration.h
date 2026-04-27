@@ -564,6 +564,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
 
 // -----------------------------------------------------------------------------
 // USERPREFS COMPLETO (CONVERTITO DA JSON)
@@ -825,4 +828,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #undef USERPREFS_MQTT_PASSWORD
 // #define USERPREFS_MQTT_PASSWORD "large4cats"
 //#undef USERPREFS_MQTT_ROOT_TOPIC
- 
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+

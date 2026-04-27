@@ -1,5 +1,5 @@
 
-
+///////////////////////////////////////////////
 // --- LOGICA DI CARICAMENTO OEM DINAMICA ---
 
 #if defined(USERPREFS_SPLASH_IMAGE_DATA) && defined(USERPREFS_SPLASH_IMAGE_WIDTH) && defined(USERPREFS_SPLASH_IMAGE_HEIGHT)
@@ -11,6 +11,7 @@
     static const unsigned char icon_bits[] = { USERPREFS_SPLASH_IMAGE_DATA };
 
 #else
+///////////////////////////////////////////////
 
 #define icon_width 50
 #define icon_height 20

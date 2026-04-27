@@ -21,7 +21,11 @@
 #include "sleep.h"
 #include "target_specific.h"
 #include <OLEDDisplay.h>
+
+///////////////////////////////////////////////
 #include "detect/ScanI2C.h"
+///////////////////////////////////////////////
+
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
 
 // Sensors
@@ -140,6 +144,7 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 
 static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
 
+///////////////////////////////////////////////
 EnvironmentTelemetryModule *EnvironmentTelemetryModule::instance = nullptr;
 
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
@@ -147,16 +152,20 @@ extern float fanTemp; // "Cerca questa variabile fuori da questo file"
 extern boolean onsleep;
 
 static bool isTelemetryBusy = false;
-
+///////////////////////////////////////////////
 
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
     if (!moduleConfig.telemetry.environment_measurement_enabled && 
         !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
+
+///////////////////////////////////////////////
 #ifdef I2C_FAN_SENSOR_ADDR
         && false // Forza l'esecuzione della scansione se la ventola è definita
 #endif
     ) {
+///////////////////////////////////////////////
+
         return;
     }
     
@@ -274,10 +283,14 @@ int32_t EnvironmentTelemetryModule::runOnce()
     // 2. CONTROLLO SOPRAVVIVENZA: Impedisce al modulo di chiudersi
     if (!(moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled ||
           ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
+		  
+///////////////////////////////////////////////
 #ifdef I2C_FAN_SENSOR_ADDR
           || true // Forza il modulo a restare acceso per la ventola
 #endif
         )) {
+///////////////////////////////////////////////
+
         return disable();
     }
 
@@ -287,6 +300,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
         // Entra nell'init se abilitato o se serve alla ventola
         if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 
+
+///////////////////////////////////////////////
 #ifdef I2C_FAN_SENSOR_ADDR
             || true 
 #endif
@@ -294,8 +309,13 @@ int32_t EnvironmentTelemetryModule::runOnce()
 #ifdef I2C_FAN_SENSOR_ADDR
             LOG_INFO("BOX FAN: Telemetria forzata (Istanza attiva)");
 #else
+///////////////////////////////////////////////
+
             LOG_INFO("Environment Telemetry: init");
+			
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
 
             if (!sensors.empty()) {
                 result = DEFAULT_SENSOR_MINIMUM_WAIT_TIME_BETWEEN_READS;
@@ -314,19 +334,33 @@ int32_t EnvironmentTelemetryModule::runOnce()
 #endif
         }
 
+///////////////////////////////////////////////
         // Se abbiamo la ventola, non permettiamo MAI il disable() qui
 #ifdef I2C_FAN_SENSOR_ADDR
         return setStartDelay();
 #else
+///////////////////////////////////////////////
+
         return result == UINT32_MAX ? disable() : setStartDelay();
+		
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
 
     } else {
         // 4. CICLO CONTINUO
         if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+
+///////////////////////////////////////////////
 #ifndef I2C_FAN_SENSOR_ADDR
+///////////////////////////////////////////////
+
             return disable(); 
+
+///////////////////////////////////////////////
 #endif
+///////////////////////////////////////////////
+
         }
 
         // Lettura sensori
@@ -342,7 +376,10 @@ int32_t EnvironmentTelemetryModule::runOnce()
             transmitHistory ? transmitHistory->getLastSentToMeshMillis(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY) : 0;
             
         // Correzione: usiamo moduleConfig invece di config
+ ///////////////////////////////////////////////
         if (!leggisolouno && moduleConfig.telemetry.environment_measurement_enabled && 
+ ///////////////////////////////////////////////
+ 
             ((lastTelemetry == 0) ||
              !Throttle::isWithinTimespanMs(lastTelemetry, Default::getConfiguredOrDefaultMsScaled(
                                                               moduleConfig.telemetry.environment_update_interval,
@@ -354,11 +391,13 @@ int32_t EnvironmentTelemetryModule::runOnce()
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY);
 
+///////////////////////////////////////////////
         // 6. INVIO LOCALE (Bluetooth al tuo telefono)
         } else if (moduleConfig.telemetry.environment_measurement_enabled && 
                    ((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
-            
+///////////////////////////////////////////////
+
             sendTelemetry(NODENUM_BROADCAST, true); 
             lastSentToPhone = millis();
         }
@@ -564,7 +603,7 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
 
 
 
-
+///////////////////////////////////////////////
 void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
     // 1. Configurazione FLAG per la lettura
     if (onsleep) {
@@ -596,7 +635,7 @@ void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
     // 4. RIPRISTINO: Riporta il flag a false per il prossimo risveglio tra 12 ore
     leggisolouno = false;
 }
-
+///////////////////////////////////////////////
 
 
 
@@ -609,10 +648,12 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     ////////     return false; 
     //////// }
 
+///////////////////////////////////////////////
     // 3. Lock the resource
     isTelemetryBusy = true;
 
     LOG_DEBUG("TELEMETRY: Avvio getEnvironmentTelemetry");
+///////////////////////////////////////////////
 
     bool valid = false;
     bool hasSensor = false;
@@ -625,6 +666,8 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     // --- AGGIUNTO IL CICLO FOR MANCANTE ---
     
 for (TelemetrySensor *sensor : sensors) {
+
+///////////////////////////////////////////////
         // Chiamata singola: recupera l'indirizzo già corretto dal .h
           uint8_t currentAddr = sensor->getAddr();
 
@@ -672,9 +715,12 @@ for (TelemetrySensor *sensor : sensors) {
             continue; 
         }
 #endif
-        
+///////////////////////////////////////////////
         // --- GESTIONE SENSORE AMBIENTE (GY-21 / SHT) ---
         LOG_DEBUG("TELEMETRY: Lettura sensore ambiente all'indirizzo 0x%02x", currentAddr);
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
         get_metrics = sensor->getMetrics(m); 
         if (get_metrics) {
             LOG_INFO("TELEMETRY: Dati letti correttamente da 0x%02x (T: %.1f H: %.1f)", 
@@ -684,13 +730,19 @@ for (TelemetrySensor *sensor : sensors) {
         } else {
             LOG_WARN("TELEMETRY: Lettura fallita per sensore 0x%02x", currentAddr);
         }
+///////////////////////////////////////////////
+
     }
 
     // --- SENSORI POWER (INA219, ecc.) ---
 #ifndef T1000X_SENSOR_EN
     if (ina219Sensor.hasSensor()) {
         get_metrics = ina219Sensor.getMetrics(m);
+
+///////////////////////////////////////////////
 		LOG_DEBUG("TELEMETRY: Lettura INA219: %s", get_metrics ? "OK" : "FAIL");
+///////////////////////////////////////////////
+
         valid = valid || get_metrics;
         hasSensor = true;
     }
@@ -718,6 +770,7 @@ for (TelemetrySensor *sensor : sensors) {
     }
 #endif
 
+///////////////////////////////////////////////
 // ... (restano i check per INA219, INA260, ecc. come nel tuo codice) ...
     // --- INIEZIONE FINALE DATI BOX ---
 #ifdef I2C_FAN_SENSOR_ADDR
@@ -740,13 +793,14 @@ for (TelemetrySensor *sensor : sensors) {
         LOG_WARN("TELEMETRY: fanTemp non valida (%.1f), iniezione saltata", fanTemp);
     }
 #endif
-
+///////////////////////////////////////////////
 
 // --- NUOVA LOGICA STATUS PANEL (FAN & RELAYS) ---
 // Formato: 5XYZ (5=OK, 9=Errore Sensore)
 // X=Ventola, Y=Relay 1, Z=Relay 2 
 // Legenda: 1=ON, 0=OFF, 2=Non Configurato (Assente)
 
+///////////////////////////////////////////////
 int relayMap = 5000; 
 
 // 1. Cifra delle CENTINAIA: VENTOLA (X)
@@ -797,6 +851,8 @@ m->variant.environment_metrics.current = (float)relayMap;
     LOG_INFO("TELEMETRY: Relay Status Map: %d (Inviato come %.1f)", relayMap, m->variant.environment_metrics.current);
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
     isTelemetryBusy = false;
+///////////////////////////////////////////////
+
     return valid && hasSensor;
 }
 
@@ -827,6 +883,7 @@ meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()
             if (getEnvironmentTelemetry(&m)) {
 
 
+///////////////////////////////////////////////
 // --- BONIFICA TOTALE E SPEGNIMENTO FLAG ---
         
         // 1. PRESSIONE
@@ -900,7 +957,8 @@ meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()
             m.variant.environment_metrics.has_soil_moisture = false;
         }
         // ------------------------------------------
-       
+///////////////////////////////////////////////
+
  
 
                 LOG_INFO("Environment telemetry reply to request");
@@ -921,6 +979,7 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 
     if (getEnvironmentTelemetry(&m)) {
 
+///////////////////////////////////////////////
 // --- BONIFICA TOTALE E SPEGNIMENTO FLAG ---
         
         // 1. PRESSIONE
@@ -994,6 +1053,8 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
             m.variant.environment_metrics.has_soil_moisture = false;
         }
         // ------------------------------------------
+///////////////////////////////////////////////
+
 
         LOG_INFO("Send: barometric_pressure=%f, current=%f, gas_resistance=%f, relative_humidity=%f, temperature=%f",
                  m.variant.environment_metrics.barometric_pressure, m.variant.environment_metrics.current,

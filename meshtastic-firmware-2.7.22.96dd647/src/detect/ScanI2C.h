@@ -2,10 +2,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
+///////////////////////////////////////////////
 #include <map>      // <--- FONDAMENTALE
 #include <string>   // <--- FONDAMENTALE
 
 extern std::map<std::string, uint8_t> discoveredDevicesMap;
+///////////////////////////////////////////////
 
 class ScanI2C
 {

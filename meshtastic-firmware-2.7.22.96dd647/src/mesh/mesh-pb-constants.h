@@ -52,8 +52,12 @@ static_assert(sizeof(meshtastic_NodeInfoLite) <= 200, "NodeInfoLite size increas
 static inline int get_max_num_nodes()
 {
     uint32_t flash_size = ESP.getFlashChipSize() / (1024 * 1024); // Convert Bytes to MB
-    int original_limit;
 
+///////////////////////////////////////////////
+    int original_limit;
+///////////////////////////////////////////////
+
+///////////////////////////////////////////////
     // Determina il limite originale di sicurezza
     if (flash_size >= 15) {
         original_limit = 250;
@@ -62,7 +66,9 @@ static inline int get_max_num_nodes()
     } else {
         original_limit = 100;
     }
+///////////////////////////////////////////////
 
+///////////////////////////////////////////////
     // Se l'utente ha definito un limite (USERPREFS_MAX_NUM_NODES) 
     // lo usiamo solo se è più restrittivo (minore) del limite originale
 #ifdef USERPREFS_MAX_NUM_NODES
@@ -72,6 +78,8 @@ static inline int get_max_num_nodes()
 #endif
 
     return original_limit;
+///////////////////////////////////////////////
+
 }
 #define MAX_NUM_NODES get_max_num_nodes()
 #else

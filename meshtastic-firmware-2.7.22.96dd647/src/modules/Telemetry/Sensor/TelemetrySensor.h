@@ -24,13 +24,20 @@ class TelemetrySensor
         this->sensorName = sensorName;
         this->sensorType = sensorType;
         this->status = 0;
+		
+///////////////////////////////////////////////
         this->address = 0; // Inizializzazione indirizzo
+///////////////////////////////////////////////
+
     }
 
     meshtastic_TelemetrySensorType sensorType = meshtastic_TelemetrySensorType_SENSOR_UNSET;
     unsigned status;
     bool initialized = false;
+
+///////////////////////////////////////////////
     uint8_t address; // Variabile per memorizzare l'indirizzo I2C
+///////////////////////////////////////////////
 
     int32_t initI2CSensor()
     {
@@ -59,7 +66,7 @@ class TelemetrySensor
 
     const char *sensorName;
     
-
+///////////////////////////////////////////////
 String cleanName(const char* name) const {
     if (!name) return "";
     String cleaned = name;
@@ -112,7 +119,7 @@ virtual uint8_t getAddr() const {
     }
     return 0;
 }
-
+///////////////////////////////////////////////
 
 
 

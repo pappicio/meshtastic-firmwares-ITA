@@ -22,16 +22,18 @@
 #include "power.h"
 #include <assert.h>
 #include <string>
+
+///////////////////////////////////////////////
 #include "../detect/ScanI2C.h"
 #include <Wire.h>
 #include "MeshService.h"
 
-
 #include "modules/Telemetry/EnvironmentTelemetry.h"
-
+///////////////////////////////////////////////
 
 // ... altri include ...
 
+///////////////////////////////////////////////
 // 1. DICHIARAZIONI GLOBALI (Devono stare PRIMA di initHardwarePins)
 // 1. PRIMA GLI INCLUDE DELLE LIBRERIE
 #ifdef ONEWIRE_TEMP_PIN
@@ -42,8 +44,10 @@
 #ifdef DHT_TEMP_PIN
   #include <DHT.h>
 #endif
+///////////////////////////////////////////////
 
 
+///////////////////////////////////////////////
 // 2. POI LE DICHIARAZIONI DELLE VARIABILI (Riga 32-33)
 #ifdef ONEWIRE_TEMP_PIN
   OneWire _oneWire(ONEWIRE_TEMP_PIN);
@@ -53,32 +57,42 @@
 #ifdef DHT_TEMP_PIN
   DHT _dht(DHT_TEMP_PIN, DHTTYPE);
 #endif
+///////////////////////////////////////////////
 // --- DICHIARAZIONI GLOBALI UNICHE (PULITE) ---
 
 // Diciamo che 'service' e 'fanTemp' esistono già in main.cpp
 
-
+///////////////////////////////////////////////
 extern float fanTemp;
 extern float fanHum; 
  
 extern EnvironmentTelemetryModule *environmentTelemetryModule;
+///////////////////////////////////////////////
 
 
-
-
+///////////////////////////////////////////////
 // scanI2C esiste già nel firmware
 extern ScanI2C *scanI2C; 
+///////////////////////////////////////////////
 
+///////////////////////////////////////////////
 // Questo lo teniamo noi qui perché è specifico del nostro nuovo task
 TaskHandle_t fanTaskHandle = NULL; 
+///////////////////////////////////////////////
 
+///////////////////////////////////////////////
 // Prototipi
 void checkInternalFan();
 void checkAutoReboot();
+///////////////////////////////////////////////
 
 // --- BLOCCHI ESISTENTI (NON TOCCARLI) ---
 #if ARCH_PORTDUINO
+
+///////////////////////////////////////////////
 #include "modules/StoreForwardModule.h"
+///////////////////////////////////////////////
+
 #include "PortduinoGlue.h"
 #endif
  
@@ -118,6 +132,7 @@ void MeshService::init()
         gpsObserver.observe(&gps->newStatus);
 #endif
 
+///////////////////////////////////////////////
 initHardwarePins(); // La tua nuova sub-routine di boot
 
     // --- AGGIUNTA PER VENTOLA ---
@@ -149,6 +164,7 @@ initHardwarePins(); // La tua nuova sub-routine di boot
     }
 #endif
 }
+///////////////////////////////////////////////
 
 
 int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
@@ -184,6 +200,7 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
     return 0;
 }
 
+///////////////////////////////////////////////
 // =========================================================================
 // GESTIONE HARDWARE PERSONALIZZATA - START
 // =========================================================================
@@ -260,11 +277,13 @@ float readAnalogTemp() {
     return (1.0f / t) - 273.15f;                 // Risultato in Celsius
 }
 #endif
+///////////////////////////////////////////////
 
 // =========================================================================
 // GESTIONE HARDWARE PERSONALIZZATA - END
 // =========================================================================
 
+//////////////////////////////////////////////
 float readI2CTemp(uint8_t addr) {
  
     // 1. Invece di usare il puntatore esterno che ti dava errore (undefined reference)
@@ -279,8 +298,10 @@ float readI2CTemp(uint8_t addr) {
     return -999.0f;
   
 }
+///////////////////////////////////////////////
 
 
+///////////////////////////////////////////////
 void checkInternalFan() {
  
     float currentTemp = -999.0f;
@@ -343,11 +364,11 @@ void checkInternalFan() {
     }
  
 }
-
+///////////////////////////////////////////////
  
 
 
-
+///////////////////////////////////////////////
 void checkAutoReboot() {
     // Esegui tutto solo se la macro è definita e maggiore di 0
 #if defined(AUTO_REBOOT_DAYS) && (AUTO_REBOOT_DAYS > 0)
@@ -408,8 +429,10 @@ void checkAutoReboot() {
     }
 #endif
 }
+///////////////////////////////////////////////
 
 
+///////////////////////////////////////////////
 // Task di sistema per il loop di controllo
 void MeshService::fanControlTask(void *pvParameters) {
 #ifdef ESP32
@@ -430,7 +453,7 @@ void MeshService::fanControlTask(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(30000)); 
     }
 }
-
+///////////////////////////////////////////////
 
 
 /// Do idle processing (mostly processing messages which have been queued from the radio)

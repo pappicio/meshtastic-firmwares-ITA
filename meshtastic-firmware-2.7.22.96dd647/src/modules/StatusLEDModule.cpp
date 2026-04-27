@@ -75,6 +75,7 @@ int32_t StatusLEDModule::runOnce()
     my_interval = 1000;
 
 
+///////////////////////////////////////////////
 // --- LOGICA GHOST FORZATA (Aggiunta qui per vincere su tutto) ---
     #if defined(LED_DISABLED) && (LED_DISABLED == 1)
     static bool firstRun = true;
@@ -86,6 +87,7 @@ int32_t StatusLEDModule::runOnce()
     }
     #endif
     // ----------------------------------------------------------------
+///////////////////////////////////////////////
 
 
 

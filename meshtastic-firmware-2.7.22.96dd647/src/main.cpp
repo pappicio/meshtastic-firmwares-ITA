@@ -193,11 +193,13 @@ bool kb_found = false;
 // global bool to record that on-screen keyboard (OSK) is present
 bool osk_found = false;
 
+///////////////////////////////////////////////
 // variabile globale per avere la temp secondo sensore nel box
 float fanTemp = -100.0f;
 float fanHum = 0.0f;
 
 boolean onsleep=false;
+///////////////////////////////////////////////
 
 // The I2C address of the RTC Module (if found)
 ScanI2C::DeviceAddress rtc_found = ScanI2C::ADDRESS_NONE;

@@ -200,6 +200,8 @@ void Channels::initDefaultChannel(ChannelIndex chIndex)
         channelSettings.downlink_enabled = USERPREFS_CHANNEL_2_DOWNLINK_ENABLED;
 #endif
         break;
+		
+///////////////////////////////////////////////
 case 3:
 #ifdef USERPREFS_CHANNEL_3_PSK
         static const uint8_t defaultpsk3[] = USERPREFS_CHANNEL_3_PSK;
@@ -301,8 +303,7 @@ case 4:
         channelSettings.downlink_enabled = USERPREFS_CHANNEL_7_DOWNLINK_ENABLED;
 #endif
         break;
-
-
+///////////////////////////////////////////////
 
 
 
