@@ -28,6 +28,7 @@ static constexpr uint16_t TX_HISTORY_KEY_POWER_TELEMETRY = 0x8005;
 
 ///////////////////////////////////////////////
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
+extern boolean onsleep;
 extern float fanHum;
 ///////////////////////////////////////////////
 
@@ -343,6 +344,19 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         powerStatusMap += 4000;
     }
 
+
+if (onsleep) {
+    if (powerStatusMap >= 9000) {
+        // Eravamo in errore (9), sottraiamo 1000 per portarlo a 8 (Sleep)
+        powerStatusMap -= 1000; 
+    } else if (powerStatusMap < 6000) {
+        // Eravamo regolari (5), sommiamo 3000 per portarlo a 8 (Sleep)
+        powerStatusMap += 3000;
+    }
+    // NOTA: Se per qualche motivo powerStatusMap fosse già 8xxx (es. doppio check), 
+    // queste condizioni lo lasciano invariato.
+}
+
     // Iniezione nel canale CH3 Current
     m.variant.power_metrics.has_ch3_current = true;
     m.variant.power_metrics.ch3_current = (float)powerStatusMap;
@@ -350,8 +364,7 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 
     LOG_INFO("POWER_METRICS: CH3_Temp=%.1f, Map_Status=%d", 
               m.variant.power_metrics.ch3_voltage, powerStatusMap);
-
-#endif
+ 
 
     // 3. Logica di invio originale (usiamo 'valid' invece del solo getPowerTelemetry)
 
@@ -367,7 +380,10 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     
     LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ALSO_POWER_METRICS=0)");
 #endif
+
+#endif
 ///////////////////////////////////////////////
+
 
 ///////////////////////////////////////////////
     if (valid) {

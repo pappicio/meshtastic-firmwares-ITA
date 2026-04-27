@@ -792,7 +792,7 @@ for (TelemetrySensor *sensor : sensors) {
     } else {
         LOG_WARN("TELEMETRY: fanTemp non valida (%.1f), iniezione saltata", fanTemp);
     }
-#endif
+ 
 ///////////////////////////////////////////////
 
 // --- NUOVA LOGICA STATUS PANEL (FAN & RELAYS) ---
@@ -850,6 +850,9 @@ m->variant.environment_metrics.current = (float)relayMap;
 
     LOG_INFO("TELEMETRY: Relay Status Map: %d (Inviato come %.1f)", relayMap, m->variant.environment_metrics.current);
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
+
+#endif
+
     isTelemetryBusy = false;
 ///////////////////////////////////////////////
 
