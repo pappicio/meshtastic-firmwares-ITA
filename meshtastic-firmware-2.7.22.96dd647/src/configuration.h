@@ -701,7 +701,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // POWER TELEMETRI, con voltaggio1/corrente100 e Voltaggio0/corrente0 per indicare ventola accesa/spenta
 
 /////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
-/////#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
+
+#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
     
     #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
