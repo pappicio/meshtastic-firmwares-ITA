@@ -109,6 +109,12 @@ Oltre ai sensori I2C, la variabile di controllo ***fanTemp*** può essere alimen
 ### 📊 Dashboard "5-1-0-2" su App Meshtastic
 Abbiamo rivoluzionato il campo **Current (A)** della telemetria. Non leggerai milliampere casuali, ma un ***display di stato digitale a 3 cifre***.
 
+The ***"Last Breath"*** Protocol (trasporto dell'Ultimo Dato)
+
+I nodi standard "muoiono" in silenzio quando la batteria finisce. Questo firmware ora esegue una **sequenza di shutdown cerimoniale**:
+
+nel senso che al raggiungimento del limite minimo di sopravvivenza batteria (di default 3400 mA) il dispoitico spegne tutti i relay ch epotrebbero essere attivi:Ventola e eventualmente gli altri 2 assegnati, invia un aggiorna,ento telemetria broadcast con codice 8xxx (8000, ad intendere ho spento tutto e mi accingo al riposo forzato per 12 ore).
+
 Ogni posizione numerica rappresenta un dispositivo:
 **Cifra 1: Ventola | Cifra 2: Relay 1 (Luce) | Cifra 3: Relay 2 (Pompa)**
 
@@ -121,6 +127,7 @@ Ogni posizione numerica rappresenta un dispositivo:
 > 
 > **Anomalia:** Se l'app mostra **9**102.0 A, significa: Errore nella lettura temperatura ventola, anche se Ventola **ON**, Relay 1 **OFF**, Relay 2 **NON PRESENTE**.
 
+> **Codice 8xxx:** Il campo *Current* viene impostato con il prefisso **8**, segnalando a tutta la rete che il nodo sta entrando in ibernazione controllata per 12 ore a causa della batteria scarica e non per un guasto hardware.
 ---
 
 # 🚀 Caratteristiche Tecniche e Personalizzazioni
