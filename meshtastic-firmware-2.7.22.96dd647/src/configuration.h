@@ -701,7 +701,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // POWER TELEMETRI, con voltaggio1/corrente100 e Voltaggio0/corrente0 per indicare ventola accesa/spenta
 
 /////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
-#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
+/////#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
     
     #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
@@ -737,18 +737,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
-#define FAN_RELAY_PIN 1           // Pin fisico del modulo Relay, controllare se il pin prescento  possa essere libero gia, da IMPEGNI!
 
-#if defined(FAN_RELAY_PIN)
-    // Soglie di temperatura per l'isteresi
-    #ifndef FAN_TEMP_START
-        #define FAN_TEMP_START 42.0f      // Accende a 42 gradi
+
+// La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
+    
+    #define FAN_RELAY_PIN 1  // GPIO fisico del modulo Relay (Verificare che sia libero!)
+
+    #if defined(FAN_RELAY_PIN)
+        // Soglie di temperatura per l'isteresi
+        #ifndef FAN_TEMP_START
+            #define FAN_TEMP_START 42.0f      // Accende a 42 gradi
+        #endif
+
+        #ifndef FAN_TEMP_STOP
+            #define FAN_TEMP_STOP 35.0f       // Spegne quando scende a 35
+        #endif
     #endif
 
-    #ifndef FAN_TEMP_STOP
-        #define FAN_TEMP_STOP 35.0f       // Spegne quando scende a 35
-    #endif
 #endif
+
 
 
 
@@ -760,7 +768,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define FORCE_WAKEUP_HR 12           // Ore di sonno profondo
     #define ABSOLUTE_SHUTDOWN_COUNT 3    // Numero letture di conferma prima dello spegnimento temporizzato
 #endif
-
 
 //////////////// INTERNAL /////////////////
 /////////////////////////////////////////////////////////////////////////////////////////

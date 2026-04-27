@@ -317,8 +317,9 @@ void checkInternalFan() {
         currentTemp = readAnalogTemp();
     #endif
 
-   
- 
+
+#if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
+
     // --- ATTUAZIONE RELAY ---
     // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
     LOG_INFO("FAN: Monitoraggio - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
@@ -362,7 +363,8 @@ void checkInternalFan() {
         #endif
         LOG_ERROR("FAN_CHECK: Lettura sensore NON VALIDA (%.1f)", currentTemp);
     }
- 
+#endif
+
 }
 ///////////////////////////////////////////////
  
