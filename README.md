@@ -141,40 +141,121 @@ Questo firmware implementa una gestione avanzata del risparmio energetico e del 
 Modifica queste macro nel file di configurazione per adattare il firmware al tuo hardware. Il sistema è progettato per essere **autonomo**: una volta impostato, gestisce energia e raffreddamento senza interventi esterni.
 
 ```cpp
+/*
+ * ========================================================================================
+ * ITALIA SMART POWER EDITION - CONFIGURATION FILE
+ * ========================================================================================
+ * Firmware Modificato v2.7.22 - Supporto Last Breath & Smart Recovery
+ */
+
 // ============================================================
 // --- MANUTENZIONE & RADIO ---
 // ============================================================
-#define AUTO_REBOOT_DAYS 5      // Riavvio hardware automatico ogni 5 giorni
-#define DBI30 27                // Potenza TX (fino a 27-30 dBi, attenzione alle norme!)
+// Riavvio hardware automatico per pulizia NodeDB e RAM
+#define AUTO_REBOOT_DAYS 5      // Massimo 45 giorni per limiti variabili
+
+// Potenza di trasmissione LoRa
+#define DBI30 27                // Range: 0-30+ dBi (Attenzione alle norme locali)
 
 // ============================================================
-// --- PROTEZIONE BATTERIA CON ISTERESI ---
+// --- GESTIONE VENTOLA & SENSORI (COOLING SYSTEM) ---
 // ============================================================
-// Impedisce cicli di accensione/spegnimento continui (effetto brown-out)
-#define FORCE_SLEEP_MV 3400     // Shutdown profondo sotto i 3.4V
+// Il sensore sarà usato per il controllo termico e i dati iniettati 
+// nei campi Voltage (Temp/Hum) e Current (Status Dashboard).
 
-#ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700      // Soglia di sblocco/risveglio (3.7V)
-    #define FORCE_WAKEUP_HR 12        // Ore di Deep Sleep se la batteria è scarica
-    #define ABSOLUTE_SHUTDOWN_COUNT 3  // Numero di conferme voltaggio basso
+/////////////// --- SORGENTE TEMPERATURA (Abilitarne solo UNA) ---
+#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, etc.)
+
+#ifdef I2C_FAN_SENSOR_ADDR
+    #define HAS_HUMIDITY 1          // 1: Iniezione TT.HH (Temp+Umidità), 0: Solo Temp
+    #define SHOW_ALSO_POWER_METRICS 0 
+#endif
+
+//#define ONEWIRE_TEMP_PIN 4        // Sensore DS18B20
+
+/////////////// --- SENSORI DHT (11/22) ---
+//#define DHT_TEMP_PIN 3
+#if defined(DHT_TEMP_PIN)
+    #ifndef DHTTYPE
+        #define DHTTYPE DHT11       // O DHT22
+    #endif
+#endif
+
+/////////////// --- SENSORI NTC ANALOGICI ---
+//#define ANALOG_TEMP_PIN 34 
+#if defined(ANALOG_TEMP_PIN)
+    #ifndef NTC_RES_NOMINAL
+        #define NTC_RES_NOMINAL 10000.0f
+    #endif
+    #ifndef NTC_BETA
+        #define NTC_BETA 3950.0f
+    #endif
 #endif
 
 // ============================================================
-// --- GESTIONE VENTOLA NATIVA (Core-Integrated) ---
+// --- CONFIGURAZIONE RELAY VENTOLA & SOGLIE ---
 // ============================================================
-// Il sistema monitora la temperatura e pilota un relay in modo autonomo.
-// Il feedback viene inviato tramite Power Metrics (invisibile a Meshtastic).
+#define FAN_RELAY_PIN 1             // GPIO per il controllo ventola
 
-// 🌡️ SORGENTE TEMPERATURA (Abilitarne solo UNA)
-#define I2C_FAN_SENSOR_ADDR 0x76    // Indirizzo I2C (BME280, BMP280, AHT, etc.)
-//#define ONEWIRE_TEMP_PIN 4        // Sensore DS18B20
-//#define DHT_TEMP_PIN 3            // Sensore DHT11/22
-//#define ANALOG_TEMP_PIN 34        // Sensore NTC Analogico (ADC)
+#if defined(FAN_RELAY_PIN)
+    #define FAN_TEMP_START 42.0f    // Accensione (Isteresi superiore)
+    #define FAN_TEMP_STOP 35.0f     // Spegnimento (Isteresi inferiore)
+#endif
 
-// ⚙️ CONFIGURAZIONE RELAY E SOGLIE
-#define FAN_RELAY_PIN 1             // Pin fisico modulo Relay (Dashboard Pos. 1)
-#define FAN_TEMP_START 42.0f        // Accensione ventola a 42°C
-#define FAN_TEMP_STOP 35.0f         // Spegnimento per isteresi a 35°C
+// ============================================================
+// --- PROTEZIONE BATTERIA & SMART RECOVERY ---
+// ============================================================
+#define FORCE_SLEEP_MV 3400         // Soglia Shutdown (Trigger "Last Breath")
+
+#ifdef FORCE_SLEEP_MV
+    #define FORCE_WAKEUP_MV 3700    // Soglia di risveglio (Solar Recovery)
+    #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo tra i check
+    #define ABSOLUTE_SHUTDOWN_COUNT 3 // Letture di conferma prima dello spegnimento
+#endif
+
+// ============================================================
+// --- CONFIGURAZIONE RELAY REMOTI (DOMOTICA) ---
+// ============================================================
+// Gestione carichi via radio con protezione password
+#define CMD_RELAY_ON  "ApritiSesamo_123!"
+#define CMD_RELAY_OFF "ChiuditiSesamo_123!"
+
+#define RELAY_1_PIN 2               // GPIO Relay 1
+#define RELAY_1_NAME "luce"
+
+#define RELAY_2_PIN 5               // GPIO Relay 2
+#define RELAY_2_NAME "pompa"
+
+// ============================================================
+// --- LOGICA INTERNA (NON MODIFICARE) ---
+// --- Controllo conflitti sensori temperatura ---
+// ============================================
+#define TOTAL_SENSORS 0
+#ifdef I2C_FAN_SENSOR_ADDR
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS 1
+#endif
+#ifdef ONEWIRE_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+#ifdef DHT_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+#ifdef ANALOG_TEMP_PIN
+  #undef TOTAL_SENSORS
+  #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
+#endif
+#if TOTAL_SENSORS > 1
+  #error "CONFIG ERROR: Troppi sensori di temperatura abilitati contemporaneamente!"
+#endif
+// ============================================================
+
+
+
+
+
 ```
 
 ### 🛠️ Configurazione GPIO (Ottimizzata)
