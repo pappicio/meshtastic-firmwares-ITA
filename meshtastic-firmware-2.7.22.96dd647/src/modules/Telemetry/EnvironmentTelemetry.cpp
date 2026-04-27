@@ -148,6 +148,7 @@ static constexpr uint16_t TX_HISTORY_KEY_ENVIRONMENT_TELEMETRY = 0x8002;
 EnvironmentTelemetryModule *EnvironmentTelemetryModule::instance = nullptr;
 
 extern float fanTemp; // "Cerca questa variabile fuori da questo file"
+extern float fanHum;
 
 extern boolean onsleep;
 
@@ -777,9 +778,20 @@ for (TelemetrySensor *sensor : sensors) {
     LOG_DEBUG("TELEMETRY: Controllo iniezione fanTemp (Attuale: %.1f C)", fanTemp);
 ///////////////// COMMENTARE DA QUI A....
     if (fanTemp > -50.0f) {
+        float finalVal;
+        float tempIntera = (float)((int)fanTemp); // Forza 23.8 -> 23.0
+
+#if HAS_HUMIDITY
+        // Mescola Umidità nei decimali (es. 23.65)
+        finalVal = tempIntera + (std::min(std::max(fanHum, 0.0f), 99.0f) / 100.0f);
+#else
+        // Solo temperatura intera (es. 23.00)
+        finalVal = tempIntera;
+#endif
+
         // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
         m->variant.environment_metrics.has_voltage = true;
-        m->variant.environment_metrics.voltage = fanTemp;
+        m->variant.environment_metrics.voltage = finalVal;
 
        
 /////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
