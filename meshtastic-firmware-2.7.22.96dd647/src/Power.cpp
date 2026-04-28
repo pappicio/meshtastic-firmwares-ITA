@@ -932,10 +932,19 @@ void Power::readPowerStatus()
     static bool wasManuallyReset = false; // <--- Nuova variabile per ricordarci del tasto
 
 
-   
+// --- 1. FILTRO "FANTASMA" (ANTI-GLITCH BOOT) ---
+    // Se non vede nulla, i dati non sono pronti. Esci e riprova al prossimo giro.
+    if (!powerStatus->getHasBattery() && !powerStatus->getHasUSB() && !powerStatus->getIsCharging()) 
+    {
+        // Non loggare nulla qui per non intasare, esci e basta.
+        return; 
+    }   
 
-    
-
+    // --- 2. CONTROLLO ANOMALIA USB (SEMPRE ATTIVO) ---
+    // Questo deve stare FUORI dal primo ciclo per monitorare sempre il corto I2C
+    if (powerStatus->getHasUSB() && batteryVoltageMv <= FORCE_SLEEP_MV) {
+        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
+    }
     
     // 1. ECCEZIONE MANUALE
     // 1. ECCEZIONE MANUALE (IL TASTO)
@@ -949,10 +958,6 @@ void Power::readPowerStatus()
                   powerStatus->getHasUSB() ? "SI" : "NO",
                   powerStatus->getIsCharging() ? "SI" : "NO",
                   batteryVoltageMv);
-// --- 1. CONTROLLO ANOMALIA USB (Sempre attivo) ---
-    if (powerStatus->getHasUSB() && batteryVoltageMv < FORCE_SLEEP_MV) {
-        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
-    }
 
 
         if (batteryVoltageMv < FORCE_SLEEP_MV) {
