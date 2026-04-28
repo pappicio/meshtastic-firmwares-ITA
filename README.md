@@ -34,7 +34,7 @@ Il cuore del progetto è la gestione dinamica della temperatura per evitare il *
 
 * **Controllo Isteresi:** Attivazione automatica ventola a **42°C** e spegnimento a **35°C** (previene cicli ON/OFF troppo brevi).
 * **Fail-Safe Logic:** In caso di errore del sensore, il sistema logga l'anomalia e mantiene lo stato di sicurezza per proteggere l'hardware.
-* **Hardware:** Testato su **Heltec V3/V4** con ventole 5V/12V tramite transistor o modulo relay su ***GPIO 1***.
+* **Hardware:** Testato su **Heltec V3/V4/T114** quindi su differenti archuìitetture hardware, con ventole 5V/12V tramite transistor, tipo 2n2222 (meno energivoro) o modulo relay su ***GPIO 1***.
 
 ---
 
@@ -369,7 +369,7 @@ Abbiamo modificato la logica di gestione eventi per bloccare l'accensione automa
 
 ### 🔐 Eccezione: Codice di Pairing Bluetooth
 L'unica funzione che mantiene la priorità di accensione è la **visualizzazione del PIN di pairing**. 
-* Quando il T114 rileva una richiesta di accoppiamento BT, la variabile globale di blocco viene temporaneamente bypassata per permettere all'utente di leggere il codice di sicurezza.
+* Quando il device lora rileva una richiesta di accoppiamento BT, la variabile globale di blocco viene temporaneamente bypassata per permettere all'utente di leggere il codice di sicurezza.
 
 ---
 
