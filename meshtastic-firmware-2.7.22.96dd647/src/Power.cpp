@@ -930,8 +930,7 @@ void Power::readPowerStatus()
     static bool isFirstCycle = true; 
     static bool wasManuallyReset = false; 
 
-
-       
+ 
 
     // --- 1. FILTRO DATI ---
     if (!powerStatus->getHasBattery() && !powerStatus->getHasUSB() && !powerStatus->getIsCharging()) 
@@ -939,9 +938,10 @@ void Power::readPowerStatus()
         return; 
     }
 
-    // --- 2. CONTROLLO ANOMALIA USB ---
-    if (powerStatus->getHasUSB() && batteryVoltageMv <= FORCE_SLEEP_MV) {
-        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
+// --- 2. CONTROLLO ANOMALIA ALIMENTAZIONE ---
+    // Scatta solo se la lettura è reale (maggiore di 0) ma troppo bassa
+    if (!powerStatus->getHasBattery() && batteryVoltageMv > 0 && batteryVoltageMv <= FORCE_SLEEP_MV) {
+        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! Batteria assente e tensione sporca cobtrolla qualche corto nelle connessioni fisiche: %d mV.", batteryVoltageMv);
     }
     
     // 1. ECCEZIONE MANUALE
