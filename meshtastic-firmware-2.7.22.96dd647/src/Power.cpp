@@ -941,23 +941,19 @@ void Power::readPowerStatus()
     // 1. ECCEZIONE MANUALE (IL TASTO)
     if (isFirstCycle) {
         isFirstCycle = false;
-   
-        // --- 1. LOG DETTAGLIATO STATO ENERGIA ---
-    // Log essenziale: Batteria, USB, Stato ricarica e Voltaggio attuale
-    LOG_INFO("PWR-LOG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
-              powerStatus->getHasBattery() ? "SI" : "NO", 
-              (powerStatus->hasUSB == OptTrue) ? "SI" : "NO",
-              (powerStatus->isCharging == OptTrue) ? "SI" : "NO",
-              batteryVoltageMv);
-      
-    // --- 2. CONTROLLO ANOMALIA USB (Se alimentato ma tensione bassa) ---
-    if (powerStatus->hasUSB == OptTrue) {
-        if (batteryVoltageMv < FORCE_SLEEP_MV) {
-            LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
-        }
-    // Se V > 3.4V sotto USB, non logghiamo errori 
-    }
     
+        
+        // Usiamo i metodi pubblici getHasBattery, getHasUSB e getIsCharging
+        LOG_INFO("PWR-BOOT-DIAG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
+                  powerStatus->getHasBattery() ? "SI" : "NO", 
+                  powerStatus->getHasUSB() ? "SI" : "NO",
+                  powerStatus->getIsCharging() ? "SI" : "NO",
+                  batteryVoltageMv);
+// --- 1. CONTROLLO ANOMALIA USB (Sempre attivo) ---
+    if (powerStatus->getHasUSB() && batteryVoltageMv < FORCE_SLEEP_MV) {
+        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
+    }
+
 
         if (batteryVoltageMv < FORCE_SLEEP_MV) {
             LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);

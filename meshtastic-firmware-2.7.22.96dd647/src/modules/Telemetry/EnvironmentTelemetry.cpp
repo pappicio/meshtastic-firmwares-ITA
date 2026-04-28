@@ -679,6 +679,7 @@ for (TelemetrySensor *sensor : sensors) {
             if (currentAddr == I2C_FAN_SENSOR_ADDR) {
                 if (sensor->getMetrics(m)) {
                     fanTemp = m->variant.environment_metrics.temperature;
+                    fanHum =  m->variant.environment_metrics.relative_humidity;
                     LOG_INFO("FAN CHECK: Lettura riuscita su 0x%02x! Temp: %.1f", currentAddr, fanTemp);
                     isTelemetryBusy = false;
                     return true; // Missione compiuta, usciamo
@@ -686,6 +687,7 @@ for (TelemetrySensor *sensor : sensors) {
                     LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!", currentAddr);
                     // Fallimento lettura: impostiamo errore e usciamo comunque
                     fanTemp = -150.0f;
+                    fanHum = 0.0f;
                     isTelemetryBusy = false;
                     return false;
                 }
@@ -697,6 +699,7 @@ for (TelemetrySensor *sensor : sensors) {
             // Impostiamo il valore di errore, sblocchiamo e chiudiamo la funzione.
             LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere box.");
             fanTemp = -150.0f;
+            fanHum=0.0f;
             isTelemetryBusy = false;
             return false; 
 #endif
@@ -792,7 +795,7 @@ for (TelemetrySensor *sensor : sensors) {
         // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
         m->variant.environment_metrics.has_voltage = true;
         m->variant.environment_metrics.voltage = finalVal;
-
+        
        
 /////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
 
