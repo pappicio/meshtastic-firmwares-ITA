@@ -930,15 +930,13 @@ void Power::readPowerStatus()
     static bool systemArmed = false; 
     static bool isFirstCycle = true; 
     static bool wasManuallyReset = false; // <--- Nuova variabile per ricordarci del tasto
+    static bool isBootWaiting = true; // <--- Salta il glitch del primo secondo
 
-
-// --- 1. FILTRO "FANTASMA" (ANTI-GLITCH BOOT) ---
-    // Se non vede nulla, i dati non sono pronti. Esci e riprova al prossimo giro.
-    if (!powerStatus->getHasBattery() && !powerStatus->getHasUSB() && !powerStatus->getIsCharging()) 
-    {
-        // Non loggare nulla qui per non intasare, esci e basta.
+    // 1. SALTO DI SICUREZZA AL BOOT
+    if (isBootWaiting) {
+        isBootWaiting = false;
         return; 
-    }   
+    }
 
     // --- 2. CONTROLLO ANOMALIA USB (SEMPRE ATTIVO) ---
     // Questo deve stare FUORI dal primo ciclo per monitorare sempre il corto I2C
