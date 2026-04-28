@@ -813,7 +813,12 @@ for (TelemetrySensor *sensor : sensors) {
 // Legenda: 1=ON, 0=OFF, 2=Non Configurato (Assente)
 
 ///////////////////////////////////////////////
+#endif
+
+
+
 int relayMap = 5000; 
+
 
 // 1. Cifra delle CENTINAIA: VENTOLA (X)
 #ifdef FAN_RELAY_PIN
@@ -854,16 +859,21 @@ if (onsleep) {
     // queste condizioni lo lasciano invariato.
 }
 
+ 
+
+#if defined (FAN_RELAY_PIN) || defined (RELAY_1_PIN) || defined (RELAY_2_PIN)
 
 // --- INIEZIONE NELLE METRICHE ---
 // Usiamo il campo 'current' (Ampere) per mostrare la mappa di stato
 m->variant.environment_metrics.has_current = true;
 m->variant.environment_metrics.current = (float)relayMap;
 
+ 
+
     LOG_INFO("TELEMETRY: Relay Status Map: %d (Inviato come %.1f)", relayMap, m->variant.environment_metrics.current);
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
 
-#endif
+ #endif
 
     isTelemetryBusy = false;
 ///////////////////////////////////////////////

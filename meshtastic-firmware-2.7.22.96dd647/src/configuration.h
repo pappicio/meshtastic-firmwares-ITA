@@ -631,8 +631,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USERPREFS_LORA_TX_DISABLED 1
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO NODO"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MN01"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO NODO V4"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MNV4"
 
  
 // NUMERO DI HOPS DI DEFAULT
@@ -809,11 +809,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ////#define CMD_RELAY_OFF "ChiuditiSesamo_123!"   // Password esatta per spegnere
 
    // Nomi dei Relay (da scrivere dopo la password e lo spazio)
-////#define RELAY_1_PIN 2            // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
-////#define RELAY_1_NAME  "luce"
+//#define RELAY_1_PIN 2            // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
+#if defined(RELAY_1_PIN)
+    #define RELAY_1_NAME  "luce"
+#endif
 
-////#define RELAY_2_PIN   5
-////#define RELAY_2_NAME  "pompa"
+//#define RELAY_2_PIN   5
+#if defined(RELAY_2_PIN)
+    #define RELAY_2_NAME  "pompa"
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 // --- NETWORK E WIFI (COMMENTATI) ---

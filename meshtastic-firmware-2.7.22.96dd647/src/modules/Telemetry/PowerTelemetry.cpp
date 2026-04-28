@@ -313,6 +313,7 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 #endif
 
 
+#endif
 
 // --- 2. COSTRUZIONE CRUSCOTTO RELAY AGGIORNATO (CH3 Current) ---
     // Formato: 5XYZ (5=OK, 9=Errore) | 1=ON, 0=OFF, 2=Assente
@@ -357,6 +358,7 @@ if (onsleep) {
     // queste condizioni lo lasciano invariato.
 }
 
+#if defined (FAN_RELAY_PIN) || defined (RELAY_1_PIN) || defined (RELAY_2_PIN)
     // Iniezione nel canale CH3 Current
     m.variant.power_metrics.has_ch3_current = true;
     m.variant.power_metrics.ch3_current = (float)powerStatusMap;
@@ -369,19 +371,20 @@ if (onsleep) {
     // 3. Logica di invio originale (usiamo 'valid' invece del solo getPowerTelemetry)
 
     // --- LOGICA DI FILTRO SELETTIVO PER IL CANALE 3 ---
-// Se NON è definita OPPURE se è definita ma vale 0
-#if !defined(SHOW_ALSO_POWER_METRICS) || (SHOW_ALSO_POWER_METRICS == 0)
+    // Se NON è definita OPPURE se è definita ma vale 0
+    
+    #if !defined(SHOW_ALSO_POWER_METRICS) || (SHOW_ALSO_POWER_METRICS == 0)
     // Se la macro è 0, cancelliamo i dati del Canale 3 prima dell'invio
     // ma lasciamo intatti gli altri (CH1, CH2, ecc.) provenienti da altri sensori
     m.variant.power_metrics.has_ch3_voltage = false;
     m.variant.power_metrics.ch3_voltage = 0.0f;
     m.variant.power_metrics.has_ch3_current = false;
     m.variant.power_metrics.ch3_current = 0.0f;
-    
+
     LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ALSO_POWER_METRICS=0)");
+    #endif
 #endif
 
-#endif
 ///////////////////////////////////////////////
 
 
