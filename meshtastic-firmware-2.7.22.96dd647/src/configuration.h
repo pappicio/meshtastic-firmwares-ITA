@@ -767,7 +767,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef FORCE_SLEEP_MV
     #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
     #define FORCE_WAKEUP_HR 12           // Ore di sonno profondo
-    #define ABSOLUTE_SHUTDOWN_COUNT 5    // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
+    #define ABSOLUTE_SHUTDOWN_COUNT 3    // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
 #endif
 
 //////////////// INTERNAL /////////////////
