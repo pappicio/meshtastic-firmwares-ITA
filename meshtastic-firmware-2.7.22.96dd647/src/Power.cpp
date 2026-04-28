@@ -923,6 +923,82 @@ void Power::readPowerStatus()
             // If the AXP192 returns a valid battery percentage, use it
 
 
+///////////////////////////////////////////////
+        // ============================================================
+#ifdef FORCE_SLEEP_MV
+    static bool systemArmed = false; 
+    static bool isFirstCycle = true; 
+    static bool wasManuallyReset = false; 
+
+
+       
+
+    // --- 1. FILTRO DATI ---
+    if (!powerStatus->getHasBattery() && !powerStatus->getHasUSB() && !powerStatus->getIsCharging()) 
+    {
+        return; 
+    }
+
+    // --- 2. CONTROLLO ANOMALIA USB ---
+    if (powerStatus->getHasUSB() && batteryVoltageMv <= FORCE_SLEEP_MV) {
+        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
+    }
+    
+    // 1. ECCEZIONE MANUALE
+    if (isFirstCycle) {
+        isFirstCycle = false;
+        
+        LOG_INFO("PWR-BOOT-DIAG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
+                  powerStatus->getHasBattery() ? "SI" : "NO", 
+                  powerStatus->getHasUSB() ? "SI" : "NO",
+                  powerStatus->getIsCharging() ? "SI" : "NO",
+                  batteryVoltageMv);
+
+        if (batteryVoltageMv < FORCE_SLEEP_MV) {
+            LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
+            shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+            return;
+        }
+
+        if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+            LOG_INFO("BATTERY: Reset Manuale OK. Batteria carica, zona VERDE (%d mV).", batteryVoltageMv);
+        } else {
+            wasManuallyReset = true; 
+            LOG_WARN("BATTERY: Reset Manuale in RISERVA, zona GRIGIA (%d mV). Avvio forzato.", batteryVoltageMv);
+        }
+    }
+
+    // 2. LOGICA ISTERESI
+    
+    // CASO A: CADUTA (Sotto 3.4V)
+    if (batteryVoltageMv < FORCE_SLEEP_MV) {
+        systemArmed = false;
+        wasManuallyReset = false; 
+        LOG_ERROR("BATTERY: Limite invalicabile. spengo tutto e Shutdown.");
+
+        sendlasttelemetry();
+
+        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+        return;
+    }
+
+    // CASO B: ARMO (Sopra 3.7V)
+    if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+        systemArmed = true; 
+        wasManuallyReset = false; 
+    }
+
+    // CASO C: ZONA GRIGIA (Tra 3.4V e 3.7V)
+    if (!systemArmed && !wasManuallyReset) {
+        LOG_WARN("BATTERY: Risveglio automatico in zona grigia. Torno a nanna.");
+        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+        return;
+    }
+    
+    onsleep = false;
+#endif
+            // ============================================================
+///////////////////////////////////////////////
 
  
 
@@ -971,94 +1047,7 @@ void Power::readPowerStatus()
 
 
 
-
-
-///////////////////////////////////////////////
-        // ============================================================
-#ifdef FORCE_SLEEP_MV
-    static bool systemArmed = false; 
-    static bool isFirstCycle = true; 
-    static bool wasManuallyReset = false; // <--- Nuova variabile per ricordarci del tasto
-
-    // --- 1. SALTO DI SICUREZZA TEMPORALE (Anti-Glitch) ---
-    // Non eseguire nulla se non sono passati almeno 5 secondi dal boot
-    if (millis() < 5000) {
-        return; 
-    }
-
-    // --- 2. CONTROLLO ANOMALIA USB (SEMPRE ATTIVO) ---
-    // Questo deve stare FUORI dal primo ciclo per monitorare sempre il corto I2C
-    if (powerStatus2.getHasUSB() && batteryVoltageMv <= FORCE_SLEEP_MV) {
-        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
-    }
-    
-    // 1. ECCEZIONE MANUALE
-    // 1. ECCEZIONE MANUALE (IL TASTO)
-    if (isFirstCycle) {
-        isFirstCycle = false;
-        
-        // Usiamo i metodi pubblici getHasBattery, getHasUSB e getIsCharging di powerStatus2
-        LOG_INFO("PWR-BOOT-DIAG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
-                  powerStatus2.getHasBattery() ? "SI" : "NO", 
-                  powerStatus2.getHasUSB() ? "SI" : "NO",
-                  powerStatus2.getIsCharging() ? "SI" : "NO",
-                  batteryVoltageMv);
-
-        if (batteryVoltageMv < FORCE_SLEEP_MV) {
-            LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
-            shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-            return;
-        }
-
-        // Qui decidiamo che messaggio darti al boot
-        if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-            LOG_INFO("BATTERY: Reset Manuale OK. Batteria carica, zona VERDE (%d mV).", batteryVoltageMv);
-        } else {
-            wasManuallyReset = true; // Permesso speciale zona grigia
-            LOG_WARN("BATTERY: Reset Manuale in RISERVA, zona GRIGIA (%d mV). Avvio forzato.", batteryVoltageMv);
-        }
-    }
-
-    // 2. LOGICA ISTERESI
-    
-    // CASO A: CADUTA (Sotto 3.4V)
-    if (batteryVoltageMv < FORCE_SLEEP_MV) {
-        systemArmed = false;
-        wasManuallyReset = false; // Anche se era manuale, ora è troppo bassa
-        LOG_ERROR("BATTERY: Limite invalicabile. spengo tutto e Shutdown.");
-
-        sendlasttelemetry();
-
-        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-        return;
-    }
-
-    // CASO B: ARMO (Sopra 3.7V)
-    if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-        systemArmed = true; 
-        // Una volta armati, non ci serve più sapere se è stato un reset manuale
-        wasManuallyReset = false; 
-    }
-
-    // CASO C: ZONA GRIGIA (Tra 3.4V e 3.7V)
-    if (!systemArmed && !wasManuallyReset) {
-        // QUI sta il trucco: spegne SOLO se non siamo armati 
-        // E NON è stato un reset manuale.
-        LOG_WARN("BATTERY: Risveglio automatico in zona grigia. Torno a nanna.");
-        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-        return;
-    }
-    
-    onsleep = false;
-
-    // Se siamo qui:
-    // - O siamo ARMATI (perché abbiamo toccato i 3.7V)
-    // - O siamo in RESET MANUALE (tra 3.4V e 3.7V)
-    // In entrambi i casi, il nodo RESTA ACCESO.
-#endif
-            // ============================================================
-///////////////////////////////////////////////
-
+ 
 
 
 
@@ -1117,6 +1106,14 @@ void Power::readPowerStatus()
 
 #endif
 
+
+
+
+
+
+ 
+
+
     // If we have a battery at all and it is less than 0%, force deep sleep if we
     // have more than 10 low readings in a row. NOTE: min LiIon/LiPo voltage
     // is 2.0 to 2.5V, current OCV min is set to 3100 that is large enough.
@@ -1134,7 +1131,11 @@ void Power::readPowerStatus()
             low_voltage_counter = 0;
         }
     }
+
+
 }
+
+
 
 int32_t Power::runOnce()
 {
