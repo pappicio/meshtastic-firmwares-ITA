@@ -932,28 +932,33 @@ void Power::readPowerStatus()
     static bool wasManuallyReset = false; // <--- Nuova variabile per ricordarci del tasto
 
 
-    // --- 1. LOG DETTAGLIATO STATO ENERGIA (Ad ogni passaggio della sub) ---
-    LOG_INFO("PWR-LOG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV | Perc:%d%%", 
-              powerStatus->getHasBattery() ? "SI" : "NO", 
-              (powerStatus->hasUSB == OptTrue) ? "SI" : "NO",
-              (powerStatus->isCharging == OptTrue) ? "SI" : "NO",
-              batteryVoltageMv,
-              powerStatus->batteryChargePercent);
+   
 
-    // --- 2. CONTROLLO ANOMALIA USB (Se alimentato ma tensione bassa) ---
-    if (powerStatus->hasUSB == OptTrue) {
-        if (batteryVoltageMv < FORCE_SLEEP_MV) {
-            LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
-        }
-        // Se V > 3.4V sotto USB, non logghiamo errori (come da tua richiesta)
-    }
+    
 
     
     // 1. ECCEZIONE MANUALE
     // 1. ECCEZIONE MANUALE (IL TASTO)
     if (isFirstCycle) {
         isFirstCycle = false;
-        
+   
+        // --- 1. LOG DETTAGLIATO STATO ENERGIA ---
+    // Log essenziale: Batteria, USB, Stato ricarica e Voltaggio attuale
+    LOG_INFO("PWR-LOG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
+              powerStatus->getHasBattery() ? "SI" : "NO", 
+              (powerStatus->hasUSB == OptTrue) ? "SI" : "NO",
+              (powerStatus->isCharging == OptTrue) ? "SI" : "NO",
+              batteryVoltageMv);
+      
+    // --- 2. CONTROLLO ANOMALIA USB (Se alimentato ma tensione bassa) ---
+    if (powerStatus->hasUSB == OptTrue) {
+        if (batteryVoltageMv < FORCE_SLEEP_MV) {
+            LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! USB collegata ma tensione CRITICA: %d mV. Controllare cortocircuiti I2C!", batteryVoltageMv);
+        }
+    // Se V > 3.4V sotto USB, non logghiamo errori 
+    }
+    
+
         if (batteryVoltageMv < FORCE_SLEEP_MV) {
             LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
             shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
