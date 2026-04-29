@@ -743,7 +743,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
 #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
     
-    #define FAN_RELAY_PIN 1  // GPIO fisico del modulo Relay (Verificare che sia libero!)
+    #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 
     #if defined(FAN_RELAY_PIN)
         // Soglie di temperatura per l'isteresi
@@ -809,12 +809,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ////#define CMD_RELAY_OFF "ChiuditiSesamo_123!"   // Password esatta per spegnere
 
    // Nomi dei Relay (da scrivere dopo la password e lo spazio)
-//#define RELAY_1_PIN 2            // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
+//#define RELAY_1_PIN 47 //2     pin 2 nn va bene, pin occupato da altro verificare sempre  // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
 #if defined(RELAY_1_PIN)
     #define RELAY_1_NAME  "luce"
 #endif
 
-//#define RELAY_2_PIN   5
+//#define RELAY_2_PIN   48 //5 pin 5 occupato, come sopra, verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
 #if defined(RELAY_2_PIN)
     #define RELAY_2_NAME  "pompa"
 #endif
