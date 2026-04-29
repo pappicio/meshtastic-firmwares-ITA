@@ -719,16 +719,6 @@ void Screen::setup()
 
 void Screen::setOn(bool on, FrameCallback einkScreensaver)
 {
-
-///////////////////////////////////////////////
-    // Debug specifico per il Nodo Solare
-#ifdef KEEP_SCREEN_OFF
-    if (on && !screenOn) {
-       //// LOG_DEBUG("SOLAR DEBUG: Rilevata chiamata a setOn(true) con KEEP_SCREEN_OFF attivo!");
-    }
-#endif
-///////////////////////////////////////////////
-
 #if defined(T_LORA_PAGER)
     if (cardKbI2cImpl)
         cardKbI2cImpl->toggleBacklight(on);
@@ -1505,13 +1495,13 @@ case STATUS_TYPE_POWER: {
             // Comportamento standard Meshtastic
 
 ///////////////////////////////////////////////
-            setOn(true);
+            ////////////setOn(true);
 ///////////////////////////////////////////////
-
+ 			lastPowerUSBState = currentUSB;
             forceDisplay(true);
 			
 ///////////////////////////////////////////////
-            lastPowerUSBState = currentUSB;
+           
         #endif
 ///////////////////////////////////////////////
 
@@ -1713,18 +1703,8 @@ int Screen::handleUIFrameEvent(const UIFrameEvent *event)
 int Screen::handleInputEvent(const InputEvent *event)
 {
     LOG_INPUT("Screen Input event %u! kb %u", event->inputEvent, event->kbchar);
-	
-    // ---  COSI' (Versione Solar/Ninja) ---
-///////////////////////////////////////////////
-    if (!screenOn) 
-	{
-        return 0;    // Esci qui, così il primo click serve solo a svegliarlo
-    }
-///////////////////////////////////////////////
-    // -----------------------------------
-
-    // Se arriviamo qui, lo schermo è già acceso (o la macro non è attiva)
-    // Procediamo con la logica originale di Meshtastic
+    if (!screenOn)
+        return 0;
 
     // Handle text input notifications specially - pass input to virtual keyboard
     if (NotificationRenderer::current_notification_type == notificationTypeEnum::text_input) {
