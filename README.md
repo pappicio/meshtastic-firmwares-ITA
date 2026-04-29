@@ -68,7 +68,7 @@ Ecco la lista dei sensori compatibili e i relativi indirizzi predefiniti:
 
 | Indirizzo | Sensore / Serie | Caratteristiche Principali |
 | :--- | :--- | :--- |
-| **0x76 / 0x77** | **BME280 / BMP280/BME680** | Pressione, Temperatura (BME: +Umidità). |
+| **0x76 / 0x77** | **BME280 / BMP280 / BME680** | Pressione, Temperatura (BME: +Umidità). |
 | **0x40** | **SHT2x / SI7013/20/21 / HTU21D** | Umidità e Temperatura (Alta stabilità). |
 | **0x44 / 0x45** | **SHT3x / SHT4x** | Precisione professionale, range esteso. |
 | **0x38 / 0x39** | **AHT10 / AHT20 / AHT21** | Ottimo rapporto qualità/prezzo, digitali. |
