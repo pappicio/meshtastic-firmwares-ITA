@@ -702,7 +702,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
 
-#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
+////#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
     
     #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
@@ -715,6 +715,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ONEWIRE_TEMP_PIN 4       // Pin per DS18B20
 
 /////////////// --- SENSORI DHT (11/22) ---
+
 //#define DHT_TEMP_PIN 3
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
@@ -724,6 +725,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //////////// --- CONFIGURAZIONE NTC ANALOGICO ---
+
 //#define ANALOG_TEMP_PIN 34  // Pin ADC (solo pin che supportano analogRead, es. GPIO 34)
 #if defined(ANALOG_TEMP_PIN)
     // Se l'utente non ha definito i parametri, usiamo i default per un 10k standard
@@ -738,12 +740,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
-
-
 // La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
+
 #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
     
-    #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
+    //////#define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 
     #if defined(FAN_RELAY_PIN)
         // Soglie di temperatura per l'isteresi
