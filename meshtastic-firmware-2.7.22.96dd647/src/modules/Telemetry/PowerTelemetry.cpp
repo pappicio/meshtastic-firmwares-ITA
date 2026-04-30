@@ -281,9 +281,9 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     bool valid = hasHardwarePower;
 
     // 2. INIEZIONE DATI BOX (Qui forziamo valid = true se abbiamo il nostro sensore)
-#if defined(I2C_FAN_SENSOR_ADDR) || defined(FAN_RELAY_PIN)
-    
-#ifdef I2C_FAN_SENSOR_ADDR
+// La condizione ora include tutti i possibili sensori di temperatura
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
+ 
 #if HAS_HUMIDITY
     LOG_DEBUG("GHOST: Controllo CH3 (Temp: %.1f C, Hum: %.1f %%)", fanTemp, fanHum);
 #else
@@ -310,8 +310,7 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     } else {
         LOG_WARN("GHOST: fanTemp non valida, salto iniezione CH3");
     }
-#endif
-
+ 
 
 #endif
 

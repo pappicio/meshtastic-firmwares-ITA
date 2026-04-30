@@ -136,7 +136,8 @@ void MeshService::init()
 initHardwarePins(); // La tua nuova sub-routine di boot
 
     // --- AGGIUNTA PER VENTOLA ---
-#ifdef I2C_FAN_SENSOR_ADDR
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
+
     if (fanTaskHandle == NULL) {
 #ifdef ESP32
         // Logica per ESP32 (V3, ecc.)
@@ -229,7 +230,9 @@ void MeshService::initHardwarePins() {
 
     // Setup Sensori (Inizializzazione una tantum)
     #ifdef ONEWIRE_TEMP_PIN
-        _owSensors.begin(); 
+         _owSensors.begin(); 
+         _owSensors.setResolution(9); // Molto più veloce!
+         _owSensors.setWaitForConversion(false); // Non bloccare il thread
     #endif
 
     #ifdef DHT_TEMP_PIN
@@ -244,13 +247,14 @@ void MeshService::initHardwarePins() {
 // --- LETTURA ONEWIRE (DS18B20) ---
 #if defined(ONEWIRE_TEMP_PIN)
 float readOneWireTemp() {
+
     // Nota: gli oggetti _oneWire e _owSensors devono essere definiti 
     // SOLO in alto nel file, non qui dentro!
     _owSensors.requestTemperatures();
     float t = _owSensors.getTempCByIndex(0);
     return (t == DEVICE_DISCONNECTED_C) ? -999.0f : t;
 }
-#endif
+#endif 
 
 // --- LETTURA DHT (11/22) ---
 #if defined(DHT_TEMP_PIN)
@@ -303,9 +307,11 @@ float readI2CTemp(uint8_t addr) {
 
 ///////////////////////////////////////////////
 void checkInternalFan() {
- 
+    
     float currentTemp = -999.0f;
     fanHum=0.0f;
+    fantemp = -999.0f;
+    
     // Selettore dinamico basato su cosa hai compilato
     #if defined(I2C_FAN_SENSOR_ADDR)
         currentTemp = readI2CTemp(I2C_FAN_SENSOR_ADDR);
@@ -317,13 +323,14 @@ void checkInternalFan() {
         currentTemp = readAnalogTemp();
     #endif
 
+LOG_INFO("Fan Monitoraggio: Current Temp = %.2f C\n", currentTemp);
 
 #if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
-
+    
     // --- ATTUAZIONE RELAY ---
     // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
     LOG_INFO("FAN: Monitoraggio - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
-          fanTemp, 
+          currentTemp, 
           fanHum, 
           (float)FAN_TEMP_START, 
           (float)FAN_TEMP_STOP);
@@ -444,7 +451,7 @@ void MeshService::fanControlTask(void *pvParameters) {
 #endif
 
     // Delay iniziale per stabilizzazione sistema
-    vTaskDelay(pdMS_TO_TICKS(30000));
+    vTaskDelay(pdMS_TO_TICKS(10000));
 
     for (;;) {
         // Logica di controllo
