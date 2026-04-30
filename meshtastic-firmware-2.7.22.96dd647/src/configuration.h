@@ -686,7 +686,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_TZ_STRING "GMT-1GMT,M3.5.0,M10.5.0/3" // Nota: Sostituito il segnaposto con TZ Italia corretta
 
 // --- RUOLO E TELEMETRIA ---
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- SELEZIONE RUOLO DISPOSITIVO ---
+// Decommenta solo quello che ti serve per il define
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_MUTE
+// Ascolta tutto, ma non trasmette mai (non fa relay e non invia Beacon).
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_ROUTER
+// Infrastruttura fissa: non scala mai i tempi (invia sempre al massimo consentito) e ha priorità nel relay.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_ROUTER_LATE
+// Router che aspetta un attimo prima di ripetere, utile per non "pestarsi i piedi" con altri router vicini.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_REPEATER
+// Modalità "stupida": ripete tutto a livello hardware/radio nel modo più veloce possibile, ignorando quasi tutto il resto.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_SENSOR
+// Per nodi con sensori (come il tuo BME280): garantisce che i dati telemetrici partano con intervalli fissi.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TRACKER
+// Ottimizzato per GPS: invia la posizione frequentemente e ignora i limiti di congestione per non perdere la traccia.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TAK
+// Configurazione specifica per l'uso con il protocollo militare/civile CoT (Cursor on Target).
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_HIDDEN
+// Come il Client, ma non compare nella "Node List" degli altri utenti.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_LOST_AND_FOUND
+// Ruolo per nodi di emergenza o "boe" di ritrovamento.
+
 #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+// Ruolo standard: partecipa attivamente, scala i tempi di invio se la rete è congestionata (>40 nodi).
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #define USERPREFS_CONFIG_SMART_POSITION_ENABLED true
 #define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 900
 
@@ -775,6 +809,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //////////////// INTERNAL /////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
+
 // Inizializziamo il contatore a 0
 #define TOTAL_SENSORS 0
 
