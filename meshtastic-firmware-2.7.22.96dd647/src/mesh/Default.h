@@ -30,21 +30,7 @@
 
 
 
-
-// Se hai definito SCREEN_INVERTED in configuration.h usa quello, 
-// altrimenti usa il default!!!
-///////////////////////////////////////////////
-#ifdef COLORS_INVERTED
-    config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_INVERTED
-#else
-///////////////////////////////////////////////
-
-     config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_DEFAULT
-	
-///////////////////////////////////////////////
-#endif
-///////////////////////////////////////////////
-
+ 
 		
 // Se hai definito SCREEN_TIMEOUT_DEFAULT in configuration.h usa quello, 
 // altrimenti usa il default originale di Meshtastic.

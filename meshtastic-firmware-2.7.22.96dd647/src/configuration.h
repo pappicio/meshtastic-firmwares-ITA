@@ -655,9 +655,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * Si accenderà solo tramite pressione del tasto fisico.
  */
 #define KEEP_SCREEN_OFF 1
-
-// Definisce se i colori dello schermo sono invertiti oppure no!
-////#define COLORS_INVERTED
+ 
 
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
