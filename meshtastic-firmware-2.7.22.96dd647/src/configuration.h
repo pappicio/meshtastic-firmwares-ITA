@@ -693,7 +693,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
 //TX POWER
-#define DBI30 32 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
+#define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
  
 
