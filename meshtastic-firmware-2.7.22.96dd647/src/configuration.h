@@ -660,7 +660,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "MN01"
+#define USERPREFS_SPLASH_TEXT "MNV4"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -714,7 +714,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 // Pin per DS18B20
-#define ONEWIRE_TEMP_PIN 6       
+#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 /////////////// --- SENSORI DHT (11/22) ---
 
