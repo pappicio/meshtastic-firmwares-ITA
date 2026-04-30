@@ -964,8 +964,12 @@ void Power::readPowerStatus()
     // Notify any status instances that are observing us
     const PowerStatus powerStatus2 = PowerStatus(hasBattery, usbPowered, isChargingNow, batteryVoltageMv, batteryChargePercent);
     if (millis() > lastLogTime + 50 * 1000) {
-        LOG_DEBUG("Battery: usbPower=%d, isCharging=%d, batMv=%d, batPct=%d", powerStatus2.getHasUSB(),
-                  powerStatus2.getIsCharging(), powerStatus2.getBatteryVoltageMv(), powerStatus2.getBatteryChargePercent());
+        LOG_DEBUG("Battery: hasBat=%d, usbPower=%d, isCharging=%d, batMv=%d, batPct=%d", 
+          powerStatus2.getHasBattery(),      // <-- Aggiunta questa
+          powerStatus2.getHasUSB(),
+          powerStatus2.getIsCharging(), 
+          powerStatus2.getBatteryVoltageMv(), 
+          powerStatus2.getBatteryChargePercent());
         lastLogTime = millis();
     }
     newStatus.notifyObservers(&powerStatus2);
@@ -1081,7 +1085,7 @@ if (hasBattery)
 // --- 2. CONTROLLO ANOMALIA ALIMENTAZIONE ---
     // Scatta solo se la lettura è reale (maggiore di 0) ma troppo bassa
     if (powerStatus->getHasUSB() && batteryVoltageMv > 0 && batteryVoltageMv <= FORCE_SLEEP_MV) {
-        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! Batteria assente e tensione sporca cobtrolla qualche corto nelle connessioni fisiche: %d mV.", batteryVoltageMv);
+        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! Tensione sporca cobtrolla qualche corto nelle connessioni fisiche: %d mV.", batteryVoltageMv);
     }
     
     // 1. ECCEZIONE MANUALE
