@@ -310,8 +310,8 @@ void checkInternalFan() {
     
     float currentTemp = -999.0f;
     fanHum=0.0f;
-    fantemp = -999.0f;
-    
+    fanTemp = -999.0f;
+
     // Selettore dinamico basato su cosa hai compilato
     #if defined(I2C_FAN_SENSOR_ADDR)
         currentTemp = readI2CTemp(I2C_FAN_SENSOR_ADDR);
