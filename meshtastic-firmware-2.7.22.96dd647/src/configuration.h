@@ -631,8 +631,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USERPREFS_LORA_TX_DISABLED 1
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO NODO V4"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MNV4"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MIO T-echo (Mobile)"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "NTEM"
 
  
 // NUMERO DI HOPS DI DEFAULT
@@ -660,7 +660,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "MNV4"
+#define USERPREFS_SPLASH_TEXT "MIO T-echo (Mobile)"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -693,7 +693,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
 //TX POWER
-#define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
+#define DBI30 32 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
  
 
@@ -714,7 +714,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 // Pin per DS18B20
-#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+////#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 /////////////// --- SENSORI DHT (11/22) ---
 
