@@ -309,27 +309,36 @@ float readI2CTemp(uint8_t addr) {
 void checkInternalFan() {
     
     float currentTemp = -999.0f;
-    fanHum=0.0f;
+    fanHum = 0.0f;
     fanTemp = -999.0f;
+    
+    // Stringa per identificare il tipo di sensore nel log
+    const char* sensorType = "NONE";
 
     // Selettore dinamico basato su cosa hai compilato
     #if defined(I2C_FAN_SENSOR_ADDR)
         currentTemp = readI2CTemp(I2C_FAN_SENSOR_ADDR);
+        sensorType = "I2C";
     #elif defined(ONEWIRE_TEMP_PIN)
         currentTemp = readOneWireTemp();
+        sensorType = "OneWire";
     #elif defined(DHT_TEMP_PIN)
         currentTemp = readDHTTemp();
+        sensorType = "DHT";
     #elif defined(ANALOG_TEMP_PIN)
         currentTemp = readAnalogTemp();
+        sensorType = "Analog";
     #endif
 
-LOG_INFO("Fan Monitoraggio: Current Temp = %.2f C\n", currentTemp);
+    // Log arricchito con il tipo di sensore
+    //LOG_INFO("Fan Monitoraggio: [%s] Current Temp = %.2f C\n", sensorType, currentTemp);
 
 #if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
     
     // --- ATTUAZIONE RELAY ---
     // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
-    LOG_INFO("FAN: Monitoraggio - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
+    LOG_INFO("Fan Monitoraggio: [%s] Monitoraggio - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
+          sensorType,
           currentTemp, 
           fanHum, 
           (float)FAN_TEMP_START, 
@@ -370,6 +379,14 @@ LOG_INFO("Fan Monitoraggio: Current Temp = %.2f C\n", currentTemp);
         #endif
         LOG_ERROR("FAN_CHECK: Lettura sensore NON VALIDA (%.1f)", currentTemp);
     }
+#else
+    // Questo log scatta se FAN_TEMP_START o FAN_TEMP_STOP non sono stati definiti
+    // Utile per monitorare la temperatura anche senza l'automatismo della ventola
+    LOG_INFO("Fan Monitoraggio: [%s] - Temp: %.1f C, Hum: %.1f %% (Soglie non configurate)", 
+              sensorType,
+              currentTemp, 
+              fanHum);
+
 #endif
 
 }
