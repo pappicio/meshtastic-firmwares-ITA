@@ -688,10 +688,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //TX POWER
 #define DBI30 30 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
+// TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
+// NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
+#define TRACERT_MIN_SEC 30 // 30 secondi, Default!!!
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 (Mobile)"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "EV4M"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Mio Nodo (Solar)"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MNS1"
 
  
 // NUMERO DI HOPS DI DEFAULT
@@ -718,7 +721,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "HeltecV4 (Mobile)"
+#define USERPREFS_SPLASH_TEXT "Mio Nodo (Solar)"
 
 //////#define COLORS_INVERTED
 
