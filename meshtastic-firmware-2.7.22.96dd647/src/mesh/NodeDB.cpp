@@ -580,7 +580,7 @@ void NodeDB::installDefaultConfig(bool preserveKey = false)
 
 
 //////////////////////////////////////////////////
-#ifdef COLORS_INVERTED // For the devices that support MUI, default to that
+#ifdef COLORS_INVERTED  
     config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_INVERTED;
 #else
     //////config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_DEFAULT;
