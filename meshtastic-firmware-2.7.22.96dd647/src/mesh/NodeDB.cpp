@@ -578,6 +578,16 @@ void NodeDB::installDefaultConfig(bool preserveKey = false)
     config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_COLOR;
 #endif
 
+
+//////////////////////////////////////////////////
+#ifdef COLORS_INVERTED // For the devices that support MUI, default to that
+    config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_INVERTED;
+#else
+    config.display.displaymode = meshtastic_Config_DisplayConfig_DisplayMode_DEFAULT;
+#endif
+//////////////////////////////////////////////////
+
+
 #if defined(TFT_WIDTH) && defined(TFT_HEIGHT) && (TFT_WIDTH >= 200 || TFT_HEIGHT >= 200)
     config.display.enable_message_bubbles = true;
 #endif
