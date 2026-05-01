@@ -709,8 +709,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LED_DISABLED 1
 
 /**
- * Se definita a 1, abilita la modalità "Solar Ghost".
- * Lo schermo rimarrà spento durante la ricezione di messaggi radio e al distacco dell'alimentazione USB.
+ * Se definita a 1, lo schermo rimarrà spento durante la ricezione di messaggi radio e al distacco dell'alimentazione USB.
  * Si accenderà solo tramite pressione del tasto fisico.
  */
 #define KEEP_SCREEN_OFF 1
@@ -719,7 +718,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "Heltec V4 (Mobile)"
+#define USERPREFS_SPLASH_TEXT "HeltecV4 (Mobile)"
 
 //////#define COLORS_INVERTED
 
