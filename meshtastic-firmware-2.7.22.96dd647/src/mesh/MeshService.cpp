@@ -337,7 +337,7 @@ void checkInternalFan() {
     
     // --- ATTUAZIONE RELAY ---
     // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
-    LOG_INFO("Fan Monitoraggio: [%s] Monitoraggio - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
+    LOG_INFO("Fan Monitoraggio: [%s] - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
           sensorType,
           currentTemp, 
           fanHum, 
@@ -377,7 +377,7 @@ void checkInternalFan() {
                 LOG_ERROR("FAN_SAFETY: Temp non valida (%.1f). Ventola spenta per sicurezza.", currentTemp);
             }
         #endif
-        LOG_ERROR("FAN_CHECK: Lettura sensore NON VALIDA (%.1f)", currentTemp);
+        LOG_ERROR("FAN Monitoraggio: [%s] Lettura sensore NON VALIDA (%.1f)", sensorType, currentTemp);
     }
 #else
     // Questo log scatta se FAN_TEMP_START o FAN_TEMP_STOP non sono stati definiti
