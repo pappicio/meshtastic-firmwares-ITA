@@ -913,6 +913,96 @@ void Power::readPowerStatus()
                                           // code doesn't run every time
     OptionalBool isChargingNow = OptUnknown;
     if (batteryLevel) {
+	
+	
+	
+	
+////if (hasBattery) {
+
+
+///////////////////////////////////////////////
+        // ============================================================
+#ifdef FORCE_SLEEP_MV
+    static bool systemArmed = false; 
+    static bool isFirstCycle = true; 
+    static bool wasManuallyReset = false; 
+ 
+
+
+    // --- 1. FILTRO DATI ---
+    if (batteryVoltageMv == -1 || batteryVoltageMv == 3100) {
+        return; 
+    }
+
+// --- 2. CONTROLLO ANOMALIA ALIMENTAZIONE ---
+    // Scatta solo se la lettura è reale (maggiore di 0) ma troppo bassa
+    if (powerStatus->getHasUSB() && batteryVoltageMv > 0 && batteryVoltageMv <= FORCE_SLEEP_MV) {
+        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! Tensione sporca cobtrolla qualche corto nelle connessioni fisiche: %d mV.", batteryVoltageMv);
+    }
+    
+    // 1. ECCEZIONE MANUALE
+    if (isFirstCycle) {
+        isFirstCycle = false;
+        
+        LOG_INFO("PWR-BOOT-DIAG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
+                  powerStatus->getHasBattery() ? "SI" : "NO", 
+                  powerStatus->getHasUSB() ? "SI" : "NO",
+                  powerStatus->getIsCharging() ? "SI" : "NO",
+                  batteryVoltageMv);
+
+        if (batteryVoltageMv < FORCE_SLEEP_MV) {
+            LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
+            shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+            return;
+        }
+
+        if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+            LOG_INFO("BATTERY: Reset Manuale OK. Batteria carica, zona VERDE (%d mV).", batteryVoltageMv);
+        } else {
+            wasManuallyReset = true; 
+            LOG_WARN("BATTERY: Reset Manuale in RISERVA, zona GRIGIA (%d mV). Avvio forzato.", batteryVoltageMv);
+        }
+    }
+
+    // 2. LOGICA ISTERESI
+    
+    // CASO A: CADUTA (Sotto 3.4V)
+    if (batteryVoltageMv < FORCE_SLEEP_MV) {
+        systemArmed = false;
+        wasManuallyReset = false; 
+        LOG_ERROR("BATTERY: Limite invalicabile. spengo tutto e Shutdown.");
+
+        sendlasttelemetry();
+
+        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+        return;
+    }
+
+    // CASO B: ARMO (Sopra 3.7V)
+    if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
+        systemArmed = true; 
+        wasManuallyReset = false; 
+    }
+
+    // CASO C: ZONA GRIGIA (Tra 3.4V e 3.7V)
+    if (!systemArmed && !wasManuallyReset) {
+        LOG_WARN("BATTERY: Risveglio automatico in zona grigia. Torno a nanna.");
+        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
+        return;
+    }
+    
+    onsleep = false;
+#endif
+            // ============================================================
+///////////////////////////////////////////////
+
+/////// } 
+
+	
+	
+	
+	
+	
         hasBattery = batteryLevel->isBatteryConnect() ? OptTrue : OptFalse;
 #ifndef NRF_APM
         usbPowered = batteryLevel->isVbusIn() ? OptTrue : OptFalse;
@@ -1064,87 +1154,7 @@ void Power::readPowerStatus()
 
 
 
-////if (hasBattery) {
-
-
-///////////////////////////////////////////////
-        // ============================================================
-#ifdef FORCE_SLEEP_MV
-    static bool systemArmed = false; 
-    static bool isFirstCycle = true; 
-    static bool wasManuallyReset = false; 
  
-
-
-    // --- 1. FILTRO DATI ---
-    if (batteryVoltageMv == -1 || batteryVoltageMv == 3100) {
-        return; 
-    }
-
-// --- 2. CONTROLLO ANOMALIA ALIMENTAZIONE ---
-    // Scatta solo se la lettura è reale (maggiore di 0) ma troppo bassa
-    if (powerStatus->getHasUSB() && batteryVoltageMv > 0 && batteryVoltageMv <= FORCE_SLEEP_MV) {
-        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! Tensione sporca cobtrolla qualche corto nelle connessioni fisiche: %d mV.", batteryVoltageMv);
-    }
-    
-    // 1. ECCEZIONE MANUALE
-    if (isFirstCycle) {
-        isFirstCycle = false;
-        
-        LOG_INFO("PWR-BOOT-DIAG: Batt:%s | USB:%s | Chg:%s | Volt:%d mV", 
-                  powerStatus->getHasBattery() ? "SI" : "NO", 
-                  powerStatus->getHasUSB() ? "SI" : "NO",
-                  powerStatus->getIsCharging() ? "SI" : "NO",
-                  batteryVoltageMv);
-
-        if (batteryVoltageMv < FORCE_SLEEP_MV) {
-            LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
-            shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-            return;
-        }
-
-        if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-            LOG_INFO("BATTERY: Reset Manuale OK. Batteria carica, zona VERDE (%d mV).", batteryVoltageMv);
-        } else {
-            wasManuallyReset = true; 
-            LOG_WARN("BATTERY: Reset Manuale in RISERVA, zona GRIGIA (%d mV). Avvio forzato.", batteryVoltageMv);
-        }
-    }
-
-    // 2. LOGICA ISTERESI
-    
-    // CASO A: CADUTA (Sotto 3.4V)
-    if (batteryVoltageMv < FORCE_SLEEP_MV) {
-        systemArmed = false;
-        wasManuallyReset = false; 
-        LOG_ERROR("BATTERY: Limite invalicabile. spengo tutto e Shutdown.");
-
-        sendlasttelemetry();
-
-        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-        return;
-    }
-
-    // CASO B: ARMO (Sopra 3.7V)
-    if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-        systemArmed = true; 
-        wasManuallyReset = false; 
-    }
-
-    // CASO C: ZONA GRIGIA (Tra 3.4V e 3.7V)
-    if (!systemArmed && !wasManuallyReset) {
-        LOG_WARN("BATTERY: Risveglio automatico in zona grigia. Torno a nanna.");
-        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-        return;
-    }
-    
-    onsleep = false;
-#endif
-            // ============================================================
-///////////////////////////////////////////////
-
-/////// } 
-
 
 
 
