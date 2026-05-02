@@ -690,11 +690,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
 // NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
-#define TRACERT_MIN_SEC 30 // 30 secondi, Default!!!
-
-// --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Mio Nodo (Solar)"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MNS1"
+#define TRACERT_MIN_SEC 10 // 30 secondi, Default!!!
 
  
 // NUMERO DI HOPS DI DEFAULT
@@ -721,7 +717,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  
 
-#define USERPREFS_SPLASH_TEXT "Mio Nodo (Solar)"
+
+// --- INFO PROPRIETARIO ---
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "My Echo (mobile)"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTEM"
+
+#define USERPREFS_SPLASH_TEXT "My T-echo (mobile)"
 
 //////#define COLORS_INVERTED
 
@@ -753,7 +754,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 // Pin per DS18B20
-#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+//#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 /////////////// --- SENSORI DHT (11/22) ---
 
@@ -804,7 +805,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
-#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
+//#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
 
 #ifdef FORCE_SLEEP_MV
     #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
