@@ -686,7 +686,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
 //TX POWER
-#define DBI30 30 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
+#define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
 // TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
 // NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
@@ -719,12 +719,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "My Echo (mobile)"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTEM"
+////#define USERPREFS_CONFIG_OWNER_LONG_NAME "My T-echo (mobile)"
+////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTEM"
 
-#define USERPREFS_SPLASH_TEXT "My T-echo (mobile)"
 
-//////#define COLORS_INVERTED
+
+
+#define USERPREFS_SPLASH_TEXT "Meshtastic Modded!"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
