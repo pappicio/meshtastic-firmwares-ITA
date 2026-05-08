@@ -389,8 +389,11 @@ if (onsleep) {
 
 ///////////////////////////////////////////////
     if (valid) {
-        LOG_INFO("Send Box Data: ch3_v=%f, ch3_i=%f",
-                 m.variant.power_metrics.ch3_voltage, m.variant.power_metrics.ch3_current);
+        LOG_INFO("Send: ch1_voltage=%f, ch1_current=%f, ch2_voltage=%f, ch2_current=%f, "
+                 "ch3_voltage=%f, ch3_current=%f",
+                 m.variant.power_metrics.ch1_voltage, m.variant.power_metrics.ch1_current, m.variant.power_metrics.ch2_voltage,
+                 m.variant.power_metrics.ch2_current, m.variant.power_metrics.ch3_voltage, m.variant.power_metrics.ch3_current);
+
 ///////////////////////////////////////////////
 
         sensor_read_error_count = 0;
