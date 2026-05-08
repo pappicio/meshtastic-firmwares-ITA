@@ -803,7 +803,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
-//#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
+#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
 
 #ifdef FORCE_SLEEP_MV
     #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
@@ -849,6 +849,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- CONFIGURAZIONE RELAY REMOTO ---
 ////#define CMD_RELAY_ON  "ApritiSesamo_123!"  // Password esatta per accendere
 ////#define CMD_RELAY_OFF "ChiuditiSesamo_123!"   // Password esatta per spegnere
+
+// per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
+// ApritiSesamo_123! luce
 
    // Nomi dei Relay (da scrivere dopo la password e lo spazio)
 //#define RELAY_1_PIN 47 //2     pin 2 nn va bene, pin occupato da altro verificare sempre  // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
