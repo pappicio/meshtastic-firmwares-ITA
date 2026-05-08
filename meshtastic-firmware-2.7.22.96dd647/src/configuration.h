@@ -630,9 +630,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USERPREFS_CONFIG_LORA_IGNORE_MQTT true
 // #define USERPREFS_LORA_TX_DISABLED 1
 
-
-
-
 // FREQUENZA PREFERITA Convertire immagine B/N delle dimensioni sotto con: https://javl.github.io/image2cpp/ 
 // poi tutit i caratteri a capo vanno convertiti in spazi, usate 
 #define USERPREFS_MQTT_ROOT_TOPIC "msh/EU_868/IT"
@@ -643,6 +640,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- TIMEZONE ---
 #undef USERPREFS_TZ_STRING
 #define USERPREFS_TZ_STRING "GMT-1GMT,M3.5.0,M10.5.0/3" // Nota: Sostituito il segnaposto con TZ Italia corretta
+
+
 
 // --- RUOLO E TELEMETRIA ---
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -686,7 +685,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
 //TX POWER
-#define DBI30 27 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
+#define DBI30 30 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
 // TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
 // NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
@@ -697,7 +696,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HOPS_DEFAULT 4
 
 // NODES
-#define USERPREFS_MAX_NUM_NODES 100
+#define USERPREFS_MAX_NUM_NODES 200
 
 
 // RANDOM ID!
@@ -721,9 +720,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 ////#define USERPREFS_CONFIG_OWNER_LONG_NAME "My T-echo (mobile)"
 ////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTEM"
-
-
-
 
 #define USERPREFS_SPLASH_TEXT "Meshtastic Modded!"
 
@@ -756,6 +752,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Pin per DS18B20
 //#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+
 
 /////////////// --- SENSORI DHT (11/22) ---
 
