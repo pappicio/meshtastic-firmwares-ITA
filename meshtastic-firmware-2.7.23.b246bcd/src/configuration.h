@@ -722,10 +722,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 (mobile)"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "H-V4"
+////#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 (Solar)"
+////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "HV4S"
 
-#define USERPREFS_SPLASH_TEXT "Meshtastic Modded!"
+#define USERPREFS_SPLASH_TEXT "Meshtastic Mods!"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -755,7 +755,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 // Pin per DS18B20
-//#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
 /////////////// --- SENSORI DHT (11/22) ---
