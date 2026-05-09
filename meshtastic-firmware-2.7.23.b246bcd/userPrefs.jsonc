@@ -61,7 +61,7 @@
  
   // "USERPREFS_NETWORK_IPV6_ENABLED": "1",
 
-   // "USERPREFS_MQTT_ROOT_TOPIC": "event/REPLACEME",
+  // "USERPREFS_MQTT_ROOT_TOPIC": "event/REPLACEME",
   // "USERPREFS_RINGTONE_NAG_SECS": "60",
   // "USERPREFS_NODEINFO_REPLY_SUPPRESS_SECS": "43200",
 ///////////////////////////////////////////////
@@ -72,5 +72,4 @@
   // "USERPREFS_TZ_STRING": "tzplaceholder                                         "
 ///////////////////////////////////////////////
 }
-                                      "
-}
+
