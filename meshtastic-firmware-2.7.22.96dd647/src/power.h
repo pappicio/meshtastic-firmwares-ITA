@@ -116,7 +116,7 @@ class Power : private concurrency::OSThread
 
 ///////////////////////////////////////////////
     ////void shutdown();
-    void shutdown(uint32_t sleepMs = portMAX_DELAY);
+    void shutdown(uint32_t sleepMs = portMAX_DELAY, bool Scheduled = false);
     bool systemArmed = false; // Aggiungi questa riga nella classe Power
 ///////////////////////////////////////////////
 

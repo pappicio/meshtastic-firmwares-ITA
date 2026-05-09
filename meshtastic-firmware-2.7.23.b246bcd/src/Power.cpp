@@ -781,7 +781,7 @@ void Power::powerCommandsCheck()
 
     if (shutdownAtMsec && millis() > shutdownAtMsec) {
         shutdownAtMsec = 0;
-        shutdown();
+        shutdown(24 * 3600 * 1000UL);
     }
 }
 
@@ -818,11 +818,16 @@ void Power::reboot()
 #endif
 }
 
-///////////////////////////////////////////////
-void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
-{
-    LOG_INFO("Shutting down for %u ms", sleepMs);
-///////////////////////////////////////////////
+void Power::shutdown(uint32_t millisec, bool Scheduled) {
+    // Se millisec è 0, spesso l'ESP32 dorme "per sempre". 
+    
+
+    if (Scheduled) {
+        // Usiamo %u per uint32_t. Niente più %f o calcoli strani nel log.
+        LOG_INFO("SPEGNIMENTO programmato tra %u ms", millisec);
+    } else {
+        LOG_WARN("SPEGNIMENTO immediato...");
+    }
 
 #if HAS_SCREEN
     if (screen) {
@@ -851,6 +856,7 @@ void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
     messageStore.saveToFlash();
 #endif
 #if defined(ARCH_NRF52) || defined(ARCH_ESP32) || defined(ARCH_RP2040)
+    // Spegnimento LED
 #ifdef PIN_LED1
     ledOff(PIN_LED1);
 #endif
@@ -865,7 +871,7 @@ void Power::shutdown(uint32_t sleepMs) // Aggiungiamo il parametro qui
 #endif
 ///////////////////////////////////////////////
     // Qui usiamo il TUO timer invece di DELAY_FOREVER
-    doDeepSleep(sleepMs, true, true); 
+    doDeepSleep(millisec, true, true); 
 ///////////////////////////////////////////////
 
 #elif defined(ARCH_PORTDUINO)
@@ -1032,81 +1038,41 @@ void Power::readPowerStatus()
 
 ////if (hasBattery) {
 
-
 ///////////////////////////////////////////////
-        // ============================================================
+// ============================================================
 #ifdef FORCE_SLEEP_MV
-    static bool systemArmed = false; 
-    static bool isFirstCycle = true; 
-    static bool wasManuallyReset = false; 
- 
+    static bool systemArmed = true; // PARTIAMO OTTIMISTI
+    static int shutdownAttempts = 0; 
 
-
-    // --- 1. FILTRO DATI ---
-    if (batteryVoltageMv == -1 || batteryVoltageMv == 3100) {
-        return; 
-    }
-
-// --- 2. CONTROLLO ANOMALIA ALIMENTAZIONE ---
-    // Scatta solo se la lettura è reale (maggiore di 0) ma troppo bassa
-    if (powerStatus2.getHasUSB() && batteryVoltageMv > 0 && batteryVoltageMv <= FORCE_SLEEP_MV) {
-        LOG_ERROR("!!! ALLARME ALIMENTAZIONE !!! Tensione sporca cobtrolla qualche corto nelle connessioni fisiche: %d mV.", batteryVoltageMv);
-    }
-    
-    // 1. ECCEZIONE MANUALE
-    if (isFirstCycle) {
-        isFirstCycle = false;
+    if (batteryVoltageMv != -1 && batteryVoltageMv != 3100) {
         
-        LOG_INFO("PWR-BOOT-DIAG: hasBat=%d, usbPower=%d, isCharging=%d, batMv=%d, batPct=%d", 
-          powerStatus2.getHasBattery(),      // <-- Aggiunta questa
-          powerStatus2.getHasUSB(),
-          powerStatus2.getIsCharging(), 
-          powerStatus2.getBatteryVoltageMv(), 
-          powerStatus2.getBatteryChargePercent());
-        
+        // 1. ISTERESI SECCA
+        if (batteryVoltageMv >= FORCE_WAKEUP_MV) systemArmed = true;
+        if (batteryVoltageMv < FORCE_SLEEP_MV) systemArmed = false;
 
-        if (batteryVoltageMv < FORCE_SLEEP_MV) {
-            LOG_ERROR("BATTERY: Tensione insufficiente per avvio, zona ROSSA (%d mV). Shutdown.", batteryVoltageMv);
-            shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-            return;
-        }
-
-        if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-            LOG_INFO("BATTERY: Reset Manuale OK. Batteria carica, zona VERDE (%d mV).", batteryVoltageMv);
+        // 2. PROTEZIONE
+        if (!systemArmed) {
+            shutdownAttempts++;
+            if (shutdownAttempts >= ABSOLUTE_SHUTDOWN_COUNT) {
+                // PRIMA DI SPEGNERE, MANDIAMO UN LOG CHIARO
+                LOG_ERROR("BATTERIA SOTTO SOGLIA (%d mV). Torno in sleep.", batteryVoltageMv);
+                
+               
+                if (!onsleep) {
+                    onsleep = true;
+                    sendlasttelemetry();
+                    ////delay(5000); 
+                }
+                //////shutdown(30000, true);
+                uint32_t sleepTimeMs = (uint32_t)FORCE_WAKEUP_HR * 3600000UL;
+                shutdown(sleepTimeMs, true);
+                return;
+            }
         } else {
-            wasManuallyReset = true; 
-            LOG_WARN("BATTERY: Reset Manuale in RISERVA, zona GRIGIA (%d mV). Avvio forzato.", batteryVoltageMv);
+            shutdownAttempts = 0;
+            onsleep = false;
         }
     }
-
-    // 2. LOGICA ISTERESI
-    
-    // CASO A: CADUTA (Sotto 3.4V)
-    if (batteryVoltageMv < FORCE_SLEEP_MV) {
-        systemArmed = false;
-        wasManuallyReset = false; 
-        LOG_ERROR("BATTERY: Limite invalicabile. spengo tutto e Shutdown.");
-
-        sendlasttelemetry();
-
-        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-        return;
-    }
-
-    // CASO B: ARMO (Sopra 3.7V)
-    if (batteryVoltageMv >= FORCE_WAKEUP_MV) {
-        systemArmed = true; 
-        wasManuallyReset = false; 
-    }
-
-    // CASO C: ZONA GRIGIA (Tra 3.4V e 3.7V)
-    if (!systemArmed && !wasManuallyReset) {
-        LOG_WARN("BATTERY: Risveglio automatico in zona grigia. Torno a nanna.");
-        shutdown(FORCE_WAKEUP_HR * 3600 * 1000);
-        return;
-    }
-    
-    onsleep = false;
 #endif
             // ============================================================
 ///////////////////////////////////////////////
@@ -1136,6 +1102,11 @@ void Power::readPowerStatus()
             low_voltage_counter = 0;
         }
     }
+
+
+
+
+
 }
 
 int32_t Power::runOnce()

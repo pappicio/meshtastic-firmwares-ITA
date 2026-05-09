@@ -722,8 +722,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-////#define USERPREFS_CONFIG_OWNER_LONG_NAME "My T-echo (mobile)"
-////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTEM"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 (mobile)"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "H-V4"
 
 #define USERPREFS_SPLASH_TEXT "Meshtastic Modded!"
 
@@ -811,8 +811,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef FORCE_SLEEP_MV
     #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
-    #define FORCE_WAKEUP_HR 12           // Ore di sonno profondo
-    #define ABSOLUTE_SHUTDOWN_COUNT 3    // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
+    #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo
+
+    // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
+    #define ABSOLUTE_SHUTDOWN_COUNT 3
 #endif
 
 //////////////// INTERNAL /////////////////
