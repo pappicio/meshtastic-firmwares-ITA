@@ -157,9 +157,7 @@ static bool isTelemetryBusy = false;
 
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
-    if (!moduleConfig.telemetry.environment_measurement_enabled && 
-        !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
-
+    if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
 ///////////////////////////////////////////////
 #ifdef I2C_FAN_SENSOR_ADDR
         && false // Forza l'esecuzione della scansione se la ventola è definita
@@ -284,8 +282,6 @@ int32_t EnvironmentTelemetryModule::runOnce()
     // 2. CONTROLLO SOPRAVVIVENZA: Impedisce al modulo di chiudersi
     if (!(moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled ||
           ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
-		  
-///////////////////////////////////////////////
 #ifdef I2C_FAN_SENSOR_ADDR
           || true // Forza il modulo a restare acceso per la ventola
 #endif
@@ -301,8 +297,6 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
         // Entra nell'init se abilitato o se serve alla ventola
         if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 
-
-///////////////////////////////////////////////
 #ifdef I2C_FAN_SENSOR_ADDR
             || true 
 #endif
@@ -336,7 +330,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
                 // sensormap here.
 #ifdef HAS_RAKPROT
-            if (rak9154Sensor.hasSensor()) result = rak9154Sensor.runOnce();
+            if (rak9154Sensor.hasSensor()) 
+			    result = rak9154Sensor.runOnce();
 #endif
 #endif
         }
@@ -357,13 +352,9 @@ int32_t EnvironmentTelemetryModule::runOnce()
     } else {
         // 4. CICLO CONTINUO
         if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
-
-///////////////////////////////////////////////
 #ifndef I2C_FAN_SENSOR_ADDR
 ///////////////////////////////////////////////
-
             return disable(); 
-
 ///////////////////////////////////////////////
 #endif
 ///////////////////////////////////////////////
@@ -372,9 +363,10 @@ int32_t EnvironmentTelemetryModule::runOnce()
         // Lettura sensori
         for (TelemetrySensor *sensor : sensors) {
             uint32_t delay = sensor->runOnce();
-            if (delay < result) result = delay;
+            if (delay < result) {
+                result = delay;
+            }
         }
-
 
  
         // 5. INVIO RADIO (Mesh remota - protetta dal filtro leggisolouno)
@@ -384,8 +376,6 @@ int32_t EnvironmentTelemetryModule::runOnce()
         // Correzione: usiamo moduleConfig invece di config
  ///////////////////////////////////////////////
         if (!leggisolouno && moduleConfig.telemetry.environment_measurement_enabled && 
- ///////////////////////////////////////////////
- 
             ((lastTelemetry == 0) ||
              !Throttle::isWithinTimespanMs(lastTelemetry, Default::getConfiguredOrDefaultMsScaled(
                                                               moduleConfig.telemetry.environment_update_interval,

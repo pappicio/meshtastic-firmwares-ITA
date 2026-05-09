@@ -778,11 +778,12 @@ void Power::powerCommandsCheck()
         LOG_INFO("Rebooting");
         reboot();
     }
-
+////////////////////////////////////////
     if (shutdownAtMsec && millis() > shutdownAtMsec) {
         shutdownAtMsec = 0;
         shutdown(24 * 3600 * 1000UL);
     }
+////////////////////////////////////////
 }
 
 void Power::reboot()
@@ -817,7 +818,7 @@ void Power::reboot()
              "require a restart to be applied");
 #endif
 }
-
+////////////////////////////////////////
 void Power::shutdown(uint32_t millisec, bool Scheduled) {
     // Se millisec è 0, spesso l'ESP32 dorme "per sempre". 
     
@@ -828,7 +829,7 @@ void Power::shutdown(uint32_t millisec, bool Scheduled) {
     } else {
         LOG_WARN("SPEGNIMENTO immediato...");
     }
-
+////////////////////////////////////////
 #if HAS_SCREEN
     if (screen) {
 #ifdef T_DECK_PRO
@@ -967,7 +968,7 @@ void Power::readPowerStatus()
         isChargingNow = usbPowered = OptTrue;
 
 #endif
-
+////////////////////////////////////////
     // Notify any status instances that are observing us
     const PowerStatus powerStatus2 = PowerStatus(hasBattery, usbPowered, isChargingNow, batteryVoltageMv, batteryChargePercent);
     if (millis() > lastLogTime + 50 * 1000) {
@@ -979,6 +980,7 @@ void Power::readPowerStatus()
           powerStatus2.getBatteryChargePercent());
         lastLogTime = millis();
     }
+////////////////////////////////////////
     newStatus.notifyObservers(&powerStatus2);
 #ifdef DEBUG_HEAP
     if (lastheap != memGet.getFreeHeap()) {

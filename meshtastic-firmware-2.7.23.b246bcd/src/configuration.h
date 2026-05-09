@@ -716,6 +716,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #define KEEP_SCREEN_OFF 1
  
+//////#define COLORS_INVERTED
+
 
 // --- OEM E DISPLAY ---
 #define SCREEN_TIMEOUT_DEFAULT 15 // Tempo in secondi per lo spegnimento LCD  

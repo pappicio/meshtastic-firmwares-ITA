@@ -286,6 +286,7 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     // 1. Chiamata originale
     bool hasHardwarePower = getPowerTelemetry(&m);
     bool valid = hasHardwarePower;
+///////////////////////////////////////////////
 
     // 2. INIEZIONE DATI BOX (Qui forziamo valid = true se abbiamo il nostro sensore)
 // La condizione ora include tutti i possibili sensori di temperatura
