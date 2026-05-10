@@ -740,14 +740,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
 
+
+    
+
 ////#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
     
     #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
     
-    #define SHOW_ALSO_POWER_METRICS 0
-    // Se abbiamo definito un indirizzo per la ventola, 
-	////#define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
 #endif
 
 // Pin per DS18B20
@@ -785,6 +785,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
     
+    // Se abbiamo definito un indirizzo per la ventola, 
+	////#define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
+    #define SHOW_ALSO_POWER_METRICS 0
+
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 
     #if defined(FAN_RELAY_PIN)

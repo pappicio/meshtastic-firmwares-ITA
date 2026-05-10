@@ -354,6 +354,10 @@ void checkInternalFan() {
         sensorType = "Analog";
     #endif
 
+    if (currentTemp > -50.0f && currentTemp < 150.0f) {
+        fanTemp = currentTemp;
+    }
+
     // Log arricchito con il tipo di sensore
 // Log arricchito con il tipo di sensore e umidità
 
