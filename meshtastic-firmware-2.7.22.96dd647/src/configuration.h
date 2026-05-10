@@ -796,6 +796,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         #ifndef FAN_TEMP_STOP
             #define FAN_TEMP_STOP 35.0f       // Spegne quando scende a 35
         #endif
+
+         // Soglie di temumidità da asciugare per l'isteresi
+        #if defined (HAS_HUMIDITY)
+            #define FAN_HUM_START  80.0f 
+            #define FAN_HUM_STOP   60.0f 
+        #endif
+
     #endif
 
 #endif

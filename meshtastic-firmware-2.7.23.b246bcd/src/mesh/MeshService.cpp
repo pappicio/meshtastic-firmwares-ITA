@@ -364,52 +364,50 @@ void checkInternalFan() {
 #endif
 
 
-#if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
-    
-    // --- ATTUAZIONE RELAY ---
-    // Usiamo %.1f per tutto (temp e soglie) così non vedrai più quei numeri giganti
-    LOG_INFO("Fan Monitoraggio: [%s] - Temp: %.1f C, Hum: %.1f %% (Soglie: Start=%.1f, Stop=%.1f)", 
-          sensorType,
-          currentTemp, 
-          fanHum, 
-          (float)FAN_TEMP_START, 
-          (float)FAN_TEMP_STOP);
-          
-    // Controllo di sicurezza: processiamo solo se la temp è in un range umano
+// Verifichiamo se esiste almeno una logica di attivazione (Temp O Umidità)
+#if (defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)) || (defined(FAN_HUM_START) && defined(FAN_HUM_STOP))
+
+    // --- LOG DI MONITORAGGIO DINAMICO ---
+    LOG_INFO("Fan Monitoraggio: [%s] T:%.1f H:%.1f", sensorType, currentTemp, fanHum);
+
+    // Sicurezza: eseguiamo solo se il sensore non è scollegato (-999)
     if (currentTemp > -50.0f && currentTemp < 150.0f) {
-        fanTemp = currentTemp;
         
         #ifdef FAN_RELAY_PIN
-            // Impostiamo il pin come output (meglio se fatto una volta nel setup, ma qui funziona)
             pinMode(FAN_RELAY_PIN, OUTPUT);
-
             bool currentState = digitalRead(FAN_RELAY_PIN);
+            bool deveStareAccesa = false;
 
-            // LOGICA DI ACCENSIONE (Soglia START)
-            if (fanTemp >= (float)FAN_TEMP_START) {
-                if (!currentState) { // Se è LOW (spenta), accendiamo
-                    digitalWrite(FAN_RELAY_PIN, HIGH);
-                    LOG_INFO("VENTOLA: STATO CAMBIATO -> ACCESA (Temp: %.1f >= %.1f)", fanTemp, (float)FAN_TEMP_START);
+            // --- 1. LOGICA TEMPERATURA (Se configurata) ---
+            #if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
+                if (currentTemp >= (float)FAN_TEMP_START) {
+                    deveStareAccesa = true;
+                } else if (currentTemp > (float)FAN_TEMP_STOP && currentState) {
+                    deveStareAccesa = true; 
                 }
+            #endif
+
+            // --- 2. LOGICA UMIDITÀ (Se configurata e presente) ---
+            #if defined(FAN_HUM_START) && defined(FAN_HUM_STOP)
+                if (fanHum >= (float)FAN_HUM_START) {
+                    deveStareAccesa = true;
+                } else if (fanHum > (float)FAN_HUM_STOP && currentState) {
+                    deveStareAccesa = true;
+                }
+            #endif
+
+            // --- 3. ATTUAZIONE FINALE ---
+            if (deveStareAccesa && !currentState) {
+                digitalWrite(FAN_RELAY_PIN, HIGH);
+                LOG_INFO("VENTOLA: ATTIVATA");
             } 
-            // LOGICA DI SPEGNIMENTO (Soglia STOP)
-            else if (fanTemp <= (float)FAN_TEMP_STOP) {
-                if (currentState) { // Se è HIGH (accesa), spegniamo
-                    digitalWrite(FAN_RELAY_PIN, LOW);
-                    LOG_INFO("VENTOLA: STATO CAMBIATO -> SPENTA (Temp: %.1f <= %.1f)", fanTemp, (float)FAN_TEMP_STOP);
-                }
-            }
-        #endif
-    } else {
-        // Se il sensore impazzisce o scolleghi il cavo (-999), meglio spegnere la ventola per sicurezza
-        #ifdef FAN_RELAY_PIN
-            if (digitalRead(FAN_RELAY_PIN)) {
+            else if (!deveStareAccesa && currentState) {
                 digitalWrite(FAN_RELAY_PIN, LOW);
-                LOG_ERROR("FAN_SAFETY: Temp non valida (%.1f). Ventola spenta per sicurezza.", currentTemp);
+                LOG_INFO("VENTOLA: DISATTIVATA");
             }
         #endif
-        LOG_ERROR("FAN Monitoraggio: [%s] Lettura sensore NON VALIDA (%.1f)", sensorType, currentTemp);
     }
+
 #else
     // Questo log scatta se FAN_TEMP_START o FAN_TEMP_STOP non sono stati definiti
     // Utile per monitorare la temperatura anche senza l'automatismo della ventola
