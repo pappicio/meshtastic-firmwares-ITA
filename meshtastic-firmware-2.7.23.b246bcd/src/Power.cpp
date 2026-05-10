@@ -1048,7 +1048,7 @@ void Power::readPowerStatus()
 
     // Verifichiamo il boot count (se disponibile in RTC memory) 
     // o semplicemente usiamo i millis per il primo minuto.
-    if (!testDone && currentMillis > 60000) { // 60 secondi di attività
+    if (!testDone && currentMillis > 30000) { // 60 secondi di attività
         
         LOG_INFO("--- DEBUG SLEEP TEST START ---");
         LOG_INFO("1 minuto passato. Invio ultima telemetria...");
@@ -1066,7 +1066,7 @@ void Power::readPowerStatus()
 
         // shutdown(tempo_in_ms, ignore_timer)
         // 30000 ms = 30 secondi
-        shutdown(30000, true); 
+        shutdown(10000, true); 
         
         return; 
     }

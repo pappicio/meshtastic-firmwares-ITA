@@ -501,6 +501,17 @@ void Screen::doDeepSleep()
 
 void Screen::handleSetOn(bool on, FrameCallback einkScreensaver)
 {
+////////////////////////////////////////////
+    if (on) {
+        // Se NON è un boot a freddo (causale 0) e siamo nei primi 10 secondi, blocca.
+        if (wakeCause != ESP_SLEEP_WAKEUP_UNDEFINED && millis() < 15000) {
+        LOG_INFO("handleSetOn: Blocco (Causale: %d, Tempo: %u)", (int)wakeCause, (unsigned int)millis());
+            return; 
+        }
+    }
+//////////////////////////////////////////////
+
+
     if (!useDisplay)
         return;
 
