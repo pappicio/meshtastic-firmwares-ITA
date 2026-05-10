@@ -634,7 +634,6 @@ void Screen::handleSetOn(bool on, FrameCallback einkScreensaver)
 
 void Screen::setup()
 {
-
     // Enable display rendering
     useDisplay = true;
 
@@ -705,11 +704,20 @@ void Screen::setup()
     logo_timeout *= 2; // Give more time for branded boot logos
 #endif
 
-    // Configure alert frames (e.g., "Resuming..." or region name)
-    EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // Skip slow refresh
+    // --- LOGICA MODIFICATA PER EVITARE IL "RESUMING" DA TIMER ---
+    EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); 
     alertFrames[0] = [this](OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y) {
 #ifdef ARCH_ESP32
-        if (wakeCause == ESP_SLEEP_WAKEUP_TIMER || wakeCause == ESP_SLEEP_WAKEUP_EXT1)
+/////////////////////////////////////////
+        // Se svegliato da timer (ventola/telemetria), non disegnare nulla, resta nero
+        if (wakeCause == ESP_SLEEP_WAKEUP_TIMER) {
+            return; 
+        }
+/////////////////////////////////////////
+
+        if (wakeCause == ESP_SLEEP_WAKEUP_EXT1)
+/////////////////////////////////////////
+
             graphics::UIRenderer::drawFrameText(display, state, x, y, "Resuming...");
         else
 #endif
@@ -718,6 +726,9 @@ void Screen::setup()
             graphics::UIRenderer::drawBootIconScreen(region, display, state, x, y);
         }
     };
+    // --- FINE MODIFICA ALERT ---
+/////////////////////////////////////////
+
     ui->setFrames(alertFrames, 1);
     ui->disableAutoTransition(); // Require manual navigation between frames
 
@@ -748,16 +759,38 @@ void Screen::setup()
     snprintf(screen->ourId, sizeof(screen->ourId), "%02x%02x", dmac[4], dmac[5]);
 
 #if ARCH_PORTDUINO
-    handleSetOn(false); // Ensure proper init for Arduino targets
+    handleSetOn(false); 
 #endif
 
-    //  Turn on display and trigger first draw
+/////////////////////////////////////////
+    // --- LOGICA MODIFICATA PER ACCENSIONE FISICA ---
+#ifdef ARCH_ESP32
+    if (wakeCause == ESP_SLEEP_WAKEUP_TIMER) {
+        LOG_INFO("Timer wakeup: Inizializzo driver ma mantengo i pixel spenti.");
+        handleSetOn(false); // Carica tutto ma non accende i LED/VEXT
+    } else {
+        handleSetOn(true);  // Accensione normale per tasto o boot a freddo
+    }
+#else
+/////////////////////////////////////////
+
     handleSetOn(true);
-    graphics::currentResolution = graphics::determineScreenResolution(dispdev->height(), dispdev->width());
-    updateUiFrame(ui);
-#ifndef USE_EINK
-    updateUiFrame(ui); // Some SSD1306 clones drop the first draw, so run twice
+	
+/////////////////////////////////////////
 #endif
+
+    graphics::currentResolution = graphics::determineScreenResolution(dispdev->height(), dispdev->width());
+    
+    // Aggiorna il frame solo se non siamo in modalità silenziosa
+    if (wakeCause != ESP_SLEEP_WAKEUP_TIMER) {
+        updateUiFrame(ui);
+#ifndef USE_EINK
+        updateUiFrame(ui); 
+#endif
+/////////////////////////////////////////
+    }
+    // --- FINE MODIFICA ACCENSIONE ---
+/////////////////////////////////////////
     serialSinceMsec = millis();
 
 #if ARCH_PORTDUINO
@@ -792,6 +825,9 @@ void Screen::setup()
     // Notify modules that support UI events
     MeshModule::observeUIEvents(&uiFrameEventObserver);
 }
+
+
+
 
 void Screen::setOn(bool on, FrameCallback einkScreensaver)
 {

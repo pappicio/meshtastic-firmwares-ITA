@@ -910,7 +910,7 @@ void sendlasttelemetry() {
         // La chiamiamo dritta in faccia
         EnvironmentTelemetryModule::instance->aggiornaTemperaturaBox();
     }
-
+    ////sleep(5000);
 }
 ///////////////////////////////////////////////
 
@@ -1041,6 +1041,38 @@ void Power::readPowerStatus()
 ////if (hasBattery) {
 
 ///////////////////////////////////////////////
+
+#ifdef FORCE_SLEEP_MV_FOR_TEST
+    static bool testDone = false; // Per evitare loop infiniti nello stesso ciclo
+    unsigned long currentMillis = millis();
+
+    // Verifichiamo il boot count (se disponibile in RTC memory) 
+    // o semplicemente usiamo i millis per il primo minuto.
+    if (!testDone && currentMillis > 60000) { // 60 secondi di attività
+        
+        LOG_INFO("--- DEBUG SLEEP TEST START ---");
+        LOG_INFO("1 minuto passato. Invio ultima telemetria...");
+
+        if (!onsleep) {
+            onsleep = true;
+            sendlasttelemetry();
+            // Un piccolo delay per essere sicuri che il pacchetto LoRa parta
+            delay(5000); 
+        }
+
+        LOG_ERROR("Entro in Deep Sleep per 30 secondi. Speriamo che lo schermo torni!");
+         
+        testDone = true; 
+
+        // shutdown(tempo_in_ms, ignore_timer)
+        // 30000 ms = 30 secondi
+        shutdown(30000, true); 
+        
+        return; 
+    }
+#endif
+
+
 // ============================================================
 #ifdef FORCE_SLEEP_MV
     static bool systemArmed = true; // PARTIAMO OTTIMISTI
@@ -1063,7 +1095,7 @@ void Power::readPowerStatus()
                 if (!onsleep) {
                     onsleep = true;
                     sendlasttelemetry();
-                    ////delay(5000); 
+                    delay(5000); 
                 }
                 //////shutdown(30000, true);
                 uint32_t sleepTimeMs = (uint32_t)FORCE_WAKEUP_HR * 3600000UL;

@@ -633,7 +633,16 @@ void Screen::setup()
     EINK_ADD_FRAMEFLAG(dispdev, DEMAND_FAST); // Skip slow refresh
     alertFrames[0] = [this](OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y) {
 #ifdef ARCH_ESP32
-        if (wakeCause == ESP_SLEEP_WAKEUP_TIMER || wakeCause == ESP_SLEEP_WAKEUP_EXT1)
+/////////////////////////////////////////
+        // Se svegliato da timer (ventola/telemetria), non disegnare nulla, resta nero
+        if (wakeCause == ESP_SLEEP_WAKEUP_TIMER) {
+            return; 
+        }
+/////////////////////////////////////////
+
+        if (wakeCause == ESP_SLEEP_WAKEUP_EXT1)
+/////////////////////////////////////////
+
             graphics::UIRenderer::drawFrameText(display, state, x, y, "Resuming...");
         else
 #endif
@@ -642,6 +651,9 @@ void Screen::setup()
             graphics::UIRenderer::drawIconScreen(region, display, state, x, y);
         }
     };
+    // --- FINE MODIFICA ALERT ---
+/////////////////////////////////////////
+
     ui->setFrames(alertFrames, 1);
     ui->disableAutoTransition(); // Require manual navigation between frames
 
@@ -675,13 +687,34 @@ void Screen::setup()
     handleSetOn(false); // Ensure proper init for Arduino targets
 #endif
 
-    //  Turn on display and trigger first draw
+/////////////////////////////////////////
+    // --- LOGICA MODIFICATA PER ACCENSIONE FISICA ---
+#ifdef ARCH_ESP32
+    if (wakeCause == ESP_SLEEP_WAKEUP_TIMER) {
+        LOG_INFO("Timer wakeup: Inizializzo driver ma mantengo i pixel spenti.");
+        handleSetOn(false); // Carica tutto ma non accende i LED/VEXT
+    } else {
+        handleSetOn(true);  // Accensione normale per tasto o boot a freddo
+    }
+#else
+/////////////////////////////////////////
+
     handleSetOn(true);
+	
+/////////////////////////////////////////
+#endif
     graphics::currentResolution = graphics::determineScreenResolution(dispdev->height(), dispdev->width());
+    
+    // Aggiorna il frame solo se non siamo in modalità silenziosa
+    if (wakeCause != ESP_SLEEP_WAKEUP_TIMER) {
     ui->update();
 #ifndef USE_EINK
     ui->update(); // Some SSD1306 clones drop the first draw, so run twice
 #endif
+/////////////////////////////////////////
+    }
+    // --- FINE MODIFICA ACCENSIONE ---
+/////////////////////////////////////////
     serialSinceMsec = millis();
 
 #if ARCH_PORTDUINO
