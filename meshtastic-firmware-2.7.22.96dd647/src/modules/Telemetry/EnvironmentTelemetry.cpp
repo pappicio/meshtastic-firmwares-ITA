@@ -659,15 +659,15 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     bool valid = false;
     bool hasSensor = false;
     bool get_metrics;
-    
+    bool has_sensors;
     m->time = getTime();
     m->which_variant = meshtastic_Telemetry_environment_metrics_tag;
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
     // --- AGGIUNTO IL CICLO FOR MANCANTE ---
-    
+    has_sensors=false;
 for (TelemetrySensor *sensor : sensors) {
-
+has_sensors=true;
 ///////////////////////////////////////////////
         // Chiamata singola: recupera l'indirizzo già corretto dal .h
           uint8_t currentAddr = sensor->getAddr();
@@ -794,6 +794,13 @@ for (TelemetrySensor *sensor : sensors) {
 #endif
 
         // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
+        if (!has_sensors) {
+           // 1. DICHIARA IL TIPO DI PACCHETTO (Fondamentale per lo storico/grafici)
+            m->which_variant = meshtastic_Telemetry_environment_metrics_tag; 
+
+            // 2. INIZIALIZZA (per pulire eventuali residui di altri sensori)
+            m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
+        }
         m->variant.environment_metrics.has_voltage = true;
         m->variant.environment_metrics.voltage = finalVal;
         
