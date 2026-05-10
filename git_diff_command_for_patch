@@ -1,0 +1,1 @@
+git diff --no-index "firmware-2.7.23.b246bcd_orig" "firmware-2.7.23.b246bcd" > firmware.patch
