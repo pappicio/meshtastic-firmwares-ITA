@@ -379,7 +379,7 @@ if (onsleep) {
     m.variant.power_metrics.ch3_voltage = 0.0f;
     m.variant.power_metrics.has_ch3_current = false;
     m.variant.power_metrics.ch3_current = 0.0f;
-
+    valid = hasHardwarePower;
     LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ALSO_POWER_METRICS=0)");
     #endif
 #endif
