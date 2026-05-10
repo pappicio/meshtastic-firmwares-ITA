@@ -721,7 +721,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ////#define USERPREFS_CONFIG_OWNER_LONG_NAME "My T-echo (mobile)"
 ////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTEM"
 
-#define USERPREFS_SPLASH_TEXT "Meshtastic Modded!"
+#define USERPREFS_SPLASH_TEXT "Meshtastic Mods!"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -756,10 +756,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /////////////// --- SENSORI DHT (11/22) ---
 
-//#define DHT_TEMP_PIN 3
+#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
         #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
+        #define HAS_HUMIDITY 1  
     #endif
 #endif
 

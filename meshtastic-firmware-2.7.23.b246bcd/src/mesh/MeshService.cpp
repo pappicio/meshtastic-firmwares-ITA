@@ -278,6 +278,12 @@ float readOneWireTemp() {
 #if defined(DHT_TEMP_PIN)
 float readDHTTemp() {
     float t = _dht.readTemperature();
+    // Aggiorna la globale fanHum solo se richiesto esplicitamente
+    #if defined(HAS_HUMIDITY) && HAS_HUMIDITY == 1
+        float h = _dht.readHumidity();
+        fanHum = (isnan(h)) ? 0.0f : h;
+    #endif
+
     return (isnan(t)) ? -999.0f : t;
 }
 #endif
@@ -349,7 +355,14 @@ void checkInternalFan() {
     #endif
 
     // Log arricchito con il tipo di sensore
-    //LOG_INFO("Fan Monitoraggio: [%s] Current Temp = %.2f C\n", sensorType, currentTemp);
+// Log arricchito con il tipo di sensore e umidità
+
+#if defined(HAS_HUMIDITY) && HAS_HUMIDITY == 1 && !defined(FAN_TEMP_START)
+    LOG_INFO("Fan Monitoraggio: [%s] Current Temp = %.2f C, Hum = %.2f %%\n", sensorType, currentTemp, fanHum);
+#elif !defined(HAS_HUMIDITY) && !defined(FAN_TEMP_START)
+    LOG_INFO("Fan Monitoraggio: [%s] Current Temp = %.2f C\n", sensorType, currentTemp);
+#endif
+
 
 #if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
     
