@@ -724,8 +724,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 Solar"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "H4-S"
+//#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 Solar"
+//#define USERPREFS_CONFIG_OWNER_SHORT_NAME "H4-S"
 
 #define USERPREFS_SPLASH_TEXT "Meshtastic Mods!"
 
