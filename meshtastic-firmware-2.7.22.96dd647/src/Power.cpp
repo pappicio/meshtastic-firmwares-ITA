@@ -831,7 +831,13 @@ void Power::shutdown(uint32_t millisec, bool Scheduled) {
                                  2250); // dismiss after 3 seconds to avoid the
                                         // banner on the sleep screen
 #else
-        screen->showSimpleBanner("Shutting Down...", 0); // stays on screen
+
+///////////////////////////////////////////////
+ #ifndef KEEP_SCREEN_OFF
+     screen->showSimpleBanner("Shutting Down...", 0); // stays on screen
+    #endif 
+///////////////////////////////////////////////
+
 #endif
     }
 #endif
