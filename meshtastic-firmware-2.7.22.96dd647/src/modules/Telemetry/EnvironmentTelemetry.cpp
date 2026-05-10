@@ -800,6 +800,15 @@ has_sensors=true;
 
             // 2. INIZIALIZZA (per pulire eventuali residui di altri sensori)
             m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
+
+            // Iniettiamo il valore nel campo TEMPERATURA (Così si attiva lo storico!)
+            m->variant.environment_metrics.has_temperature = true;
+            m->variant.environment_metrics.temperature = finalVal;
+            // Umidità (opzionale, ma aiuta lo storico)
+            if (fanHum > 0.1f) { 
+                m->variant.environment_metrics.has_relative_humidity = true;
+                m->variant.environment_metrics.relative_humidity = fanHum;
+            }
         }
         m->variant.environment_metrics.has_voltage = true;
         m->variant.environment_metrics.voltage = finalVal;
