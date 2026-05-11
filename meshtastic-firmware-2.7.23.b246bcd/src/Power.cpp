@@ -842,9 +842,7 @@ void Power::shutdown(uint32_t millisec, bool Scheduled) {
 #else
 
 ///////////////////////////////////////////////
- #ifndef KEEP_SCREEN_OFF
      screen->showSimpleBanner("Shutting Down...", 0); // stays on screen
-    #endif 
 ///////////////////////////////////////////////
 
 #endif
@@ -1103,7 +1101,6 @@ void Power::readPowerStatus()
                     sendlasttelemetry();
                     delay(5000); 
                 }
-                //////shutdown(30000, true);
                 uint32_t sleepTimeMs = (uint32_t)FORCE_WAKEUP_HR * 3600000UL;
                 shutdown(sleepTimeMs, true);
                 return;

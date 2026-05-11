@@ -570,7 +570,7 @@ void setup()
         LOG_DEBUG("suppress screen wake because this is a headless timer wakeup");
 
 //////////////////////////////////////
-        ////i2cScanner->setSuppressScreen();
+        i2cScanner->setSuppressScreen();
 //////////////////////////////////////
 
     }

@@ -380,7 +380,7 @@ if (onsleep) {
     // --- LOGICA DI FILTRO SELETTIVO PER IL CANALE 3 ---
     // Se NON è definita OPPURE se è definita ma vale 0
     
-    #if !defined(SHOW_ALSO_POWER_METRICS) || (SHOW_ALSO_POWER_METRICS == 0)
+    #if !defined(SHOW_ON_POWER_METRICS)
     // Se la macro è 0, cancelliamo i dati del Canale 3 prima dell'invio
     // ma lasciamo intatti gli altri (CH1, CH2, ecc.) provenienti da altri sensori
     m.variant.power_metrics.has_ch3_voltage = false;
@@ -388,7 +388,7 @@ if (onsleep) {
     m.variant.power_metrics.has_ch3_current = false;
     m.variant.power_metrics.ch3_current = 0.0f;
     valid = hasHardwarePower;
-    LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ALSO_POWER_METRICS=0)");
+    LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ON_POWER_METRICS non definito!)");
     #endif
 #endif
 

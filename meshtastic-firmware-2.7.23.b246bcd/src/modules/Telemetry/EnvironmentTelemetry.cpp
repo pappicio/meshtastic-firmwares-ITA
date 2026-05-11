@@ -352,6 +352,7 @@ int32_t EnvironmentTelemetryModule::runOnce()
     } else {
         // 4. CICLO CONTINUO
         if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
+///////////////////////////////////////////////
 #ifndef I2C_FAN_SENSOR_ADDR
 ///////////////////////////////////////////////
             return disable(); 
@@ -666,8 +667,8 @@ has_sensors=true;
         // Chiamata singola: recupera l'indirizzo già corretto dal .h
           uint8_t currentAddr = sensor->getAddr();
 
-        if (leggisolouno) {
-#ifdef I2C_FAN_SENSOR_ADDR
+if (leggisolouno) {
+    #ifdef I2C_FAN_SENSOR_ADDR
             LOG_DEBUG("FAN CHECK: Controllo sensore all'indirizzo 0x%02x", currentAddr);
 
             if (currentAddr == I2C_FAN_SENSOR_ADDR) {
@@ -688,7 +689,7 @@ has_sensors=true;
             }
             // Se non è l'indirizzo giusto, continua il ciclo per cercarlo
             continue; 
-#else
+    #else
             // SE NON È DEFINITO: Non possiamo sapere qual è il sensore giusto.
             // Impostiamo il valore di errore, sblocchiamo e chiudiamo la funzione.
             LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere box.");
@@ -696,8 +697,8 @@ has_sensors=true;
             fanHum=0.0f;
             isTelemetryBusy = false;
             return false; 
-#endif
-        }
+    #endif
+}
 
 
         
@@ -784,29 +785,46 @@ has_sensors=true;
         finalVal = tempIntera + (std::min(std::max(fanHum, 0.0f), 99.0f) / 100.0f);
 #else
         // Solo temperatura intera (es. 23.00)
+        fanHum=0.0f;
         finalVal = tempIntera;
 #endif
 
-        // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
-        if (!has_sensors) {
-           // 1. DICHIARA IL TIPO DI PACCHETTO (Fondamentale per lo storico/grafici)
-            m->which_variant = meshtastic_Telemetry_environment_metrics_tag; 
+        // Se NON vogliamo vedere i dati nelle Power Metrics, procediamo con l'iniezione Ambientale
+#ifndef SHOW_ON_POWER_METRICS
 
-            // 2. INIZIALIZZA (per pulire eventuali residui di altri sensori)
-            m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
+    // Ora iniettiamo la temperatura della box nel campo VOLTAGE di 'm'
+    if (!has_sensors) {
+        // 1. DICHIARA IL TIPO DI PACCHETTO (Fondamentale per lo storico/grafici)
+        m->which_variant = meshtastic_Telemetry_environment_metrics_tag; 
 
-            // Iniettiamo il valore nel campo TEMPERATURA (Così si attiva lo storico!)
-            m->variant.environment_metrics.has_temperature = true;
-            m->variant.environment_metrics.temperature = finalVal;
-            // Umidità (opzionale, ma aiuta lo storico)
-            if (fanHum > 0.1f) { 
-                m->variant.environment_metrics.has_relative_humidity = true;
-                m->variant.environment_metrics.relative_humidity = fanHum;
-            }
-        }
+        // 2. INIZIALIZZA (per pulire eventuali residui di altri sensori)
+        m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
+
+        // Iniettiamo il valore nel campo TEMPERATURA (Così si attiva lo storico!)
+        m->variant.environment_metrics.has_temperature = true;
+        m->variant.environment_metrics.temperature = fanTemp;
+        
+        m->variant.environment_metrics.has_relative_humidity = false;
+        m->variant.environment_metrics.relative_humidity = 0.0f;
+        
         m->variant.environment_metrics.has_voltage = true;
         m->variant.environment_metrics.voltage = finalVal;
         
+        valid = true; // Per essere sicuri che invii se non ci sono sensori
+
+    } else {
+        // Se ci sono sensori, scrivi solo nel voltaggio come volevi tu
+        m->variant.environment_metrics.has_voltage = true;
+        m->variant.environment_metrics.voltage = finalVal;
+    }
+
+#else
+    // Se ci sono sensori, scrivi solo nel voltaggio come volevi tu
+    m->variant.environment_metrics.has_voltage = false;
+    m->variant.environment_metrics.voltage = 0.0f;
+    LOG_DEBUG("powermetrics Mode: Dati deviati su Power Metrics, salto iniezione ambientale.");
+#endif
+
        
 /////////////////// qui per ELIMINARE IL FAN TEMP DA  info FAN TEMP da  metriche normali!!!
 
@@ -875,20 +893,25 @@ if (onsleep) {
 
  
 
-#if defined (FAN_RELAY_PIN) || defined (RELAY_1_PIN) || defined (RELAY_2_PIN)
+#if defined(FAN_RELAY_PIN) || defined(RELAY_1_PIN) || defined(RELAY_2_PIN)
 
 // --- INIEZIONE NELLE METRICHE ---
-// Usiamo il campo 'current' (Ampere) per mostrare la mappa di stato
-m->variant.environment_metrics.has_current = true;
-m->variant.environment_metrics.current = (float)relayMap;
-
- 
+// Se SHOW_ON_POWER_METRICS è definita, saltiamo questa iniezione per non duplicare i dati
+#ifndef SHOW_ON_POWER_METRICS
+    m->variant.environment_metrics.has_current = true;
+    m->variant.environment_metrics.current = (float)relayMap;
 
     LOG_INFO("TELEMETRY: Relay Status Map: %d (Inviato come %.1f)", relayMap, m->variant.environment_metrics.current);
+#else
+    // Se invece è definito, ci assicuriamo che il campo corrente sia spento o ignorato qui
+    m->variant.environment_metrics.has_current = false;
+    m->variant.environment_metrics.current = 0.0f;
+    LOG_DEBUG("TELEMETRY: Relay Map ignorata nelle Env Metrics (attesa su Power Metrics)");
+#endif
+
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
 
- #endif
-
+#endif
     isTelemetryBusy = false;
 ///////////////////////////////////////////////
 

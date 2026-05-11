@@ -633,6 +633,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define USERPREFS_CONFIG_GPS_MODE meshtastic_Config_PositionConfig_GpsMode_ENABLED
 // #define USERPREFS_CONFIG_LORA_IGNORE_MQTT true
 // #define USERPREFS_LORA_TX_DISABLED 1
+////#define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
 
 // FREQUENZA PREFERITA Convertire immagine B/N delle dimensioni sotto con: https://javl.github.io/image2cpp/ 
 // poi tutit i caratteri a capo vanno convertiti in spazi, usate 
@@ -791,9 +792,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
     
-    // Se abbiamo definito un indirizzo per la ventola, 
-	////#define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
-    #define SHOW_ALSO_POWER_METRICS 0
+    // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
+    
+    ////#define SHOW_ON_POWER_METRICS
 
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 
