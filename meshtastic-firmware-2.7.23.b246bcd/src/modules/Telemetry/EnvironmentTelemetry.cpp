@@ -159,7 +159,7 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
     if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
 ///////////////////////////////////////////////
-#ifdef I2C_FAN_SENSOR_ADDR
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
         && false // Forza l'esecuzione della scansione se la ventola è definita
 #endif
     ) {
@@ -282,7 +282,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
     // 2. CONTROLLO SOPRAVVIVENZA: Impedisce al modulo di chiudersi
     if (!(moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled ||
           ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE
-#ifdef I2C_FAN_SENSOR_ADDR
+///////////////////////////////////////////////
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
           || true // Forza il modulo a restare acceso per la ventola
 #endif
         )) {
@@ -297,11 +298,12 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
         // Entra nell'init se abilitato o se serve alla ventola
         if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 
-#ifdef I2C_FAN_SENSOR_ADDR
+///////////////////////////////////////////////
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
             || true 
 #endif
         ) {
-#ifdef I2C_FAN_SENSOR_ADDR
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
             LOG_INFO("BOX FAN: Telemetria forzata (Istanza attiva)");
 #else
 ///////////////////////////////////////////////
@@ -337,28 +339,40 @@ int32_t EnvironmentTelemetryModule::runOnce()
         }
 
 ///////////////////////////////////////////////
-        // Se abbiamo la ventola, non permettiamo MAI il disable() qui
-#ifdef I2C_FAN_SENSOR_ADDR
-        return setStartDelay();
-#else
 ///////////////////////////////////////////////
+    // 1. Controllo Avvio: Se abbiamo QUALSIASI sensore della box, 
+    // non permettiamo MAI il disable() qui.
+    ///////////////////////////////////////////////
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
+    
+    return setStartDelay();
 
-        return result == UINT32_MAX ? disable() : setStartDelay();
-		
-///////////////////////////////////////////////
+#else
+
+    return result == UINT32_MAX ? disable() : setStartDelay();
+
 #endif
-///////////////////////////////////////////////
+    ///////////////////////////////////////////////
 
     } else {
         // 4. CICLO CONTINUO
+        // Se la telemetria è disattivata nelle impostazioni ufficiali...
         if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
-///////////////////////////////////////////////
-#ifndef I2C_FAN_SENSOR_ADDR
-///////////////////////////////////////////////
+
+    ///////////////////////////////////////////////
+    // ...ma abbiamo uno dei nostri sensori custom definiti, NON spegnere.
+    // Il disable() scatta SOLO SE non abbiamo nessuno di questi sensori.
+    ///////////////////////////////////////////////
+#if !defined(I2C_FAN_SENSOR_ADDR) && !defined(ONEWIRE_TEMP_PIN) && !defined(DHT_TEMP_PIN) && !defined(ANALOG_TEMP_PIN)
+            
             return disable(); 
-///////////////////////////////////////////////
+
+#else
+            // Restiamo vivi per gestire la ventola e l'iniezione dati Ninja
+            return setStartDelay();
+
 #endif
-///////////////////////////////////////////////
+    ///////////////////////////////////////////////
         }
 
         // Lettura sensori
@@ -377,6 +391,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
         // Correzione: usiamo moduleConfig invece di config
  ///////////////////////////////////////////////
         if (!leggisolouno && moduleConfig.telemetry.environment_measurement_enabled && 
+ ///////////////////////////////////////////////
+ 
             ((lastTelemetry == 0) ||
              !Throttle::isWithinTimespanMs(lastTelemetry, Default::getConfiguredOrDefaultMsScaled(
                                                               moduleConfig.telemetry.environment_update_interval,
@@ -402,6 +418,7 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
     return min(sendToPhoneIntervalMs, result);
 }
+
 
 
 bool EnvironmentTelemetryModule::wantUIFrame()
@@ -692,7 +709,7 @@ if (leggisolouno) {
     #else
             // SE NON È DEFINITO: Non possiamo sapere qual è il sensore giusto.
             // Impostiamo il valore di errore, sblocchiamo e chiudiamo la funzione.
-            LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere box.");
+            LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere su i2c.");
             fanTemp = -150.0f;
             fanHum=0.0f;
             isTelemetryBusy = false;

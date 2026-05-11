@@ -685,7 +685,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define USERPREFS_CONFIG_SMART_POSITION_ENABLED true
-#define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 900
+
 
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
@@ -757,13 +757,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
 #endif
 
-// Pin per DS18B20
-#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+////////////////////////////////////////////// Pin per DS18B20
+////#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
-/////////////// --- SENSORI DHT (11/22) ---
-
-//#define DHT_TEMP_PIN 6
+////////////////////////////// --- SENSORI DHT (11/22) ---
+#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
         #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
@@ -791,9 +790,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
 
 #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
-    
-    // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
-    
+
+// se abilitiamo temp per il box, allora possiamo dire invia telemetrie ogni ora
+    #define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 3600
+    #define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
+
+// possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
     ////#define SHOW_ON_POWER_METRICS
 
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)

@@ -51,7 +51,7 @@ int32_t PowerTelemetryModule::runOnce()
 
 ///////////////////////////////////////////////
    // 2. FORZATURA TOTALE PER MONITORAGGIO BOX
-    #if defined(FAN_RELAY_PIN) || defined(I2C_FAN_SENSOR_ADDR)
+  #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
         // Se abbiamo hardware per la ventola/box, il modulo DEVE esistere
         
             moduleConfig.telemetry.power_measurement_enabled = true;
@@ -89,7 +89,7 @@ int32_t PowerTelemetryModule::runOnce()
 
 ///////////////////////////////////////////////
             // FIX: Forziamo il successo se abbiamo il monitoraggio Box
-            #if defined(I2C_FAN_SENSOR_ADDR) || defined(FAN_RELAY_PIN)
+           #if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
                 LOG_INFO("Power Telemetry: Monitor Box attivo, modulo abilitato.");
                 result = 0; 
             #endif
@@ -366,14 +366,11 @@ if (onsleep) {
 
     LOG_INFO("POWER_METRICS: CH3_Temp=%.1f, Map_Status=%d", 
               m.variant.power_metrics.ch3_voltage, powerStatusMap);
- 
+#endif
 
-    // 3. Logica di invio originale (usiamo 'valid' invece del solo getPowerTelemetry)
 
-    // --- LOGICA DI FILTRO SELETTIVO PER IL CANALE 3 ---
-    // Se NON è definita OPPURE se è definita ma vale 0
-    
-    #if !defined(SHOW_ON_POWER_METRICS)
+// 3. Logica di invio originale (usiamo 'valid' invece del solo getPowerTelemetry)
+#if !defined(SHOW_ON_POWER_METRICS)
     // Se la macro è 0, cancelliamo i dati del Canale 3 prima dell'invio
     // ma lasciamo intatti gli altri (CH1, CH2, ecc.) provenienti da altri sensori
     m.variant.power_metrics.has_ch3_voltage = false;
@@ -382,9 +379,7 @@ if (onsleep) {
     m.variant.power_metrics.ch3_current = 0.0f;
     valid = hasHardwarePower;
     LOG_DEBUG("POWER_METRICS: Dati CH3 oscurati (SHOW_ON_POWER_METRICS non definito!)");
-    #endif
 #endif
-
 ///////////////////////////////////////////////
 
 
