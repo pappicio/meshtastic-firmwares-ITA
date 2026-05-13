@@ -796,7 +796,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
 
 // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
-    ////#define SHOW_ON_POWER_METRICS
+    
+    #define SHOW_ON_POWER_METRICS
 
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 

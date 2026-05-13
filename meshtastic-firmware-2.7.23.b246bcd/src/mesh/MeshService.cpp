@@ -501,7 +501,7 @@ void MeshService::fanControlTask(void *pvParameters) {
 #endif
 
     // Delay iniziale per stabilizzazione sistema
-    vTaskDelay(pdMS_TO_TICKS(10000));
+    vTaskDelay(pdMS_TO_TICKS(15000));
 
     for (;;) {
         // Logica di controllo
