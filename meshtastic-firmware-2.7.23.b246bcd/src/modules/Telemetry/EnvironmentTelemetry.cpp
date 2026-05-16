@@ -22,6 +22,10 @@
 #include "target_specific.h"
 #include <OLEDDisplay.h>
 
+#include <Wire.h>
+
+
+
 ///////////////////////////////////////////////
 #include "detect/ScanI2C.h"
 ///////////////////////////////////////////////
@@ -612,8 +616,7 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
     return false; // Let others look at this message also if they want
 }
 
-
-
+ 
 
 ///////////////////////////////////////////////
 void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
@@ -651,6 +654,9 @@ void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
 
 
 
+
+ 
+
 bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m)
 {
 
@@ -671,18 +677,27 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     // getMetrics() doesn't always get evaluated because of
     // short-circuit evaluation rules in c++
     bool get_metrics;
-    bool has_sensors;
+    bool has_sensors=false;
+
     m->time = getTime();
     m->which_variant = meshtastic_Telemetry_environment_metrics_tag;
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
-    // --- AGGIUNTO IL CICLO FOR MANCANTE ---
-    has_sensors=false;
+     
+     
+
+ 
+// --- AGGIUNTO IL CICLO FOR MANCANTE ---
 for (TelemetrySensor *sensor : sensors) {
 has_sensors=true;
+
+
 ///////////////////////////////////////////////
-        // Chiamata singola: recupera l'indirizzo già corretto dal .h
-          uint8_t currentAddr = sensor->getAddr();
+// Chiamata singola: recupera l'indirizzo già corretto dal .h
+
+uint8_t currentAddr = sensor->getAddr();
+
+ 
 
 if (leggisolouno) {
     #ifdef I2C_FAN_SENSOR_ADDR
@@ -929,6 +944,78 @@ if (onsleep) {
     LOG_DEBUG("TELEMETRY: Fine. Valid=%s, HasSensor=%s", valid ? "YES" : "NO", hasSensor ? "YES" : "NO");
 
 #endif
+
+
+
+
+
+
+
+// =========================================================================
+// BLOCCO METEO UNIFICATO ED ELASTICO (DIREZIONE & VELOCITÀ)
+// =========================================================================
+#if defined(HAS_WIND_DIRECTION) || defined(HAS_WIND_VELOCITY)
+if (!leggisolouno) 
+{
+    float calcolodir = -1.0f;
+    float calcolovel = -1.0f;
+    bool ha_dir = false;
+    bool ha_vel = false;
+
+    // 1. Chiamata al metodo della Banderuola (AS5600)
+#ifdef HAS_WIND_DIRECTION
+    calcolodir = getWindDirectionDegrees();
+    if (calcolodir >= 0.0f && calcolodir <= 360.0f) {
+        ha_dir = true;
+    }
+#endif
+
+    // 2. Chiamata al metodo dell'Anemometro (PCF8583)
+#ifdef HAS_WIND_VELOCITY
+    calcolovel = getWindSpeedCounters();
+    if (calcolovel >= 0.0f) {
+        ha_vel = true;
+    }
+#endif
+
+    // 3. Fusione intelligente dei valori e gestione concorrenza per l'App
+    if (ha_dir || ha_vel) 
+    {
+        // CASO 1: Entrambi i sensori sono vivi e reali
+        if (ha_dir && ha_vel) {
+            m->variant.environment_metrics.wind_direction = (uint32_t)calcolodir;
+            m->variant.environment_metrics.wind_speed = calcolovel;
+            m->variant.environment_metrics.has_wind_direction = true; // Abilita Dir
+            m->variant.environment_metrics.has_wind_speed = true;     // Abilita Vel
+            LOG_INFO("METEO COMPLETO: [REALE] Dir = %u° | [REALE] Vel = %.2f m/s", (uint32_t)calcolodir, calcolovel);
+        }
+        // CASO 2: Solo Banderuola reale -> Velocità fasulla (2.5 m/s) per svegliare l'App
+        else if (ha_dir && !ha_vel) {
+            m->variant.environment_metrics.wind_direction = (uint32_t)calcolodir;
+            m->variant.environment_metrics.wind_speed = 2.5f; 
+            m->variant.environment_metrics.has_wind_direction = true; // Abilita Dir
+            m->variant.environment_metrics.has_wind_speed = true;     // SVEGLIA l'app anche per la velocità!
+            LOG_INFO("METEO PARZIALE: [REALE] Dir = %u° | [FASULLO] Vel = 2.50 m/s", (uint32_t)calcolodir);
+        }
+        // CASO 3: Solo Anemometro reale -> Direzione fasulla (180° = Sud) per orientare l'App
+        else if (!ha_dir && ha_vel) {
+            m->variant.environment_metrics.wind_direction = 180; 
+            m->variant.environment_metrics.wind_speed = calcolovel;
+            m->variant.environment_metrics.has_wind_direction = true; // SVEGLIA l'app anche per la direzione!
+            m->variant.environment_metrics.has_wind_speed = true;     // Abilita Vel
+            LOG_INFO("METEO PARZIALE: [FASULLO] Dir = 180° | [REALE] Vel = %.2f m/s", calcolovel);
+        }
+
+        // Diamo il via libera alla trasmissione della telemetria ambientale
+        valid = true; 
+        hasSensor = true; 
+    }
+}
+#endif
+
+
+
+
     isTelemetryBusy = false;
 ///////////////////////////////////////////////
 
@@ -936,6 +1023,127 @@ if (onsleep) {
 }
 
 
+
+/**
+ * Legge l'angolo grezzo dall'AS5600 e lo converte in gradi (0-360)
+ * Ritorna -1.0 in caso di errore di lettura sul bus.
+ */
+#ifdef HAS_WIND_DIRECTION
+float EnvironmentTelemetryModule::getWindDirectionDegrees() {
+        // 1. Diciamo al chip che vogliamo leggere a partire dal registro 0x0C (RAW ANGLE)
+Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
+    Wire.write(0x0C); 
+    if (Wire.endTransmission() != 0) {
+        return -1.0f; // Il sensore non risponde (es. cavo scollegato)
+    }
+
+    // 2. Richiediamo i 2 byte successivi (0x0C e 0x0D)
+    Wire.requestFrom(EnvironmentTelemetryModule::AS5600_ADDR, 2);
+    if (Wire.available() >= 2) {
+        uint8_t msb = Wire.read(); // Byte alto
+        uint8_t lsb = Wire.read(); // Byte basso
+        
+        // Uniamo i due byte per ottenere il valore a 12-bit (0 - 4095)
+        uint16_t rawAngle = ((msb & 0x0F) << 8) | lsb;
+
+        // Convertiamo il valore grezzo in gradi sessagesimali
+        float degrees = (rawAngle * 360.0f) / 4096.0f;
+        
+        return degrees;
+    }
+
+    return -1.0f; // Errore di lettura
+}
+#endif
+
+#ifdef HAS_WIND_VELOCITY
+float EnvironmentTelemetryModule::getWindSpeedCounters() {
+    const uint8_t PCF_ADDR = 0x51;
+    static bool pcf_inizializzato = false;
+    
+    // Inizializzazione una tantum
+    if (!pcf_inizializzato) {
+        Wire.beginTransmission(PCF_ADDR);
+        Wire.write(0x00); 
+        Wire.write(0x20); // Modalità "Event Counter"
+        if (Wire.endTransmission() == 0) {
+            LOG_INFO("METEO ANEMO: PCF8583 pronto.");
+            pcf_inizializzato = true;
+        } else {
+            LOG_WARN("METEO ANEMO: PCF8583 non risponde!");
+            return -1.0f;
+        }
+    }
+
+    static uint32_t lastTotalCount = 0;
+    static uint32_t lastReadTime = 0; 
+    uint32_t currentTime = millis();
+    float speed_mps = -1.0f;
+
+    // Lettura diretta dei 3 registri BCD
+    Wire.beginTransmission(PCF_ADDR);
+    Wire.write(0x01); 
+    if (Wire.endTransmission() == 0) {
+        Wire.requestFrom(PCF_ADDR, (uint8_t)3);
+        if (Wire.available() >= 3) {
+            uint8_t r1 = Wire.read();
+            uint8_t r2 = Wire.read();
+            uint8_t r3 = Wire.read();
+
+            // 1. LOG ULTRA GREZZO: Vediamo i byte esatti letti dal chip I2C
+            LOG_INFO("GREZZO I2C -> Reg0x01(HEX): 0x%02X | Reg0x02(HEX): 0x%02X | Reg0x03(HEX): 0x%02X", r1, r2, r3);
+
+            // Decodifica BCD
+            auto bcdDec = [](uint8_t val) { return ((val / 16 * 10) + (val % 16)); };
+            uint32_t currentTotalCount = bcdDec(r1) + (bcdDec(r2) * 100) + (bcdDec(r3) * 10000);
+
+            // 2. LOG TEMPORALE E DI CONTEGGIO
+            LOG_INFO("CONTEGGIO -> Attuale Totale Decodificato: %u | Precedente: %u | Millis Attuali: %u", currentTotalCount, lastTotalCount, currentTime);
+
+            if (lastReadTime != 0) {
+                float elapsedSeconds = (currentTime - lastReadTime) / 1000.0f;
+
+                if (elapsedSeconds > 0.1f) {
+                    uint32_t deltaImpulses = (currentTotalCount >= lastTotalCount) ? 
+                                             (currentTotalCount - lastTotalCount) : 
+                                             (1000000 - lastTotalCount) + currentTotalCount;
+
+                    float hz = (float)deltaImpulses / elapsedSeconds;
+                    speed_mps = (hz * 2.4f) / 3.6f; 
+
+
+// 21 VELOCITA FINTA PER VISUALIZZA SU APP, ATTENDO NUOVI SENSORI HALL U18...
+                    speed_mps = 2.0f; 
+///////////////////////////////////////////////////////////////////////////////////
+
+
+                    // 3. LOG FINALE DEL CALCOLO
+                    LOG_INFO("CALCOLO -> Delta Impulsi: %u in %.3f secondi -> Freq: %.2f Hz -> Vel: %.2f m/s", 
+                             deltaImpulses, elapsedSeconds, hz, speed_mps);
+                } else {
+                    LOG_WARN("METEO ANEMO: Tempo trascorso troppo basso (%.3fs), calcolo saltato!", elapsedSeconds);
+                }
+            } else {
+                LOG_INFO("METEO ANEMO: Primo giro di sincronizzazione (lastReadTime era 0).");
+                speed_mps = 0.0f; 
+            }
+            
+            lastTotalCount = currentTotalCount;
+            lastReadTime = currentTime;
+        } else {
+            LOG_WARN("METEO ANEMO: Byte disponibili su I2C insufficienti!");
+        }
+    } else {
+        LOG_WARN("METEO ANEMO: Impossibile avviare la lettura dall'indirizzo del registro 0x01");
+    }
+
+
+    
+    return speed_mps;
+}
+#endif
+
+ 
 
 
 meshtastic_MeshPacket *EnvironmentTelemetryModule::allocReply()

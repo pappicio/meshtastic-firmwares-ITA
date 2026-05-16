@@ -35,7 +35,7 @@ class ScanI2C
         INA260,
         INA219,
         INA3221,
-        MAX17048,
+        WIND_DIRECTION_AS5600,
         MCP9808,
         SHT31,
         SHT4X,

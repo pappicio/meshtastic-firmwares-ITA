@@ -785,6 +785,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
  
+// Per attivarli basta lasciarli così:
+// #define HAS_WIND_DIRECTION
+#define HAS_WIND_VELOCITY
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
 // La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
@@ -797,7 +800,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
     
-    #define SHOW_ON_POWER_METRICS
+//     #define SHOW_ON_POWER_METRICS
 
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 
