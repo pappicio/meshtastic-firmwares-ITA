@@ -22,12 +22,14 @@
 #include "target_specific.h"
 #include <OLEDDisplay.h>
 
-#include <Wire.h>
+ 
 
 
 
 ///////////////////////////////////////////////
 #include "detect/ScanI2C.h"
+
+#include <Wire.h>
 ///////////////////////////////////////////////
 
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL

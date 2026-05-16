@@ -84,6 +84,22 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
     meshtastic_MeshPacket *lastMeasurementPacket;
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute
     uint32_t lastSentToPhone = 0;
+///////////////////////////////////////////////
+    // === AGGIUNGI IL PROTOTIPO DELLA FUNZIONE QUI ===
+#ifdef HAS_WIND_DIRECTION
+    float getWindDirectionDegrees();
+#endif
+
+#ifdef HAS_WIND_VELOCITY
+    float getWindSpeedCounters();
+#endif
+    
+    // Se serve definire l'indirizzo dell'AS5600 qui nel .h:
+    static const uint8_t AS5600_ADDR = 0x36;
+///////////////////////////////////////////////
+
+
+
 };
 
 #endif
