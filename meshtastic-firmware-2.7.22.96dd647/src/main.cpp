@@ -312,6 +312,39 @@ void printInfo()
 {
     LOG_INFO("S:B:%d,%s,%s,%s", HW_VENDOR, optstr(APP_VERSION), optstr(APP_ENV), optstr(APP_REPO));
 }
+
+
+///////////////////////////////////////////////
+#ifdef WIND_VELOCITY_PIN
+#if defined(ARCH_ESP32)
+// ISR memorizzata in IRAM per la massima efficienza
+volatile uint32_t wind_pulse_count = 0;
+volatile unsigned long last_micros_anemometro = 0; 
+
+void IRAM_ATTR windVelocityISR() {
+    unsigned long calcolo_tempo = micros();
+    // Filtro antirimbalzo a 15ms (Tarato per max 160 km/h)
+    // Prende solo il primo impulso genuino e ignora i successivi rimbalzi ravvicinati
+    if (calcolo_tempo - last_micros_anemometro > 15000) {
+        wind_pulse_count++;
+        last_micros_anemometro = calcolo_tempo;
+    }
+}
+#else
+volatile uint32_t wind_pulse_count = 0;
+volatile unsigned long last_micros_anemometro = 0;
+
+void windVelocityISR() {
+    unsigned long calcolo_tempo = micros();
+    if (calcolo_tempo - last_micros_anemometro > 15000) {
+        wind_pulse_count++;
+        last_micros_anemometro = calcolo_tempo;
+    }
+}
+#endif
+#endif
+/////////////////////////////////////////////
+
 #ifndef PIO_UNIT_TESTING
 void setup()
 {
@@ -498,7 +531,7 @@ void setup()
     Wire.begin();
 #endif
 #endif
-
+//////////////////////////////////////////////////////////8
 #if defined(M5STACK_UNITC6L)
     pinMode(LORA_CS, OUTPUT);
     digitalWrite(LORA_CS, 1);
@@ -572,6 +605,9 @@ void setup()
 //////////////////////////////////////
         i2cScanner->setSuppressScreen();
 //////////////////////////////////////
+
+
+
 
     }
 #endif
@@ -1035,9 +1071,27 @@ void setup()
 
     // We manually run this to update the NodeStatus
     nodeDB->notifyObservers(true);
+
+
+
+///////////////////////////////////////////////////////
+#ifdef WIND_VELOCITY_PIN
+    // 1. Configura il pin con il Pull-Down interno dell'ESP32
+    pinMode(WIND_VELOCITY_PIN, INPUT_PULLDOWN);
+    
+    // 2. Rimetti RISING: conta quando il segnale SALE da 0V a 3.3V
+    attachInterrupt(digitalPinToInterrupt(WIND_VELOCITY_PIN), windVelocityISR, RISING);
+    
+    LOG_INFO("Anemometro allineato in PULL-DOWN e RISING su pin %d", WIND_VELOCITY_PIN);
+#endif
+///////////////////////////////////////////////////////
+
+
 }
 
 #endif
+
+////////////////////////////////7
 uint32_t rebootAtMsec;     // If not zero we will reboot at this time (used to reboot shortly after the update completes)
 uint32_t shutdownAtMsec;   // If not zero we will shutdown at this time (used to shutdown from python or mobile client)
 bool suppressRebootBanner; // If true, suppress "Rebooting..." overlay (used for OTA handoff)

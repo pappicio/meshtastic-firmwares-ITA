@@ -89,10 +89,7 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
 #ifdef HAS_WIND_DIRECTION
     float getWindDirectionDegrees();
 #endif
-
-#ifdef HAS_WIND_VELOCITY
-    float getWindSpeedCounters();
-#endif
+ 
     
     // Se serve definire l'indirizzo dell'AS5600 qui nel .h:
     static const uint8_t AS5600_ADDR = 0x36;

@@ -489,7 +489,43 @@ void checkAutoReboot() {
 #endif
 }
 ///////////////////////////////////////////////
+#ifdef WIND_VELOCITY_PIN
+extern volatile uint32_t wind_pulse_count; // Dice al file che il contatore hardware è in main.cpp
+static unsigned long last_wind_check = 0;
 
+// Variabile globale che conterrà la velocità del vento aggiornata ogni 30s
+float vento_salvato_globale = 0.0f; 
+
+void aggiornaMeteoLocale() {
+    unsigned long time_elapsed = millis() - last_wind_check;
+    
+    // Evita calcoli assurdi se la funzione viene chiamata troppo a ridosso
+    if (time_elapsed < 1000) {
+        return; 
+    }
+
+    // --- ZONA CRITICA SICURA ---
+    // Blocchiamo gli interrupt per una frazione di millisecondo per azzerare il contatore in sicurezza
+    noInterrupts();
+    uint32_t pulses = wind_pulse_count;
+    wind_pulse_count = 0; 
+    interrupts();
+    // ---------------------------
+
+    last_wind_check = millis();
+
+    // Calcolo della frequenza (Hz)
+    float frequenza_hz = (float)pulses / (time_elapsed / 1000.0f);
+    
+    // Formula: Hz * 2.4 (Modifica il 2.4 in base al tuo anemometro per km/h o m/s)
+    vento_salvato_globale = frequenza_hz * 2.4f; 
+
+    // Qui puoi mettere anche la lettura del DHT o di altri sensori della scatola
+    // es. temp_box_globale = dht.readTemperature();
+
+    LOG_INFO("[METEO-SUB] Anemometro letto. Impulsi:: %d | Velocità calcolata: %.2f", pulses, vento_salvato_globale);
+}
+#endif
 
 ///////////////////////////////////////////////
 // Task di sistema per il loop di controllo
@@ -500,16 +536,35 @@ void MeshService::fanControlTask(void *pvParameters) {
     LOG_INFO("TASK_MAINTENANCE: Avviato (Single Core Mode)");
 #endif
 
-    // Delay iniziale per stabilizzazione sistema
+    // Delay iniziale per stabilizzazione sistema (Ripristinato a 15 secondi)
     vTaskDelay(pdMS_TO_TICKS(15000));
 
-    for (;;) {
-        // Logica di controllo
-        checkInternalFan();
-        checkAutoReboot();
+    // Variabile per contare i cicli da 5 secondi
+    uint8_t cicli = 0;
 
-        // Rilascia il controllo per 30 secondi
-        vTaskDelay(pdMS_TO_TICKS(30000)); 
+    for (;;) {
+
+        // =========================================================================
+        // OGNI 5 SECONDI: Lettura Anemometro (Il valore perfetto)
+        // =========================================================================
+#ifdef WIND_VELOCITY_PIN
+        aggiornaMeteoLocale(); 
+        LOG_INFO("[MONITOR] Vento attuale (ultimi 5s): %.2f km/h", vento_salvato_globale);
+#endif
+
+        // =========================================================================
+        // OGNI 30 SECONDI: Controllo Ventola e Reboot (Eseguiti solo al ciclo 0)
+        // =========================================================================
+        if (cicli == 0) {
+            checkInternalFan();
+            checkAutoReboot();
+        }
+
+        // Avanziamo il contatore: resetta a 0 ogni 6 giri (6 cicli * 5s = 30 secondi)
+        cicli = (cicli + 1) % 6;
+
+        // Il cuore del task adesso pulsa ogni 5 secondi
+        vTaskDelay(pdMS_TO_TICKS(5000)); 
     }
 }
 ///////////////////////////////////////////////

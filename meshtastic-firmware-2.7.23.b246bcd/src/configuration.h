@@ -787,7 +787,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
 // Per attivarli basta lasciarli così:
 // #define HAS_WIND_DIRECTION
-#define HAS_WIND_VELOCITY
+#define WIND_VELOCITY_PIN 47
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
 // La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
