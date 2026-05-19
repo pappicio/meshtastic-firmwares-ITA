@@ -786,7 +786,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  
 // Per attivarli basta lasciarli così:
-// #define HAS_WIND_DIRECTION
+//#define HAS_WIND_DIRECTION
+
+// Se la direzione del vento è attiva, controlliamo l'offset
+#ifdef HAS_WIND_DIRECTION
+    #define WIND_NORTH_OFFSET 120.0f  // Valore di default se l'utente non lo ha specificato
+#endif
+
+
 #define WIND_VELOCITY_PIN 47
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola

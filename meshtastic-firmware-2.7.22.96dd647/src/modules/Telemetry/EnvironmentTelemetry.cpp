@@ -22,8 +22,11 @@
 #include "target_specific.h"
 #include <OLEDDisplay.h>
 
+
 ///////////////////////////////////////////////
 #include "detect/ScanI2C.h"
+
+#include <Wire.h>
 ///////////////////////////////////////////////
 
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
@@ -1032,7 +1035,15 @@ Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
 
         // Convertiamo il valore grezzo in gradi sessagesimali
         float degrees = (rawAngle * 360.0f) / 4096.0f;
-        
+        // --- APPLICAZIONE TARATURA NORD ---
+        // Sottraiamo l'offset definito nella macro globale
+        degrees -= WIND_NORTH_OFFSET;
+
+        // Se il valore scende sotto zero, lo riportiamo nel range corretto [0 - 359.9]
+        if (degrees < 0.0f) {
+            degrees += 360.0f;
+        }
+        // ----------------------------------
         return degrees;
     }
 
