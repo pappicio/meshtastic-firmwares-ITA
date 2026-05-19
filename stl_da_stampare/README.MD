@@ -74,6 +74,16 @@ Il design meccanico sfrutta componenti intelligenti ed intercambiabili che perme
 
 ---
 
+### 📐 Impostazioni Consigliate nello Slicer (Orca Slicer / Cura / PrusaSlicer)
+
+* **Materiale:** PETG (o ASA).
+* **Altezza Strato (Layer Height):** 0.20 mm (Asse Z).
+* **Perimetri (Gusci):** Almeno **3 o 4 perimetri** per dare massima filettabilità e tenuta strutturale alle viti M3.
+* **Infill (Riempimento):** 20% - 30% di tipo **Giroide** (Gyroid) per una resistenza uniforme e per evitare che la struttura risulti troppo pesante per girare con brezze leggere.
+* **Tolleranze delle Sedi:** Se la tua stampante tende a stringere leggermente i fori interni dei cerchi, utilizza la compensazione dimensionale dei fori nello slicer (es. `X-Y Hole Compensation` a +0.1 mm) per far calzare a pennello il cuscinetto da 16 mm.
+
+---
+
 ### 🧲 Configurazione dei Magneti e Logica di Funzionamento
 
 Il **Rotore da 4.5 cm** è ingegnerizzato con una predisposizione interna flessibile per i magneti a seconda dell'uso dello strumento:
