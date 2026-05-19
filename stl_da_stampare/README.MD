@@ -96,3 +96,26 @@ Sfrutta l'alloggiamento dedicato da **4x2 mm** posizionato esattamente all'estre
   * *Consiglio pratico:* Reperibili a basso costo online o presso i ricambisti auto. Per l'anemometro si consiglia di rimuovere lo schermo protettivo, lavare via il grasso denso di fabbrica con diluente o avio e lubrificare con una sola goccia di olio leggerissimo (tipo Singer) per massimizzare la sensibilità alle brezze leggere.
 * **Viteria:**
   * **Modello:** Viti **M3 a testa piatta svasata** (ISO 10642 / DIN 7991). Utilizzate per assemblare in modo solido e a filo i tappi, le coppette e la banderuola.
+
+
+---
+
+## 💻 Configurazione delle Direttive Firmware
+
+Il comportamento del codice è regolato da direttive di precompilazione (`#define`) per isolare i moduli software e abilitare le funzioni solo quando i sensori sono fisicamente connessi.
+
+```cpp
+// --- CONFIGURAZIONE ANEMOMETRO (VELOCITÀ) ---
+#define WIND_SPEED_PIN 47       // GPIO dedicato all'interruzione hardware (es. Heltec V4)
+
+// --- CONFIGURAZIONE BANDERUOLA (DIREZIONE) ---
+// Per attivare il sensore di direzione basta decommentare la riga seguente:
+#define HAS_WIND_DIRECTION      
+
+// Se la direzione è attiva, imposta un offset di default (es. 120°) se non già definito altrove
+#ifdef HAS_WIND_DIRECTION
+    #ifndef WIND_NORTH_OFFSET
+        #define WIND_NORTH_OFFSET 120.0f  // Macro di taratura del Nord (0.0 a 359.0)
+    #endif
+#endif
+```
