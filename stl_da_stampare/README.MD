@@ -49,3 +49,52 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
 
 // --- CONFIGURAZIONE BANDERUOLA (DIREZIONE) ---
 #define HAS_WIND_DIRECTION      // Abilita il modulo software I2C per l'AS5600
+
+
+---
+
+## 🖨️ Guida alla Stampa 3D e Assemblaggio Meccanico
+
+Il design meccanico è completamente modulare. Utilizza componenti comuni che possono essere stampati sia per configurare l'Anemometro (velocità) sia la Banderuola (direzione), riducendo la necessità di progettare parti diverse da zero.
+
+---
+
+### 📦 Componenti da Stampare (Lista dei Pezzi)
+
+A seconda del sensore che si vuole costruire, stampare i pezzi indicati nelle quantità specifiche:
+
+| Nome File STL / Pezzo | Quantità (Velocità) | Quantità (Direzione) | Note di Stampa |
+| :--- | :---: | :---: | :--- |
+| **Corpo Centrale** | 1 | 1 | Struttura esterna con diametro da **4.5 cm (45 mm)**. Ospita i cuscinetti e il sensore (US1881 o AS5600). |
+| **Rotore** | 1 | 1 | Il cilindro da **4.5 cm (45 mm)** che ruota sull'asse e alloggia i magneti internamente. |
+| **Coppetta Anemometro** | **3** | 0 | Le tazze per catturare il vento. |
+| **Banderuola** | 0 | **1** | La freccia direzionale per l'orientamento del vento. |
+| **Tappo Rotore (Chiusura)** | 0 | **3** | **Solo per Direzione:** Chiude i 3 slot sul rotore destinati alle coppette. |
+| **Tappo Superiore** | 1 | 1 | Chiude il blocco. Sulla Banderuola, la freccia va avvitata sopra di esso. |
+| **Tappo Inferiore** | 1 | 1 | Sigilla la base del corpo centrale per proteggere i collegamenti. |
+
+---
+
+### 🔩 Ferramenta e Componenti Non Stampati (BOM)
+
+I componenti meccanici ed elettronici sono facilmente reperibili online o presso i ricambisti locali a basso costo.
+
+* **Cuscinetti ad Alta Scorrevolezza (Modello 688 / SKF 628):**
+  * **Quantità:** 2 pezzi per ogni strumento (totale 4 se si realizzano entrambi).
+  * **Misure Esatte:** Diametro interno $\mathbf{8\text{ mm}}$, diametro esterno $\mathbf{16\text{ mm}}$, spessore $\mathbf{5\text{ mm}}$.
+  * *Consiglio:* Si trovano a pochissimi euro nei negozi di e-commerce o dai ricambisti auto/moto. Per l'anemometro, sgrassare il grasso di fabbrica interno con diluente o avio e lubrificare con una goccia di olio leggerissimo (tipo Singer) per azzerare l'attrito d'avvio.
+* **Viteria:**
+  * **Modello:** Viti **M3 a testa piatta svasata** (ISO 10642 / DIN 7991).
+  * Servono per fissare i tappi, le coppette al rotore e la banderuola sul tappo superiore.
+
+---
+
+### 📐 Impostazioni Consigliate per lo Slicer (Orca Slicer / Cura / PrusaSlicer)
+
+Per garantire la massima resistenza agli agenti atmosferici (pioggia, raggi UV, gelo) e stabilità dimensionale per le sedi dei cuscinetti:
+
+* **Materiale Consigliato:** **PETG** (ottimo il PETG effetto marmo per estetica e resistenza) o **ASA**. Evitare il PLA poiché si deforma sotto il sole estivo sul tetto.
+* **Altezza Strato:** 0.20 mm (per un buon compromesso tra precisione e tempo).
+* **Perimetri (Gusci):** Almeno **3 o 4 perimetri** per garantire la robustezza strutturale dove alloggiano le viti M3.
+* **Infill (Riempimento):** 20% - 30% di tipo **Giroide** (Gyroid) per una resistenza uniforme in tutte le direzioni senza appesantire la struttura.
+* **Tolleranze delle Sedi:** Le sedi dei cuscinetti da 16 mm e dell'albero da 8 mm sono progettate a tolleranza fissa. Se la tua stampante stringe i fori, calibrare il flusso di estrusione o utilizzare la compensazione dimensionale dei fori nello slicer (es. `X-Y Hole Compensation` a +0.1 mm).
