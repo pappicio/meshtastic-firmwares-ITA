@@ -50,6 +50,7 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
 // --- CONFIGURAZIONE BANDERUOLA (DIREZIONE) ---
 #define HAS_WIND_DIRECTION      // Abilita il modulo software I2C per l'AS5600
 
+```
 
 ---
 
