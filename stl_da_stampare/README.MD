@@ -114,8 +114,6 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
 
 // Se la direzione è attiva, imposta un offset di default (es. 120°) se non già definito altrove
 #ifdef HAS_WIND_DIRECTION
-    #ifndef WIND_NORTH_OFFSET
-        #define WIND_NORTH_OFFSET 120.0f  // Macro di taratura del Nord (0.0 a 359.0)
-    #endif
+    #define WIND_NORTH_OFFSET 120.0f  // Macro di taratura del Nord (0.0 a 359.0)
 #endif
 ```
