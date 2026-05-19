@@ -81,7 +81,7 @@ A seconda del sensore che si vuole costruire, stampare i pezzi indicati nelle qu
 I componenti meccanici ed elettronici sono facilmente reperibili online o presso i ricambisti locali a basso costo.
 
 * **Cuscinetti ad Alta Scorrevolezza (Modello 688 / SKF 628):**
-  * **Quantità:** 2 pezzi per ogni strumento (totale 4 se si realizzano entrambi).
+  * **Quantità:** 1 pezzi per ogni strumento (totale 2 se si realizzano entrambi).
   * **Misure Esatte:** Diametro interno $\mathbf{8\text{ mm}}$, diametro esterno $\mathbf{16\text{ mm}}$, spessore $\mathbf{5\text{ mm}}$.
   * *Consiglio:* Si trovano a pochissimi euro nei negozi di e-commerce o dai ricambisti auto/moto. Per l'anemometro, sgrassare il grasso di fabbrica interno con diluente o avio e lubrificare con una goccia di olio leggerissimo (tipo Singer) per azzerare l'attrito d'avvio.
 * **Viteria:**
