@@ -95,7 +95,7 @@ Sfrutta l'alloggiamento dedicato da **4x2 mm** posizionato esattamente all'estre
   * **Misure Esatte:** Diametro interno **8 mm**, diametro esterno **16 mm**, spessore **5 mm**.
   * *Consiglio pratico:* Reperibili a basso costo online o presso i ricambisti auto. Per l'anemometro si consiglia di rimuovere lo schermo protettivo, lavare via il grasso denso di fabbrica con diluente o avio e lubrificare con una sola goccia di olio leggerissimo (tipo Singer) per massimizzare la sensibilità alle brezze leggere.
 * **Viteria:**
-  * **Modello:** Viti **M3 a testa piatta svasata** (ISO 10642 / DIN 7991). Utilizzate per assemblare in modo solido e a filo i tappi, le coppette e la banderuola.
+  * **Modello:** Viti **M3 con la base testa piatta** (ISO 10642 / DIN 7991). Utilizzate per assemblare in modo solido e a filo i tappi, le coppette e la banderuola.
 
 
 ---
