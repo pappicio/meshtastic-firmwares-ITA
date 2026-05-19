@@ -10,7 +10,7 @@ La stazione meteo è divisa in due componenti principali alloggiate su supporti 
 
 ### 1. Velocità del Vento (Anemometro)
 * **Sensore:** `US1881` (Sensore Effetto Hall di tipo **Latch**).
-* **Meccanica:** Un cilindro rotante da **2 cm di diametro** ospita due magneti da $4 \times 2\text{ mm}$ posizionati ed incollati agli antipodi esatti ($180^\circ$).
+* **Meccanica:** Un cilindro rotante da **4 cm di diametro** ospita due magneti da $4 \times 2\text{ mm}$ posizionati ed incollati agli antipodi esatti ($180^\circ$).
 * **Funzionamento:** Il sensore ha memoria di stato. Quando passa il polo **NORD**, l'uscita si attiva (va a GND). Rimane congelata a GND finché la girandola non compie mezzo giro e il polo **SUD** resetta il sensore. Questo genera un'onda quadra perfetta priva di rimbalzi meccanici, ideale per gestire le alte velocità di rotazione senza falsi trigger.
 
 ### 2. Direzione del Vento (Banderuola)
