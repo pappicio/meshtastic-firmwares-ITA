@@ -67,7 +67,7 @@ A seconda del sensore che si vuole costruire, stampare i pezzi indicati nelle qu
 | Nome File STL / Pezzo | Quantità (Velocità) | Quantità (Direzione) | Note di Stampa |
 | :--- | :---: | :---: | :--- |
 | **Corpo Centrale** | 1 | 1 | Struttura esterna con diametro da **4.5 cm (45 mm)**. Ospita i cuscinetti e il sensore (US1881 o AS5600). |
-| **Rotore** | 1 | 1 | Il cilindro da **4.5 cm (45 mm)** che ruota sull'asse e alloggia i magneti internamente. |
+| **Rotore** | 1 | 1 | Il cilindro da **4.5 cm (45 mm)** che ruota sull'asse. All'interno include **4 alloggiamenti per i magneti**. |
 | **Coppetta Anemometro** | **3** | 0 | Le tazze per catturare il vento. |
 | **Banderuola** | 0 | **1** | La freccia direzionale per l'orientamento del vento. |
 | **Tappo Rotore (Chiusura)** | 0 | **3** | **Solo per Direzione:** Chiude i 3 slot sul rotore destinati alle coppette. |
@@ -76,12 +76,27 @@ A seconda del sensore che si vuole costruire, stampare i pezzi indicati nelle qu
 
 ---
 
+### 🧲 Configurazione e Allineamento dei Magneti nel Rotore
+
+Il **Rotore da 4.5 cm** è ingegnerizzato con una doppia predisposizione interna che prevede **4 alloggiamenti totali**:
+* **2 slot** dedicati a magneti al neodimio da **8x3 mm**
+* **2 slot** dedicati a magneti da **4x2 mm**
+
+#### ⚠️ Regola di Montaggio Fondamentale per l'US1881 (Anemometro):
+I magneti scelti (siano essi i componenti da 8x3 mm o quelli da 4x2 mm) vanno installati obbligatoriamente in **senso contrapposto l'uno dall'altro** (sfasati di $180^\circ$ sulla circonferenza interna):
+1. Il primo magnete deve mostrare la faccia con polo **NORD** rivolta verso il sensore.
+2. Il secondo magnete, sul lato opposto, deve mostrare la faccia con polo **SUD** rivolta verso il sensore.
+
+Grazie a questa alternanza geometrica perfetta, a ogni giro della girandola il sensore US1881 rileverà prima il passaggio del NORD (attivando l'output a 0) e poi quello del SUD (resettando l'output a 1). Questo sistema latch meccanico genera un'onda quadra pulitissima e **azzera completamente i falsi impulsi o i sobbalzi software** in caso di oscillazioni della girandola dovute a turbolenze.
+
+---
+
 ### 🔩 Ferramenta e Componenti Non Stampati (BOM)
 
 I componenti meccanici ed elettronici sono facilmente reperibili online o presso i ricambisti locali a basso costo.
 
 * **Cuscinetti ad Alta Scorrevolezza (Modello 688 / SKF 628):**
-  * **Quantità:** 1 pezzi per ogni strumento (totale 2 se si realizzano entrambi).
+  * **Quantità:** 2 pezzi per ogni strumento (totale 4 se si realizzano entrambi).
   * **Misure Esatte:** Diametro interno $\mathbf{8\text{ mm}}$, diametro esterno $\mathbf{16\text{ mm}}$, spessore $\mathbf{5\text{ mm}}$.
   * *Consiglio:* Si trovano a pochissimi euro nei negozi di e-commerce o dai ricambisti auto/moto. Per l'anemometro, sgrassare il grasso di fabbrica interno con diluente o avio e lubrificare con una goccia di olio leggerissimo (tipo Singer) per azzerare l'attrito d'avvio.
 * **Viteria:**
