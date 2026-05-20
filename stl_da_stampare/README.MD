@@ -131,4 +131,9 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
 ## 💻 TESTATO con magneti 4x2 mm, per anemometro e funziona ameraviglia con sensore hall U18 
 
 (presi su amazon, ma anche aliexpress ne ha a dozzine a 4 spicci)
+
+TESTATO Direzione vento con sensore i2c AS5600, piu che funzionale 
+(presi su amazon comprensivi di magneti 4x2 mm ma anche su aliexpress ce ne sono.)
+
+The end!!!
 ---
