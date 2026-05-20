@@ -583,7 +583,6 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Telemetry *t)
 {
     if (t->which_variant == meshtastic_Telemetry_environment_metrics_tag) {
-        
 #if defined(DEBUG_PORT) && !defined(DEBUG_MUTE)
         const char *sender = getSenderShortName(mp);
 
@@ -614,8 +613,7 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
     return false; // Let others look at this message also if they want
 }
 
-
-
+ 
 
 ///////////////////////////////////////////////
 void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
@@ -653,6 +651,9 @@ void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
 
 
 
+
+ 
+
 bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m)
 {
 
@@ -686,12 +687,17 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
 // --- AGGIUNTO IL CICLO FOR MANCANTE ---
 for (TelemetrySensor *sensor : sensors) {
 has_sensors=true;
-///////////////////////////////////////////////
-        // Chiamata singola: recupera l'indirizzo già corretto dal .h
-          uint8_t currentAddr = sensor->getAddr();
 
-        if (leggisolouno) {
-#ifdef I2C_FAN_SENSOR_ADDR
+
+///////////////////////////////////////////////
+// Chiamata singola: recupera l'indirizzo già corretto dal .h
+
+uint8_t currentAddr = sensor->getAddr();
+
+ 
+
+if (leggisolouno) {
+    #ifdef I2C_FAN_SENSOR_ADDR
             LOG_DEBUG("FAN CHECK: Controllo sensore all'indirizzo 0x%02x", currentAddr);
 
             if (currentAddr == I2C_FAN_SENSOR_ADDR) {
@@ -712,7 +718,7 @@ has_sensors=true;
             }
             // Se non è l'indirizzo giusto, continua il ciclo per cercarlo
             continue; 
-#else
+    #else
             // SE NON È DEFINITO: Non possiamo sapere qual è il sensore giusto.
             // Impostiamo il valore di errore, sblocchiamo e chiudiamo la funzione.
             LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere su i2c.");
@@ -720,8 +726,8 @@ has_sensors=true;
             fanHum=0.0f;
             isTelemetryBusy = false;
             return false; 
-#endif
-        }
+    #endif
+}
 
 
         

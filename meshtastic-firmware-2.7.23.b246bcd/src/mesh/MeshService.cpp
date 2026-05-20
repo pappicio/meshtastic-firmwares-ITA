@@ -493,52 +493,46 @@ void checkAutoReboot() {
 
 ///////////////////////////////////////////////
 #ifdef WIND_VELOCITY_PIN
-extern volatile uint32_t wind_pulse_count; // Dice al file che il contatore hardware è in main.cpp
+extern volatile uint32_t wind_pulse_count; 
+extern volatile unsigned long last_micros_anemometro; // Diciamo alla sub che esiste questa variabile della ISR
+
 static unsigned long last_wind_check = 0;
 
-// Configurazione geometrica dell'anemometro (Fissata a 10cm)
-#define WIND_RADIUS_METERS 0.100f   // Raggio esatto: dal centro asse al centro coppetta (100 mm)
-#define ANEMOMETER_FACTOR 2.5f      // Fattore aerodinamico K (Standard empirico per stampa 3D)
+#define WIND_RADIUS_METERS 0.100f   
+#define ANEMOMETER_FACTOR 2.5f      
 
-// Variabile globale che conterrà la velocità del vento aggiornata in km/h
 float vento_salvato_globale = 0.0f; 
 
 void aggiornaMeteoLocale() {
     unsigned long time_elapsed = millis() - last_wind_check;
     
-    // Evita calcoli assurdi se la funzione viene chiamata troppo a ridosso
     if (time_elapsed < 1000) {
         return; 
     }
 
     // --- ZONA CRITICA SICURA ---
-    // Blocchiamo gli interrupt per una frazione di millisecondo per azzerare il contatore in sicurezza
+    // Blocchiamo gli interrupt per allineare le variabili in modo atomico
     noInterrupts();
     uint32_t pulses = wind_pulse_count;
     wind_pulse_count = 0; 
+    
+    // FISSA: Aggiorna il timestamp della ISR al micros() attuale. 
+    // Se il vento si ferma, il debounce ripartirà da questo preciso istante.
+    last_micros_anemometro = micros(); 
     interrupts();
     // ---------------------------
 
     last_wind_check = millis();
 
-    // Calcolo della frequenza reale (Hz) considerando il tempo trascorso esatto
     float frequenza_hz = (float)pulses / (time_elapsed / 1000.0f);
     
     if (frequenza_hz > 0.0f) {
-        // 1. Calcoliamo la circonferenza descritta dalle coppette (2 * PI * R)
         float circonferenza = 2.0f * PI * WIND_RADIUS_METERS;
-        
-        // 2. Velocità lineare teorica delle palette convertita in km/h (* 3.6)
         float velocita_palette = circonferenza * frequenza_hz * 3.6f;
-        
-        // 3. Applichiamo il fattore aerodinamico K per ottenere la velocità del vento reale
         vento_salvato_globale = velocita_palette * ANEMOMETER_FACTOR;
     } else {
-        vento_salvato_globale = 0.0f; // Vento calmo, girandola ferma
+        vento_salvato_globale = 0.0f; 
     }
-
-    // Qui puoi mettere anche la lettura del DHT o di altri sensori della scatola
-    // es. temp_box_globale = dht.readTemperature();
 
     LOG_INFO("[METEO-SUB] Anemometro letto. Impulsi: %d | Frequenza: %.2f Hz | Velocità reale: %.2f km/h", 
              pulses, frequenza_hz, vento_salvato_globale);
@@ -546,6 +540,12 @@ void aggiornaMeteoLocale() {
 #endif
 
 ///////////////////////////////////////////////
+
+
+
+
+///////////////////////////////////////////////
+
 // Task di sistema per il loop di controllo
 void MeshService::fanControlTask(void *pvParameters) {
 #ifdef ESP32
