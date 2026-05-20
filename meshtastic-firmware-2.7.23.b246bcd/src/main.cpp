@@ -1076,13 +1076,13 @@ void setup()
 
 ///////////////////////////////////////////////////////
 #ifdef WIND_VELOCITY_PIN
-    // 1. Configura il pin con il Pull-Down interno dell'ESP32
-    pinMode(WIND_VELOCITY_PIN, INPUT_PULLDOWN);
+    // 1. Configura il pin in INPUT semplice (sfruttando il Pull-Up fisico esterno da 10k)
+    pinMode(WIND_VELOCITY_PIN, INPUT);
     
-    // 2. Rimetti RISING: conta quando il segnale SALE da 0V a 3.3V
-    attachInterrupt(digitalPinToInterrupt(WIND_VELOCITY_PIN), windVelocityISR, RISING);
+    // 2. Imposta FALLING: conta quando il segnale SCENDE da 3.3V a 0V (attivazione del Latch)
+    attachInterrupt(digitalPinToInterrupt(WIND_VELOCITY_PIN), windVelocityISR, FALLING);
     
-    LOG_INFO("Anemometro allineato in PULL-DOWN e RISING su pin %d", WIND_VELOCITY_PIN);
+    LOG_INFO("Anemometro allineato con PULL-UP esterno e FALLING su pin %d", WIND_VELOCITY_PIN);
 #endif
 ///////////////////////////////////////////////////////
 

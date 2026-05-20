@@ -786,9 +786,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  
 // Per attivarli basta lasciarli così:
-//#define HAS_WIND_DIRECTION
-
 // Se la direzione del vento è attiva, controlliamo l'offset
+
+//#define HAS_WIND_DIRECTION
 #ifdef HAS_WIND_DIRECTION
     #define WIND_NORTH_OFFSET 120.0f  // Valore di default se l'utente non lo ha specificato
 #endif
