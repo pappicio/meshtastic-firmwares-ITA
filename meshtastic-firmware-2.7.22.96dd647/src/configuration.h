@@ -721,8 +721,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-//#define USERPREFS_CONFIG_OWNER_LONG_NAME "Heltec V4 Solar"
-//#define USERPREFS_CONFIG_OWNER_SHORT_NAME "H4-S"
+////#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Fantastic"
+////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMFF"
 
 #define USERPREFS_SPLASH_TEXT "Meshtastic Mods!"
 
@@ -753,12 +753,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
 #endif
 
-// Pin per DS18B20
-//#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+////////////////////////////////////////////// Pin per DS18B20
+////#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
-/////////////// --- SENSORI DHT (11/22) ---
-
+////////////////////////////// --- SENSORI DHT (11/22) ---
 #define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
@@ -783,9 +782,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  
 // Per attivarli basta lasciarli così:
-//#define HAS_WIND_DIRECTION
-
 // Se la direzione del vento è attiva, controlliamo l'offset
+
+//#define HAS_WIND_DIRECTION
 #ifdef HAS_WIND_DIRECTION
     #define WIND_NORTH_OFFSET 120.0f  // Valore di default se l'utente non lo ha specificato
 #endif
@@ -803,7 +802,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
 
 // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
-    ////#define SHOW_ON_POWER_METRICS
+    
+//     #define SHOW_ON_POWER_METRICS
 
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
 
@@ -920,4 +920,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
-
