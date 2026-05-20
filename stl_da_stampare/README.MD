@@ -128,5 +128,7 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
 #endif
 ```
 ---
-## 💻 TESTATO con magneti 4x2 mm, per asnemometro e funziona ameraviglia con sensore hall U18
+## 💻 TESTATO con magneti 4x2 mm, per anemometro e funziona ameraviglia con sensore hall U18 
+
+(presi su amazon, ma anche aliexpress ne ha a dozzine a 4 spicci)
 ---
