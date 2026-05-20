@@ -127,3 +127,6 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
     #define WIND_NORTH_OFFSET 120.0f  // Macro di taratura del Nord (0.0 a 359.0)
 #endif
 ```
+---
+## 💻 TESTATO con magneti 4x2 mm, per asnemometro e funziona ameraviglia con sensore hall U18
+---
