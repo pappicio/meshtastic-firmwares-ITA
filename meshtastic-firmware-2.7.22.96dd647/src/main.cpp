@@ -715,7 +715,17 @@ void setup()
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA226, meshtastic_TelemetrySensorType_INA226);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA219, meshtastic_TelemetrySensorType_INA219);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA3221, meshtastic_TelemetrySensorType_INA3221);
-    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX17048, meshtastic_TelemetrySensorType_MAX17048);
+
+//////////////////////////////////////////
+#ifdef HAS_WIND_DIRECTION
+    // Se c'è la banderuola, mappiamo il nostro tipo nell'elenco dei sensori attivi
+    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::WIND_DIRECTION_AS5600, (meshtastic_TelemetrySensorType)99); 
+#else
+    // Comportamento originale di Meshtastic per il chip batteria
+    // scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX17048, meshtastic_TelemetrySensorType_MAX17048);
+#endif
+////////////////////////////////////////
+
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::QMC6310U, meshtastic_TelemetrySensorType_QMC6310);
     // TODO: Types need to be added meshtastic_TelemetrySensorType_QMC6310N
     //  scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::QMC6310N, meshtastic_TelemetrySensorType_QMC6310N);
@@ -1076,13 +1086,13 @@ void setup()
 
 ///////////////////////////////////////////////////////
 #ifdef WIND_VELOCITY_PIN
-    // 1. Configura il pin con il Pull-Down interno dell'ESP32
-    pinMode(WIND_VELOCITY_PIN, INPUT_PULLDOWN);
+    // 1. Configura il pin in INPUT semplice (sfruttando il Pull-Up fisico esterno da 10k)
+    pinMode(WIND_VELOCITY_PIN, INPUT);
     
-    // 2. Rimetti RISING: conta quando il segnale SALE da 0V a 3.3V
-    attachInterrupt(digitalPinToInterrupt(WIND_VELOCITY_PIN), windVelocityISR, RISING);
+    // 2. Imposta FALLING: conta quando il segnale SCENDE da 3.3V a 0V (attivazione del Latch)
+    attachInterrupt(digitalPinToInterrupt(WIND_VELOCITY_PIN), windVelocityISR, FALLING);
     
-    LOG_INFO("Anemometro allineato in PULL-DOWN e RISING su pin %d", WIND_VELOCITY_PIN);
+    LOG_INFO("Anemometro allineato con PULL-UP esterno e FALLING su pin %d", WIND_VELOCITY_PIN);
 #endif
 ///////////////////////////////////////////////////////
 

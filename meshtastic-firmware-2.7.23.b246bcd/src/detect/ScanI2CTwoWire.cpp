@@ -648,9 +648,17 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
 
                 SCAN_SIMPLE_CASE(MLX90632_ADDR, MLX90632, "MLX90632", (uint8_t)addr.address);
                 SCAN_SIMPLE_CASE(NAU7802_ADDR, NAU7802, "NAU7802", (uint8_t)addr.address);
-                // --- ABBIAMO SOSTITUITO IL MAX17048 CON IL SENSORE VENTO ---
-                SCAN_SIMPLE_CASE(MAX1704X_ADDR, WIND_DIRECTION_AS5600, "AS5600 Wind Direction", (uint8_t)addr.address);
                 
+				// --- ABBIAMO SOSTITUITO IL MAX17048 CON IL SENSORE VENTO ---
+#ifdef HAS_WIND_DIRECTION
+    			// Sulla tua V4 l'indirizzo 0x36 diventerà ufficialmente la banderuola del vento
+    			SCAN_SIMPLE_CASE(0x36, WIND_DIRECTION_AS5600, "AS5600 Wind Direction", (uint8_t)addr.address);
+#else
+    			// Per le altre schede che hanno il chip della batteria
+    			SCAN_SIMPLE_CASE(MAX1704X_ADDR, MAX17048, "MAX17048", (uint8_t)addr.address);
+#endif
+               //------------------------------------------------------------
+			    
                 SCAN_SIMPLE_CASE(DFROBOT_RAIN_ADDR, DFROBOT_RAIN, "DFRobot Rain Gauge", (uint8_t)addr.address);
                 SCAN_SIMPLE_CASE(LTR390UV_ADDR, LTR390UV, "LTR390UV", (uint8_t)addr.address);
                 SCAN_SIMPLE_CASE(PCT2075_ADDR, PCT2075, "PCT2075", (uint8_t)addr.address);

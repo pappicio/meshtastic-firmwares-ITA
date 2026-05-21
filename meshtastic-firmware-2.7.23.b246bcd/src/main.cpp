@@ -715,7 +715,17 @@ void setup()
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA226, meshtastic_TelemetrySensorType_INA226);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA219, meshtastic_TelemetrySensorType_INA219);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::INA3221, meshtastic_TelemetrySensorType_INA3221);
-    //scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX17048, meshtastic_TelemetrySensorType_MAX17048);
+
+//////////////////////////////////////////
+#ifdef HAS_WIND_DIRECTION
+    // Se c'è la banderuola, mappiamo il nostro tipo nell'elenco dei sensori attivi
+    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::WIND_DIRECTION_AS5600, (meshtastic_TelemetrySensorType)99); 
+#else
+    // Comportamento originale di Meshtastic per il chip batteria
+    // scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX17048, meshtastic_TelemetrySensorType_MAX17048);
+#endif
+////////////////////////////////////////
+
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::QMC6310U, meshtastic_TelemetrySensorType_QMC6310);
     // TODO: Types need to be added meshtastic_TelemetrySensorType_QMC6310N
     //  scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::QMC6310N, meshtastic_TelemetrySensorType_QMC6310N);
