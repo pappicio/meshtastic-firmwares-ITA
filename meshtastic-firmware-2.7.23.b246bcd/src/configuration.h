@@ -654,34 +654,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Decommenta solo quello che ti serve per il define
 
 // #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_MUTE
-// Ascolta tutto, ma non trasmette mai (non fa relay e non invia Beacon).
-
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_ROUTER
-// Infrastruttura fissa: non scala mai i tempi (invia sempre al massimo consentito) e ha priorità nel relay.
-
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_ROUTER_LATE
-// Router che aspetta un attimo prima di ripetere, utile per non "pestarsi i piedi" con altri router vicini.
-
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_REPEATER
-// Modalità "stupida": ripete tutto a livello hardware/radio nel modo più veloce possibile, ignorando quasi tutto il resto.
-
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_SENSOR
-// Per nodi con sensori (come il tuo BME280): garantisce che i dati telemetrici partano con intervalli fissi.
-
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TRACKER
-// Ottimizzato per GPS: invia la posizione frequentemente e ignora i limiti di congestione per non perdere la traccia.
-
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TAK
-// Configurazione specifica per l'uso con il protocollo militare/civile CoT (Cursor on Target).
+// Come il Client, ma non invia pacchetti di posizione o telemetria spontaneamente per risparmiare banda.
 
 // #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_HIDDEN
-// Come il Client, ma non compare nella "Node List" degli altri utenti.
+// Come il Client, ma non trasmette il proprio nodo sulla mappa pubblica della mesh (invisibile agli altri).
 
 // #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_LOST_AND_FOUND
 // Ruolo per nodi di emergenza o "boe" di ritrovamento.
 
-#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TRACKER
+// Ottimizzato per dispositivi di localizzazione GPS (invio frequente della posizione, funzioni display ridotte).
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_SENSOR
+// Ottimizzato per nodi di telemetria ambientali (stazioni meteo, sensori isolati). Riduce il traffico mesh inutile.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TAK
+// Configurazione specifica per l'integrazione avanzata con i sistemi e i server ATAK.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_TAK_TRACKER
+// Localizzatore leggero ottimizzato specificamente per inviare dati di posizione compatibili con ATAK (CoT).
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_ROUTER
+// Nodo ripetitore puro ad alta priorità posizionato in alto. Non genera traffico locale, ripete solo i pacchetti.
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_ROUTER_LATE
+// Nodo Router di backup. Introduce un leggero ritardo prima di ripetere, lasciando la precedenza ai Router principali.
+
 // Ruolo standard: partecipa attivamente, scala i tempi di invio se la rete è congestionata (>40 nodi).
+#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
+// Nodo Client fisso (casa/ufficio). Ottimizza il routing sapendo di non essere in movimento.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define USERPREFS_CONFIG_SMART_POSITION_ENABLED true
@@ -690,11 +693,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
 
 //TX POWER
-#define DBI30 30 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
+#define DBI30 31 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
 // TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
 // NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
-#define TRACERT_MIN_SEC 10 // 30 secondi, Default!!!
+#define TRACERT_MIN_SEC 5 // 30 secondi, Default!!!
 
  
 // NUMERO DI HOPS DI DEFAULT
@@ -725,10 +728,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-////#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Fantastic"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods!"
 ////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMFF"
 
-#define USERPREFS_SPLASH_TEXT "Meshtastic Mods!"
+#define USERPREFS_SPLASH_TEXT "MTMS"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -758,11 +761,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ////////////////////////////////////////////// Pin per DS18B20
-////#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
 ////////////////////////////// --- SENSORI DHT (11/22) ---
-#define DHT_TEMP_PIN 6
+//#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
         #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
@@ -788,7 +791,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
 
-//#define HAS_WIND_DIRECTION
+#define HAS_WIND_DIRECTION
 #ifdef HAS_WIND_DIRECTION
     #define WIND_NORTH_OFFSET 120.0f  // Valore di default se l'utente non lo ha specificato
 #endif
