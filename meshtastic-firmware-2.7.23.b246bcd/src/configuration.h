@@ -793,7 +793,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define HAS_WIND_DIRECTION
 #ifdef HAS_WIND_DIRECTION
-    #define WIND_NORTH_OFFSET 120.0f  // Valore di default se l'utente non lo ha specificato
+    #define WIND_NORTH_OFFSET 171.0f  // Valore di default se l'utente non lo ha specificato
 #endif
 
 

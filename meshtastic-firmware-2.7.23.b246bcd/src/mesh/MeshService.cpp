@@ -490,59 +490,47 @@ void checkAutoReboot() {
 }
 
 
+////////////////////////////////////////////////
 
-///////////////////////////////////////////////
 #ifdef WIND_VELOCITY_PIN
 extern volatile uint32_t wind_pulse_count; 
-extern volatile unsigned long last_micros_anemometro; // Diciamo alla sub che esiste questa variabile della ISR
 
-static unsigned long last_wind_check = 0;
+// --- TARATURA LINEARE CONVERTITA IN m/s (0.695f / 3.6f) ---
+#define ANEMOMETER_FACTOR 0.193f      
 
-#define WIND_RADIUS_METERS 0.100f   
-#define ANEMOMETER_FACTOR 2.5f      
-
+// Questa variabile ora conterrà i m/s pronti per essere passati a Meshtastic
 float vento_salvato_globale = 0.0f; 
 
-void aggiornaMeteoLocale() {
-    unsigned long time_elapsed = millis() - last_wind_check;
-    
-    if (time_elapsed < 1000) {
-        return; 
+void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
+
+    // Scatta solo al ciclo 0 e al ciclo 3 (Intervallo preciso di 15 secondi)
+    if (ciclo_attuale != 0 && ciclo_attuale != 3) {
+        return; // Nei cicli intermedi esce subito tenendo l'ultimo vento calcolato
     }
 
-    // --- ZONA CRITICA SICURA ---
-    // Blocchiamo gli interrupt per allineare le variabili in modo atomico
+    // --- ZONA CRITICA SICURA (Scatta ogni 15 secondi reali) ---
     noInterrupts();
     uint32_t pulses = wind_pulse_count;
-    wind_pulse_count = 0; 
-    
-    // FISSA: Aggiorna il timestamp della ISR al micros() attuale. 
-    // Se il vento si ferma, il debounce ripartirà da questo preciso istante.
-    last_micros_anemometro = micros(); 
+    wind_pulse_count = 0; // Azzera il contatore hardware per i prossimi 15 secondi
     interrupts();
     // ---------------------------
 
-    last_wind_check = millis();
-
-    float frequenza_hz = (float)pulses / (time_elapsed / 1000.0f);
+    // Calcolo della frequenza media basata sui 15 secondi fissi del task
+    float frequenza_hz = (float)pulses / 15.0f;
     
     if (frequenza_hz > 0.0f) {
-        float circonferenza = 2.0f * PI * WIND_RADIUS_METERS;
-        float velocita_palette = circonferenza * frequenza_hz * 3.6f;
-        vento_salvato_globale = velocita_palette * ANEMOMETER_FACTOR;
+        // Il calcolo qui restituisce direttamente i METRI AL SECONDO (m/s)
+        vento_salvato_globale = frequenza_hz * ANEMOMETER_FACTOR;
     } else {
         vento_salvato_globale = 0.0f; 
     }
 
-    LOG_INFO("[METEO-SUB] Anemometro letto. Impulsi: %d | Frequenza: %.2f Hz | Velocità reale: %.2f km/h", 
-             pulses, frequenza_hz, vento_salvato_globale);
+    // Nel log moltiplichiamo al volo per 3.6f solo per la visualizzazione a schermo.
+    // Così sul monitor seriale leggi i km/h e verifichi la taratura con la Ecowitt!
+    LOG_INFO("[METEO-SUB] Finestra 15s conclusa (Ciclo %d). Impulsi: %d | Frequenza: %.2f Hz | Velocità: %.2f m/s (%.2f km/h)", 
+             ciclo_attuale, pulses, frequenza_hz, vento_salvato_globale, (vento_salvato_globale * 3.6f));
 }
 #endif
-
-///////////////////////////////////////////////
-
-
-
 
 ///////////////////////////////////////////////
 
@@ -566,7 +554,8 @@ void MeshService::fanControlTask(void *pvParameters) {
         // OGNI 5 SECONDI: Lettura Anemometro (Il valore perfetto)
         // =========================================================================
 #ifdef WIND_VELOCITY_PIN
-        aggiornaMeteoLocale(); 
+
+       aggiornaMeteoLocale(cicli); // <--- Passiamo il contatore dei cicli qui!
         LOG_INFO("[MONITOR] Vento attuale (ultimi 5s): %.2f km/h", vento_salvato_globale);
 #endif
 

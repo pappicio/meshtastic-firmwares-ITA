@@ -324,8 +324,8 @@ volatile unsigned long last_micros_anemometro = 0;
 void IRAM_ATTR windVelocityISR() {
     unsigned long calcolo_tempo = micros();
     // Filtro antirimbalzo a 15ms (Tarato per max 160 km/h)
-    // Prende solo il primo impulso genuino e ignora i successivi rimbalzi ravvicinati
-    if (calcolo_tempo - last_micros_anemometro > 15000) {
+// Ottimizzato a 5ms (5000 micros) per reggere tempeste oltre i 130 km/h veri
+    if (calcolo_tempo - last_micros_anemometro > 5000) {
         wind_pulse_count++;
         last_micros_anemometro = calcolo_tempo;
     }

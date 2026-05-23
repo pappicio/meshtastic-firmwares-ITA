@@ -690,7 +690,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
 // NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
-#define TRACERT_MIN_SEC 10 // 30 secondi, Default!!!
+#define TRACERT_MIN_SEC 5 // 30 secondi, Default!!!
 
  
 // NUMERO DI HOPS DI DEFAULT
@@ -721,10 +721,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-////#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Fantastic"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods!"
 ////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMFF"
 
-#define USERPREFS_SPLASH_TEXT "Meshtastic Mods!"
+#define USERPREFS_SPLASH_TEXT "MTMS"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -754,11 +754,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ////////////////////////////////////////////// Pin per DS18B20
-////#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
 ////////////////////////////// --- SENSORI DHT (11/22) ---
-#define DHT_TEMP_PIN 6
+//#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
         #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
@@ -784,9 +784,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
 
-//#define HAS_WIND_DIRECTION
+#define HAS_WIND_DIRECTION
 #ifdef HAS_WIND_DIRECTION
-    #define WIND_NORTH_OFFSET 120.0f  // Valore di default se l'utente non lo ha specificato
+    #define WIND_NORTH_OFFSET 171.0f  // Valore di default se l'utente non lo ha specificato
 #endif
 
 
