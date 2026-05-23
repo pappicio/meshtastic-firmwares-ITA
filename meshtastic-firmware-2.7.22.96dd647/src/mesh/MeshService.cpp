@@ -476,9 +476,7 @@ void checkAutoReboot() {
 
 #ifdef WIND_VELOCITY_PIN
 extern volatile uint32_t wind_pulse_count; 
-
-// --- TARATURA LINEARE CONVERTITA IN m/s (0.695f / 3.6f) ---
-#define ANEMOMETER_FACTOR 0.193f      
+ 
 
 // Questa variabile ora conterrà i m/s pronti per essere passati a Meshtastic
 float vento_salvato_globale = 0.0f; 

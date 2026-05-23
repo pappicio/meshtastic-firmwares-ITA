@@ -791,6 +791,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #define WIND_VELOCITY_PIN 47
+#ifdef WIND_VELOCITY_PIN
+    #define ANEMOMETER_FACTOR 2.50f   //fattore per anemometro mio, managi è da affinare ancora per alltri!!!
+#endif
+// --- TARATURA LINEARE CONVERTITA IN m/s (0.695f / 3.6f) ---
+
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
 // La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
