@@ -799,7 +799,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define WIND_VELOCITY_PIN 47
 #ifdef WIND_VELOCITY_PIN
-    #define ANEMOMETER_FACTOR 1.254f 
+    #define ANEMOMETER_FACTOR 6.76f
 #endif
 // --- TARATURA LINEARE CONVERTITA IN m/s (0.695f / 3.6f) ---
 
