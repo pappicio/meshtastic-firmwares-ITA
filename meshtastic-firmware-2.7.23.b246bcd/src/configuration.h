@@ -792,16 +792,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Se la direzione del vento è attiva, controlliamo l'offset
 
 #define HAS_WIND_DIRECTION
+// --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
-    #define WIND_NORTH_OFFSET 171.0f  // Valore di default se l'utente non lo ha specificato
+    extern float WIND_NORTH_OFFSET;
 #endif
-
+ 
 
 #define WIND_VELOCITY_PIN 47
+
 #ifdef WIND_VELOCITY_PIN
-    #define ANEMOMETRO_GUADAGNO   1.38f  // Abbassa se a vento forte segna troppo, alza se segna poco
-    #define ANEMOMETRO_ATTRITO    0.30f  // Alza se a vento leggero segna zero o troppo poco
+    extern float ANEMOMETRO_GUADAGNO;
+    extern float ANEMOMETRO_ATTRITO;
 #endif
+
 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola

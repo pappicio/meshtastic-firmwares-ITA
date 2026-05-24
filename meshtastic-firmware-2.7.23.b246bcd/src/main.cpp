@@ -83,6 +83,19 @@ NRF52Bluetooth *nrf52Bluetooth = nullptr;
 #include <string>
 #endif
 
+
+// -------------------------------------------------------------
+// INCLUDE UNIVERSALI PER MEMORIA NON VOLATILE (METEO TARATURE)
+// -------------------------------------------------------------
+#if defined(ARCH_ESP32) || defined(ESP32)
+    #include <Preferences.h>
+#elif defined(NRF52_SERIES)
+    #include <InternalFileSystem.h>
+    // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
+    using namespace Adafruit_InternalFS; 
+#endif
+// -------------------------------------------------------------
+
 #ifdef ARCH_ESP32
 #ifdef DEBUG_PARTITION_TABLE
 #include "esp_partition.h"
@@ -199,7 +212,15 @@ float fanTemp = -100.0f;
 float fanHum = 0.0f;
 
 boolean onsleep=false;
+
 ///////////////////////////////////////////////
+
+// --- DEFINIZIONE REALE CON VALORI INIZIALI IN RAM ---
+float ANEMOMETRO_GUADAGNO   = 1.38f;
+float ANEMOMETRO_ATTRITO    = 0.30f;
+float WIND_NORTH_OFFSET     = 171.0f;
+///////////////////////////////////////////////
+
 
 // The I2C address of the RTC Module (if found)
 ScanI2C::DeviceAddress rtc_found = ScanI2C::ADDRESS_NONE;
@@ -770,6 +791,45 @@ void setup()
         tftSetup();
     }
 #endif
+
+
+/////////////////////////////////////////////////
+// -------------------------------------------------------------
+    // RECUPERO TARATURE ANEMOMETRO UNIVERSALE
+    // -------------------------------------------------------------
+#if defined(WIND_VELOCITY_PIN) || defined(HAS_WIND_DIRECTION)
+    
+    // --- SE SEI SU ESP32 (Heltec, T-Beam, ecc.) ---
+    #if defined(ARCH_ESP32) || defined(ESP32)
+        Preferences prefs;
+        if (prefs.begin("meteo", true)) {
+            ANEMOMETRO_GUADAGNO   = prefs.getFloat("guadagno", ANEMOMETRO_GUADAGNO);
+            ANEMOMETRO_ATTRITO    = prefs.getFloat("attrito", ANEMOMETRO_ATTRITO);
+            WIND_NORTH_OFFSET     = prefs.getFloat("diroffset", WIND_NORTH_OFFSET);
+            prefs.end();
+        }
+    
+    // --- SE SEI SU NRF52 (RAK Wireless, ecc.) ---
+    #elif defined(NRF52_SERIES)
+        if (InternalFS.exists("/meteo.dat")) {
+            File file = InternalFS.open("/meteo.dat", FILE_READ);
+            if (file) {
+                file.read(&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
+                file.read(&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
+                file.read(&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
+                file.close();
+            }
+        }
+    #endif
+
+    LOG_INFO("[METEO] Config attiva -> G: %.2f | A: %.2f | Nord Off: %.1f", 
+             ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO, WIND_NORTH_OFFSET);
+#endif
+    // -------------------------------------------------------------
+
+/////////////////////////////////////////////////
+
+
 
     router = new ReliableRouter();
 
