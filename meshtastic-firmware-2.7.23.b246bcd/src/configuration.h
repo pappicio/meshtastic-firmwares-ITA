@@ -683,7 +683,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Ruolo standard: partecipa attivamente, scala i tempi di invio se la rete è congestionata (>40 nodi).
 #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
 
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
+//#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
 // Nodo Client fisso (casa/ufficio). Ottimizza il routing sapendo di non essere in movimento.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -730,10 +730,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods 1"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTM1"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTMS"
 
-#define USERPREFS_SPLASH_TEXT "MTM1"
+#define USERPREFS_SPLASH_TEXT "MTMS"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
