@@ -135,5 +135,42 @@ Il comportamento del codice è regolato da direttive di precompilazione (`#defin
 TESTATO Direzione vento con sensore i2c AS5600, piu che funzionale 
 (presi su amazon comprensivi di magneti 4x2 mm ma anche su aliexpress ce ne sono.)
 
+
+
+# 🌪️ Meshtastic Weather Station Calibration & Multi-Relay Remote Control
+
+Questo modulo aggiunge al firmware **Meshtastic** la gestione dinamica a runtime dei parametri di taratura dell'anemometro e della banderuola per la stazione meteo, insieme a un sistema di controllo remoto atomico per relè multipli. 
+
+Grazie all'architettura `extern float`, le costanti rigide (`#define`) sono state trasformate in variabili globali allocate in RAM e sincronizzate in modo persistente sulla memoria non volatile della scheda, garantendo la totale compatibilità multi-piattaforma (**ESP32** e **nRF52 Series**).
+
+---
+
+## 📡 Comandi di Controllo Remoto (Via Direct Message / Messaggio di Testo)
+
+I comandi possono essere inviati da qualsiasi nodo della rete Mesh tramite un messaggio di testo privato (DM) indirizzato al nodo ricevente. Il parsing dei pacchetti include un controllo di sicurezza della memoria (`safe_buffer`) per prevenire fenomeni di *buffer overflow*.
+
+### 1. Taratura Sensori Meteo
+
+| Comando | Descrizione | Esempio Pratico |
+| :--- | :--- | :--- |
+| `/anemometro [guadagno] [attrito]` | Modifica istantaneamente i fattori di calcolo della velocità del vento. | `/anemometro 1.45 0.35` |
+| `/direzione [offset_gradi]` | Imposta l'offset angolare (in gradi) per allineare il Nord della banderuola. | `/direzione 180.0` |
+
+> 💡 **Nota sulla persistenza:** All'invio del comando, i valori vengono applicati immediatamente in RAM a tutti i moduli di calcolo e salvati contemporaneamente nella Flash (`Preferences` su ESP32 e `/meteo.dat` su LittleFS per nRF52). Al riavvio del nodo, i dati personalizzati verranno ricaricati automaticamente.
+
+```cpp
+#define HAS_WIND_DIRECTION
+#define WIND_VELOCITY_PIN 47
+
+#ifdef HAS_WIND_DIRECTION
+    extern float WIND_NORTH_OFFSET;
+#endif
+#ifdef WIND_VELOCITY_PIN
+    extern float ANEMOMETRO_GUADAGNO;
+    extern float ANEMOMETRO_ATTRITO;
+#endif
+
+```
+
 The end!!!
 ---
