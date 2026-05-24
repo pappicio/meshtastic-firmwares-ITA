@@ -728,10 +728,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods!"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTMS"
- 
-#define USERPREFS_SPLASH_TEXT "MTMS"
+#define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
+
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods 1"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTM1"
+
+#define USERPREFS_SPLASH_TEXT "MTM1"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -795,16 +797,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
     extern float WIND_NORTH_OFFSET;
+    // Definisci il comando esatto in minuscolo, pronto per il parsing
+    #define COMANDO_DIREZIONE "/direzione vento" 
 #endif
- 
 
 #define WIND_VELOCITY_PIN 47
 
 #ifdef WIND_VELOCITY_PIN
     extern float ANEMOMETRO_GUADAGNO;
     extern float ANEMOMETRO_ATTRITO;
+    // Definisci i comandi per l'anemometro (es. guadagno e attrito separati o uniti)
+    #define COMANDO_GUADAGNO "/guadagno anemometro"
+    #define COMANDO_ATTRITO  "/attrito anemometro"
 #endif
-
 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola

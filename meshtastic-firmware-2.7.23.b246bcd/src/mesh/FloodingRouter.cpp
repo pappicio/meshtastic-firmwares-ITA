@@ -8,17 +8,7 @@
 #if !MESHTASTIC_EXCLUDE_TRACEROUTE
 #include "modules/TraceRouteModule.h"
 #endif
-// -------------------------------------------------------------
-// INCLUDE UNIVERSALI PER MEMORIA NON VOLATILE (METEO TARATURE)
-// -------------------------------------------------------------
-#if defined(ARCH_ESP32) || defined(ESP32)
-    #include <Preferences.h>
-#elif defined(NRF52_SERIES)
-    #include <InternalFileSystem.h>
-    // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
-    using namespace Adafruit_InternalFS; 
-#endif
-// -------------------------------------------------------------
+
 FloodingRouter::FloodingRouter() {}
 
 /**
@@ -167,147 +157,11 @@ bool FloodingRouter::isRebroadcaster()
     return config.device.role != meshtastic_Config_DeviceConfig_Role_CLIENT_MUTE &&
            config.device.rebroadcast_mode != meshtastic_Config_DeviceConfig_RebroadcastMode_NONE;
 }
-
-///////////////////////////////////////////////
-/**
- * Gestisce i comandi remoti per Relay e Anemometro in modo atomico e universale.
- */
-void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
-    // Verifichiamo: Messaggio di testo + Indirizzato a noi (DM)
-    if (p->which_payload_variant == meshtastic_MeshPacket_decoded_tag && 
-        p->decoded.portnum == meshtastic_PortNum_TEXT_MESSAGE_APP && 
-        isToUs(p)) {
-
-        // ESTRAZIONE SICURA DEL TESTO (Evita Buffer Overflow e crash)
-        size_t len = p->decoded.payload.size;
-        char safe_buffer[len + 1];
-        memcpy(safe_buffer, p->decoded.payload.bytes, len);
-        safe_buffer[len] = '\0'; // Forza la chiusura della stringa
-
-        String msg = String(safe_buffer);
-        msg.trim(); 
-
-        // =========================================================
-        // --- 1. COMANDI TARATURA ANEMOMETRO (Via EXTERN float) ---
-        // =========================================================
-        
-        // Comando: /anemometro [guadagno] [attrito] (es: /anemometro 1.45 0.35)
-        if (msg.startsWith("/anemometro ")) {
-            String parametri = msg.substring(12); 
-            int spazio = parametri.indexOf(' ');
-            if (spazio != -1) {
-                #if defined(WIND_VELOCITY_PIN)
-                    ANEMOMETRO_GUADAGNO = parametri.substring(0, spazio).toFloat();
-                    ANEMOMETRO_ATTRITO  = parametri.substring(spazio + 1).toFloat();
-                    
-                    // --- Salvataggio permanente specifico per CPU ---
-                    #if defined(ARCH_ESP32) || defined(ESP32)
-                        Preferences prefs;
-                        if (prefs.begin("meteo", false)) { // false = Scrittura
-                            prefs.putFloat("guadagno", ANEMOMETRO_GUADAGNO);
-                            prefs.putFloat("attrito", ANEMOMETRO_ATTRITO);
-                            prefs.end();
-                        }
-                    #elif defined(NRF52_SERIES)
-                        File file = InternalFS.open("/meteo.dat", FILE_WRITE);
-                        if (file) {
-                            file.write((uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
-                            file.write((uint8_t*)&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
-                            file.write((uint8_t*)&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET)); // Mantiene allineato il file
-                            file.close();
-                        }
-                    #endif
-                    
-                    LOG_INFO("METEO REMOTE: Nuovo Guadagno: %.2f | Attrito: %.2f (Salvati!)", ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO);
-                #endif
-            }
-            return; // Esci, comando gestito
-        }
-
-        // Comando: /direzione [gradi] (es: /direzione 180)
-        if (msg.startsWith("/direzione ")) {
-            #if defined(HAS_WIND_DIRECTION)
-                WIND_NORTH_OFFSET = msg.substring(11).toFloat();
-                
-                // --- Salvataggio permanente specifico per CPU ---
-                #if defined(ARCH_ESP32) || defined(ESP32)
-                    Preferences prefs;
-                    if (prefs.begin("meteo", false)) {
-                        prefs.putFloat("diroffset", WIND_NORTH_OFFSET);
-                        prefs.end();
-                    }
-                #elif defined(NRF52_SERIES)
-                    File file = InternalFS.open("/meteo.dat", FILE_WRITE);
-                    if (file) {
-                        file.write((uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
-                        file.write((uint8_t*)&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
-                        file.write((uint8_t*)&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
-                        file.close();
-                    }
-                #endif
-                
-                LOG_INFO("METEO REMOTE: Nuovo Offset Direzione: %.1f (Salvo!)", WIND_NORTH_OFFSET);
-            #endif
-            return; // Esci, comando gestito
-        }
-
-        // =========================================================
-        // --- 2. LOGICA AUTOMAZIONE RELAY ---
-        // =========================================================
-
-        // --- RELAY 1 ---
-        #if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
-            // Caso ON
-            #ifdef CMD_RELAY_ON
-            if (msg == String(CMD_RELAY_ON) + " " + RELAY_1_NAME) {
-                pinMode(RELAY_1_PIN, OUTPUT);
-                digitalWrite(RELAY_1_PIN, HIGH);
-                LOG_INFO("REMOTE: %s -> ACCESO", RELAY_1_NAME);
-            }
-            #endif
-
-            // Caso OFF
-            #ifdef CMD_RELAY_OFF
-            if (msg == String(CMD_RELAY_OFF) + " " + RELAY_1_NAME) {
-                pinMode(RELAY_1_PIN, OUTPUT);
-                digitalWrite(RELAY_1_PIN, LOW);
-                LOG_INFO("REMOTE: %s -> SPENTO", RELAY_1_NAME);
-            }
-            #endif
-        #endif
-
-        // --- RELAY 2 ---
-        #if defined(RELAY_2_PIN) && defined(RELAY_2_NAME)
-            // Caso ON
-            #ifdef CMD_RELAY_ON
-            if (msg == String(CMD_RELAY_ON) + " " + RELAY_2_NAME) {
-                pinMode(RELAY_2_PIN, OUTPUT);
-                digitalWrite(RELAY_2_PIN, HIGH);
-                LOG_INFO("REMOTE: %s -> ACCESO", RELAY_2_NAME);
-            }
-            #endif
-
-            // Caso OFF
-            #ifdef CMD_RELAY_OFF
-            if (msg == String(CMD_RELAY_OFF) + " " + RELAY_2_NAME) {
-                pinMode(RELAY_2_PIN, OUTPUT);
-                digitalWrite(RELAY_2_PIN, LOW);
-                LOG_INFO("REMOTE: %s -> SPENTO", RELAY_2_NAME);
-            }
-            #endif
-        #endif
-    }
-}
-///////////////////////////////////////////////
-
+ 
 void FloodingRouter::sniffReceived(const meshtastic_MeshPacket *p, const meshtastic_Routing *c)
 {
 
-///////////////////////////////////////////////
-    // --- RICHIAMO DELLA SUB ---
-    checkMultiRelayCommand(p); // Il tuo nuovo telecomando a distanza
-    // ---------------------------
-///////////////////////////////////////////////
+ 
 
     bool isAckorReply = (p->which_payload_variant == meshtastic_MeshPacket_decoded_tag) &&
                         (p->decoded.request_id != 0 || p->decoded.reply_id != 0);

@@ -30,6 +30,7 @@ class TextMessageModule : public SinglePortModule, public Observable<const mesht
      */
     virtual ProcessMessage handleReceived(const meshtastic_MeshPacket &mp) override;
     virtual bool wantPacket(const meshtastic_MeshPacket *p) override;
+    
 
   private:
     uint32_t textPacketList[TEXT_PACKET_LIST_SIZE] = {0};
