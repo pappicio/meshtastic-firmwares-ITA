@@ -29,6 +29,8 @@
 #include "MeshService.h"
 
 #include "modules/Telemetry/EnvironmentTelemetry.h"
+
+#include <math.h> // Serve per la funzione powf (potenza)
 ///////////////////////////////////////////////
 
 // ... altri include ...
@@ -516,9 +518,10 @@ void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
     // Calcolo della frequenza media basata sui 15 secondi fissi del task
     float frequenza_hz = (float)pulses / 15.0f;
     
+    // --- FORMULA LOGARITMICA APERTA (Da 0 a 150+ km/h) ---
     if (frequenza_hz > 0.0f) {
-        // Il calcolo qui restituisce direttamente i METRI AL SECONDO (m/s)
-        vento_salvato_globale = frequenza_hz * ANEMOMETER_FACTOR;
+        // Calcola la velocità pura con curva di potenza + offset di attrito
+        vento_salvato_globale = (1.38f * powf(frequenza_hz, 0.92f)) + 0.30f;
     } else {
         vento_salvato_globale = 0.0f; 
     }
