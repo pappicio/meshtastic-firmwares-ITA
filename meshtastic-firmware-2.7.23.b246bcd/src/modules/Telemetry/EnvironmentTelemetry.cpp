@@ -1036,51 +1036,37 @@ Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
     }
 
     // 2. Richiediamo i 2 byte successivi (0x0C e 0x0D)
-    Wire.requestFrom(EnvironmentTelemetryModule::AS5600_ADDR, 2);
-    if (Wire.available() >= 2) {
-        uint8_t msb = Wire.read(); // Byte alto
-        uint8_t lsb = Wire.read(); // Byte basso
-       // Uniamo i due byte per ottenere il valore a 12-bit (0 - 4095)
-        uint16_t rawAngle = ((msb & 0x0F) << 8) | lsb;
-
-        // Convertiamo il valore grezzo magnetico in gradi reali (0.0 - 359.9) prima dell'offset
-        float gradi_magnetici = (rawAngle * 360.0f) / 4096.0f;
-        
-        // --- APPLICAZIONE TARATURA NORD ---
-        // Sottraiamo l'offset impostato nella macro
-        float degrees = gradi_magnetici - WIND_NORTH_OFFSET;
-        
-        // --- APPLICAZIONE TARATURA NORD ---
-        // Sottraiamo l'offset definito nella macro globale
-      // Ritorniamo nel range corretto [0.0 - 359.9] se andiamo sottozero o sopra i 360
-        if (degrees < 0.0f) {
-            degrees += 360.0f;
+        // 2. Richiediamo i 2 byte successivi (0x0C e 0x0D)
+        Wire.requestFrom(EnvironmentTelemetryModule::AS5600_ADDR, 2);
+        if (Wire.available() >= 2) {
+            uint8_t msb = Wire.read(); // Byte alto
+            uint8_t lsb = Wire.read(); // Byte basso
+            // Uniamo i due byte per ottenere il valore a 12-bit (0 - 4095)
+            uint16_t rawAngle = ((msb & 0x0F) << 8) | lsb;
+            // Convertiamo il valore grezzo magnetico in gradi reali (0.0 - 359.9) prima dell'offset
+            float gradi_magnetici = (rawAngle * 360.0f) / 4096.0f;
+            
+            // --- APPLICAZIONE TARATURA NORD ---
+            // Invertiamo la direzione (magnete montato al contrario)
+            // e applichiamo l'offset di calibrazione
+            float degrees = 360.0f - gradi_magnetici + WIND_NORTH_OFFSET;
+            
+            // Ritorniamo nel range corretto [0.0 - 359.9] se andiamo sottozero o sopra i 360
+            if (degrees < 0.0f) {
+                degrees += 360.0f;
+            }
+            if (degrees >= 360.0f) {
+                degrees -= 360.0f;
+            }
+            // ----------------------------------
+            // <<< IL FOTTUTO LOG DI CALIBRAZIONE >>>
+            LOG_INFO("[AS5600-DEBUG] RAW: %d | Gradi Magnetici: %.1f° | Offset: %.1f° | -> DIREZIONE FINALE: %.1f°", 
+                     rawAngle, gradi_magnetici, (float)WIND_NORTH_OFFSET, degrees);
+            return degrees;
         }
-        if (degrees >= 360.0f) {
-            degrees -= 360.0f;
-        }
-        // ----------------------------------
-
-        // <<< IL FOTTUTO LOG DI CALIBRAZIONE >>>
-        // Ti mostra: valore RAW a 12bit, i gradi reali che sta leggendo il chip in quel momento,
-        // l'offset che hai impostato e il risultato finale che manderai a Meshtastic.
-        LOG_INFO("[AS5600-DEBUG] RAW: %d | Gradi Magnetici: %.1f° | Offset: %.1f° | -> DIREZIONE FINALE: %.1f°", 
-                 rawAngle, gradi_magnetici, (float)WIND_NORTH_OFFSET, degrees);
-
-        return degrees;
-
-        // Se il valore scende sotto zero, lo riportiamo nel range corretto [0 - 359.9]
-        if (degrees < 0.0f) {
-            degrees += 360.0f;
-        }
-        // ----------------------------------
-        return degrees;
+        return -1.0f; // Errore di lettura
     }
-
-    return -1.0f; // Errore di lettura
-}
 #endif
-
 ///////////////////////////////////////////////
 
  
