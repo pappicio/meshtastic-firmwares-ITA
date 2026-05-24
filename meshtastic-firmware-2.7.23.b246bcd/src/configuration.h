@@ -802,7 +802,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define ANEMOMETRO_GUADAGNO   1.38f  // Abbassa se a vento forte segna troppo, alza se segna poco
     #define ANEMOMETRO_ATTRITO    0.30f  // Alza se a vento leggero segna zero o troppo poco
 #endif
-// --- TARATURA LINEARE CONVERTITA IN m/s (0.695f / 3.6f) ---
 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
