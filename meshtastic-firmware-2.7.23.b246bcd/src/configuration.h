@@ -729,7 +729,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods!"
-////#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMFF"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTMS"
 
 #define USERPREFS_SPLASH_TEXT "MTMS"
 
