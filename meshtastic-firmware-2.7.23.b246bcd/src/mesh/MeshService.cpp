@@ -521,7 +521,7 @@ void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
     // --- FORMULA LOGARITMICA APERTA (Da 0 a 150+ km/h) ---
     if (frequenza_hz > 0.0f) {
         // Calcola la velocità pura con curva di potenza + offset di attrito
-        vento_salvato_globale = (1.38f * powf(frequenza_hz, 0.92f)) + 0.30f;
+        vento_salvato_globale = (ANEMOMETRO_GUADAGNO * powf(frequenza_hz, 0.92f)) + ANEMOMETRO_ATTRITO;
     } else {
         vento_salvato_globale = 0.0f; 
     }
