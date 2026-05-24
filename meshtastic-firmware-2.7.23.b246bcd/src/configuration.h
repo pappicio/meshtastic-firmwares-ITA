@@ -796,6 +796,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_WIND_DIRECTION
 // --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
+//  #define WIND_DIRECTION_INVERT // se avete montato il magnete al CONTRARIO E SEGNA SUD EST, INVECE DI NORD OVERS, POTETE: INVERTIRE IL MAGNETE O ABILITARE QUI
     extern float WIND_NORTH_OFFSET;
     // Definisci il comando esatto in minuscolo, pronto per il parsing
     #define COMANDO_DIREZIONE "/direzione vento" 

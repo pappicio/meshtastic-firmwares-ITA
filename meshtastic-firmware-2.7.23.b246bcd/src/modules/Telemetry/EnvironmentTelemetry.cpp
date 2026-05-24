@@ -1047,9 +1047,12 @@ Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
             float gradi_magnetici = (rawAngle * 360.0f) / 4096.0f;
             
             // --- APPLICAZIONE TARATURA NORD ---
-            // Invertiamo la direzione (magnete montato al contrario)
-            // e applichiamo l'offset di calibrazione
-            float degrees = 360.0f - gradi_magnetici + WIND_NORTH_OFFSET;
+            // e applichiamo l'offset di calibrazione e invertiamo in caso di magnete montato al contrario
+#ifdef WIND_DIRECTION_INVERT
+	    float degrees = 360.0f - gradi_magnetici - WIND_NORTH_OFFSET;
+#else
+    	    float degrees = gradi_magnetici - WIND_NORTH_OFFSET;
+#endif
             
             // Ritorniamo nel range corretto [0.0 - 359.9] se andiamo sottozero o sopra i 360
             if (degrees < 0.0f) {
