@@ -531,7 +531,7 @@ void setup()
     Wire.begin();
 #endif
 #endif
-//////////////////////////////////////////////////////////8
+//////////////////////////////////////////////////////////
 #if defined(M5STACK_UNITC6L)
     pinMode(LORA_CS, OUTPUT);
     digitalWrite(LORA_CS, 1);
@@ -722,7 +722,7 @@ void setup()
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::WIND_DIRECTION_AS5600, (meshtastic_TelemetrySensorType)99); 
 #else
     // Comportamento originale di Meshtastic per il chip batteria
-    // scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX17048, meshtastic_TelemetrySensorType_MAX17048);
+    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::MAX17048, meshtastic_TelemetrySensorType_MAX17048);
 #endif
 ////////////////////////////////////////
 

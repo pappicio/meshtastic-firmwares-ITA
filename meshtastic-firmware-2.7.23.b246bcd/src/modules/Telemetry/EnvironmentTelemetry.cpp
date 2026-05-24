@@ -1021,7 +1021,7 @@ if (!leggisolouno)
     return valid && hasSensor;
 }
 
-
+///////////////////////////////////////////////
 /**
  * Legge l'angolo grezzo dall'AS5600 e lo converte in gradi (0-360)
  * Ritorna -1.0 in caso di errore di lettura sul bus.
@@ -1081,7 +1081,7 @@ Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
 }
 #endif
 
- 
+///////////////////////////////////////////////
 
  
 

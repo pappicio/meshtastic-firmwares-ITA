@@ -123,8 +123,7 @@ int32_t PowerTelemetryModule::runOnce()
 ///////////////////////////////////////////////
             if (transmitHistory)
                 transmitHistory->setLastSentToMesh(TX_HISTORY_KEY_POWER_TELEMETRY);
-        } 
-        else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
+        } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
             
             sendTelemetry(NODENUM_BROADCAST, true);
