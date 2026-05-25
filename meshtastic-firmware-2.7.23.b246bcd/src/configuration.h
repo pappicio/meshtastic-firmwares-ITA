@@ -791,7 +791,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
-#define CMD_PASSWORD "p@ssw0rd"
+#define CMD_PASSWORD "Password"
 
 //comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
 //password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
