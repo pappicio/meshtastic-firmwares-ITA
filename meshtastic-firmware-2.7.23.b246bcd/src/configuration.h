@@ -681,9 +681,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Nodo Router di backup. Introduce un leggero ritardo prima di ripetere, lasciando la precedenza ai Router principali.
 
 // Ruolo standard: partecipa attivamente, scala i tempi di invio se la rete è congestionata (>40 nodi).
-#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+//#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
 
-//#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
+#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
 // Nodo Client fisso (casa/ufficio). Ottimizza il routing sapendo di non essere in movimento.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -789,27 +789,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #endif
 #endif
 
- 
+
+//PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
+#define CMD_PASSWORD "p@ssw0rd"
+
+//comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
+//password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
+//password /direzione vento 12.1  e ti imposta offset direzione vento a 12,1 ecc ecc ecc.....
+#define COMANDO_STATO "stato"
+
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
-
-#define HAS_WIND_DIRECTION
+//#define HAS_WIND_DIRECTION
 // --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
-//  #define WIND_DIRECTION_INVERT // se avete montato il magnete al CONTRARIO E SEGNA SUD EST, INVECE DI NORD OVERS, POTETE: INVERTIRE IL MAGNETE O ABILITARE QUI
+    #define WIND_DIRECTION_INVERT_DEFAULT true
+    extern bool WIND_DIRECTION_INVERT; // se avete montato il magnete al CONTRARIO E SEGNA SUD EST, INVECE DI NORD OVERS, POTETE: INVERTIRE IL MAGNETE O ABILITARE QUI
+    #define COMANDO_INVERTI "inverti"
+    
     extern float WIND_NORTH_OFFSET;
     // Definisci il comando esatto in minuscolo, pronto per il parsing
-    #define COMANDO_DIREZIONE "/direzione vento" 
+    #define COMANDO_DIREZIONE "direzione vento" 
 #endif
 
-#define WIND_VELOCITY_PIN 47
+//#define WIND_VELOCITY_PIN 47
 
 #ifdef WIND_VELOCITY_PIN
     extern float ANEMOMETRO_GUADAGNO;
     extern float ANEMOMETRO_ATTRITO;
     // Definisci i comandi per l'anemometro (es. guadagno e attrito separati o uniti)
-    #define COMANDO_GUADAGNO "/guadagno anemometro"
-    #define COMANDO_ATTRITO  "/attrito anemometro"
+    #define COMANDO_GUADAGNO "guadagno anemometro"
+    #define COMANDO_ATTRITO  "attrito anemometro"
 #endif
 
 
@@ -917,15 +927,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-// --- NETWORK E WIFI (COMMENTATI) ---
-// #undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
-// #define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
-// #undef USERPREFS_NETWORK_WIFI_ENABLED
-// #define USERPREFS_NETWORK_WIFI_ENABLED true
-// #undef USERPREFS_NETWORK_WIFI_SSID
-// #define USERPREFS_NETWORK_WIFI_SSID "wifi_ssid"
-// #undef USERPREFS_NETWORK_WIFI_PSK
-// #define USERPREFS_NETWORK_WIFI_PSK "wifi_psk"
+
+// --- NETWORK E WIFI ---
+//#undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
+//#define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
+
+//#undef USERPREFS_NETWORK_WIFI_ENABLED
+//#define USERPREFS_NETWORK_WIFI_ENABLED true
+
+//#undef USERPREFS_NETWORK_WIFI_SSID
+//#define USERPREFS_NETWORK_WIFI_SSID "ssid"
+
+//#undef USERPREFS_NETWORK_WIFI_PSK
+//#define USERPREFS_NETWORK_WIFI_PSK "password"
+
+// --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
+//#define MY_STATIC_IP      192, 168, 1, 250
+//#define MY_STATIC_GATEWAY 192, 168, 1, 1
+//#define MY_STATIC_SUBNET  255, 255, 255, 0
 
 // --- MQTT ---
 // #undef USERPREFS_MQTT_ENABLED

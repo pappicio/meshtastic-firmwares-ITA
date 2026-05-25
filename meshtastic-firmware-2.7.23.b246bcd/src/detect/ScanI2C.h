@@ -35,9 +35,12 @@ class ScanI2C
         INA260,
         INA219,
         INA3221,
-
 ///////////////////////////////////////////////
+#ifdef HAS_WIND_DIRECTION
         WIND_DIRECTION_AS5600,
+#else
+        MAX17048,
+#endif
 ///////////////////////////////////////////////
 
         MCP9808,

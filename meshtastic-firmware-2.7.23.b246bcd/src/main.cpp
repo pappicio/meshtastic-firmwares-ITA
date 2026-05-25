@@ -219,6 +219,7 @@ boolean onsleep=false;
 float ANEMOMETRO_GUADAGNO   = 1.38f;
 float ANEMOMETRO_ATTRITO    = 0.30f;
 float WIND_NORTH_OFFSET     = 0.0f;
+bool WIND_DIRECTION_INVERT  = false;
 ///////////////////////////////////////////////
 
 
@@ -798,32 +799,54 @@ void setup()
     // RECUPERO TARATURE ANEMOMETRO UNIVERSALE
     // -------------------------------------------------------------
 #if defined(WIND_VELOCITY_PIN) || defined(HAS_WIND_DIRECTION)
-    
-    // --- SE SEI SU ESP32 (Heltec, T-Beam, ecc.) ---
+
     #if defined(ARCH_ESP32) || defined(ESP32)
-        Preferences prefs;
-        if (prefs.begin("meteo", true)) {
-            ANEMOMETRO_GUADAGNO   = prefs.getFloat("guadagno", ANEMOMETRO_GUADAGNO);
-            ANEMOMETRO_ATTRITO    = prefs.getFloat("attrito", ANEMOMETRO_ATTRITO);
-            WIND_NORTH_OFFSET     = prefs.getFloat("diroffset", WIND_NORTH_OFFSET);
-            prefs.end();
-        }
-    
-    // --- SE SEI SU NRF52 (RAK Wireless, ecc.) ---
+    Preferences prefs;
+    if (prefs.begin("meteo", true)) {
+#ifdef WIND_VELOCITY_PIN
+        ANEMOMETRO_GUADAGNO = prefs.getFloat("guadagno", ANEMOMETRO_GUADAGNO);
+        ANEMOMETRO_ATTRITO  = prefs.getFloat("attrito", ANEMOMETRO_ATTRITO);
+#endif
+#ifdef HAS_WIND_DIRECTION
+        WIND_NORTH_OFFSET     = prefs.getFloat("diroffset", WIND_NORTH_OFFSET);
+        WIND_DIRECTION_INVERT = prefs.getBool("invertito", WIND_DIRECTION_INVERT_DEFAULT);
+#endif
+        prefs.end();
+    }
+
     #elif defined(NRF52_SERIES)
-        if (InternalFS.exists("/meteo.dat")) {
-            File file = InternalFS.open("/meteo.dat", FILE_READ);
-            if (file) {
-                file.read(&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
-                file.read(&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
-                file.read(&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
-                file.close();
-            }
+    if (InternalFS.exists("/meteo.dat")) {
+        File file = InternalFS.open("/meteo.dat", FILE_READ);
+        if (file) {
+#ifdef WIND_VELOCITY_PIN
+            file.read(&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
+            file.read(&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
+#endif
+#ifdef HAS_WIND_DIRECTION
+            file.read(&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
+            file.read(&WIND_DIRECTION_INVERT, sizeof(WIND_DIRECTION_INVERT));
+#endif
+            file.close();
         }
+    }
     #endif
 
-    LOG_INFO("[METEO] Config attiva -> G: %.2f | A: %.2f | Nord Off: %.1f", 
-             ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO, WIND_NORTH_OFFSET);
+    LOG_INFO("[METEO] Config attiva -> "
+#ifdef WIND_VELOCITY_PIN
+        "G: %.2f | A: %.2f | "
+#endif
+#ifdef HAS_WIND_DIRECTION
+        "Nord Off: %.1f | Invertito: %s"
+#endif
+        ,
+#ifdef WIND_VELOCITY_PIN
+        ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO,
+#endif
+#ifdef HAS_WIND_DIRECTION
+        WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO"
+#endif
+    );
+
 #endif
     // -------------------------------------------------------------
 

@@ -30,6 +30,7 @@
 #include "detect/ScanI2C.h"
 
 #include <Wire.h>
+
 ///////////////////////////////////////////////
 
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
@@ -1048,11 +1049,12 @@ Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
             
             // --- APPLICAZIONE TARATURA NORD ---
             // e applichiamo l'offset di calibrazione e invertiamo in caso di magnete montato al contrario
-#ifdef WIND_DIRECTION_INVERT
-	    float degrees = 360.0f - gradi_magnetici - WIND_NORTH_OFFSET;
-#else
-    	    float degrees = gradi_magnetici - WIND_NORTH_OFFSET;
-#endif
+float degrees;
+if (WIND_DIRECTION_INVERT) {
+    degrees = 360.0f - gradi_magnetici - WIND_NORTH_OFFSET;
+} else {
+    degrees = gradi_magnetici - WIND_NORTH_OFFSET;
+}
             
             // Ritorniamo nel range corretto [0.0 - 359.9] se andiamo sottozero o sopra i 360
             if (degrees < 0.0f) {

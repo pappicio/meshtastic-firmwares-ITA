@@ -148,6 +148,8 @@ void esp32Setup()
         preferences.putUInt("hwVendor", HW_VENDOR);
     preferences.end();
     LOG_DEBUG("Number of Device Reboots: %d", rebootCounter);
+
+////////////////////////////////////////////////////////////////////////
 #if !MESHTASTIC_EXCLUDE_WIFI
     String version = MeshtasticOTA::getVersion();
     if (version.isEmpty()) {
@@ -155,8 +157,25 @@ void esp32Setup()
     } else {
         LOG_INFO("MeshtasticOTA firmware version %s", version.c_str());
     }
+    
+    // --- 1. CONFIGURAZIONE IP STATICO (DA CONFIGURATION.H) ---
+    #if defined(MY_STATIC_IP) && defined(MY_STATIC_GATEWAY) && defined(MY_STATIC_SUBNET)
+        IPAddress local_IP(MY_STATIC_IP);  
+        IPAddress gateway(MY_STATIC_GATEWAY);     
+        IPAddress subnet(MY_STATIC_SUBNET);    
+        
+        if (!WiFi.config(local_IP, gateway, subnet)) {
+            LOG_ERROR("Configurazione IP Statico Fallita!");
+        } else {
+            LOG_INFO("IP Statico applicato con successo!");
+        }
+    #endif
+
+    // --- 2. INIZIALIZZAZIONE SERVER OTA ---
+    // Questo apre la porta 3232 sull'IP impostato sopra e ti evita di salire sul tetto
     MeshtasticOTA::initialize();
 #endif
+////////////////////////////////////////////////////////////////////////
 
     // enableModemSleep();
 

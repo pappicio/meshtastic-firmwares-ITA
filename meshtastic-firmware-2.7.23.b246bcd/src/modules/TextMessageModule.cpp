@@ -65,7 +65,6 @@ static void sendConfirm(const meshtastic_MeshPacket *req, const char *msg)
     // Invia direttamente senza passare per myReply
     router->send(p);
 }
-
 static void salvaMeteo() {
 
 #if defined(ARCH_ESP32) || defined(ESP32)
@@ -73,40 +72,37 @@ static void salvaMeteo() {
     Preferences prefs;
 
     if (prefs.begin("meteo", false)) {
+#ifdef WIND_VELOCITY_PIN
         prefs.putFloat("guadagno", ANEMOMETRO_GUADAGNO);
         prefs.putFloat("attrito", ANEMOMETRO_ATTRITO);
-        prefs.putFloat("diroff", WIND_NORTH_OFFSET);
+#endif
+#ifdef HAS_WIND_DIRECTION
+        prefs.putFloat("diroffset", WIND_NORTH_OFFSET);
+        prefs.putBool("invertito", WIND_DIRECTION_INVERT);
+#endif
         prefs.end();
     }
 
 #elif defined(NRF52_SERIES)
 
     InternalFS.remove("/meteo.dat");
-
     File file = InternalFS.open("/meteo.dat", FILE_O_WRITE);
 
     if (file) {
-
-        file.write(
-            (const uint8_t*)&ANEMOMETRO_GUADAGNO,
-            sizeof(ANEMOMETRO_GUADAGNO)
-        );
-
-        file.write(
-            (const uint8_t*)&ANEMOMETRO_ATTRITO,
-            sizeof(ANEMOMETRO_ATTRITO)
-        );
-
-        file.write(
-            (const uint8_t*)&WIND_NORTH_OFFSET,
-            sizeof(WIND_NORTH_OFFSET)
-        );
-
+#ifdef WIND_VELOCITY_PIN
+        file.write((const uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
+        file.write((const uint8_t*)&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
+#endif
+#ifdef HAS_WIND_DIRECTION
+        file.write((const uint8_t*)&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
+        file.write((const uint8_t*)&WIND_DIRECTION_INVERT, sizeof(WIND_DIRECTION_INVERT));
+#endif
         file.close();
     }
 
 #endif
 }
+
 
 
 // =====================================================
@@ -127,6 +123,8 @@ if (p->decoded.portnum != meshtastic_PortNum_TEXT_MESSAGE_APP)
 if (p->to != nodeDB->getNodeNum())
     return;
 
+
+
 const size_t len = p->decoded.payload.size;
 
     if (len == 0 || len > 200)
@@ -139,11 +137,80 @@ const size_t len = p->decoded.payload.size;
     if (msg.isEmpty())
         return;
 
+ // =====================================================
+    //  VERIFICA PASSWORD
+    // =====================================================
+#ifdef CMD_PASSWORD
+    if (!msg.startsWith(CMD_PASSWORD " ")) {
+        sendConfirm(p, "Accesso negato: password errata o mancante.");
+        return;
+    }
+    // Rimuoviamo la password, lasciamo solo il comando
+    msg = msg.substring(strlen(CMD_PASSWORD) + 1);
+    msg.trim();
+#else
+    // Nessuna password configurata: nodo bloccato per sicurezza
+    sendConfirm(p, "Password non configurata: impostare CMD_PASSWORD nel firmware.");
+    return;
+#endif
+
+/////////////////////////////////////////////
+// =====================================================
+    //  STATO
+    // =====================================================
+#ifdef CMD_PASSWORD
+    if (msg.equals("STATO")) {
+        char stato[180];
+        int offset = 0;
+
+#ifdef HAS_WIND_DIRECTION
+        offset += snprintf(stato + offset, sizeof(stato) - offset,
+            "Offset Nord: %.0f | Magnete Invertito: %s | ", 
+            WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO");
+#endif
+
+#ifdef WIND_VELOCITY_PIN
+        offset += snprintf(stato + offset, sizeof(stato) - offset,
+            "Guadagno: %.2f | Attrito: %.2f | ", 
+            ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO);
+#endif
+
+#if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
+        offset += snprintf(stato + offset, sizeof(stato) - offset,
+            "%s: %s | ", RELAY_1_NAME, digitalRead(RELAY_1_PIN) == HIGH ? "ON" : "OFF");
+#endif
+
+#if defined(RELAY_2_PIN) && defined(RELAY_2_NAME)
+        offset += snprintf(stato + offset, sizeof(stato) - offset,
+            "%s: %s", RELAY_2_NAME, digitalRead(RELAY_2_PIN) == HIGH ? "ON" : "OFF");
+#endif
+
+        sendConfirm(p, stato);
+        return;
+    }
+#endif
+    ////////////////////////////////////////////
+
+
+
+    // =====================================================
+    //  INVERTI DIREZIONE
+    // =====================================================
+#if defined(HAS_WIND_DIRECTION) && defined(COMANDO_INVERTI)
+    if (msg.equals(COMANDO_INVERTI)) {
+        WIND_DIRECTION_INVERT = !WIND_DIRECTION_INVERT;
+        salvaMeteo();
+        char buf[64];
+        snprintf(buf, sizeof(buf), "OK Magnete invertito: %s", 
+                 WIND_DIRECTION_INVERT ? "SI" : "NO");
+        sendConfirm(p, buf);
+        return;
+    }
+#endif
 
     // =====================================================
     //  GUADAGNO
     // =====================================================
-
 #if defined(WIND_VELOCITY_PIN) && defined(COMANDO_GUADAGNO)
 
     if (msg.startsWith(COMANDO_GUADAGNO)) {
