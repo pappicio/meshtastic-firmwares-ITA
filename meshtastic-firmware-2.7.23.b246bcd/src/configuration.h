@@ -791,7 +791,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
-#define CMD_PASSWORD "p@ssw0rd"
+#define CMD_PASSWORD "Password"
 
 //comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
 //password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
@@ -801,7 +801,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
 
-#define HAS_WIND_DIRECTION
+//#define HAS_WIND_DIRECTION
 // --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
     #define WIND_DIRECTION_INVERT_DEFAULT true
@@ -813,7 +813,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define COMANDO_DIREZIONE "direzione vento" 
 #endif
 
-#define WIND_VELOCITY_PIN 47
+//#define WIND_VELOCITY_PIN 47
 
 #ifdef WIND_VELOCITY_PIN
     extern float ANEMOMETRO_GUADAGNO;
@@ -937,10 +937,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define USERPREFS_NETWORK_WIFI_ENABLED true
 
 //#undef USERPREFS_NETWORK_WIFI_SSID
-//#define USERPREFS_NETWORK_WIFI_SSID "SS_ID"
+//#define USERPREFS_NETWORK_WIFI_SSID "ssid"
 
 //#undef USERPREFS_NETWORK_WIFI_PSK
-//#define USERPREFS_NETWORK_WIFI_PSK "PASSWORD"
+//#define USERPREFS_NETWORK_WIFI_PSK "password"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 //#define MY_STATIC_IP      192, 168, 1, 250
