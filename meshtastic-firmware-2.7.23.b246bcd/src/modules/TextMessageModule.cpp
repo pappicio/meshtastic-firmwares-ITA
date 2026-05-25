@@ -65,12 +65,11 @@ static void sendConfirm(const meshtastic_MeshPacket *req, const char *msg)
     // Invia direttamente senza passare per myReply
     router->send(p);
 }
+
 static void salvaMeteo() {
 
 #if defined(ARCH_ESP32) || defined(ESP32)
-
     Preferences prefs;
-
     if (prefs.begin("meteo", false)) {
 #ifdef WIND_VELOCITY_PIN
         prefs.putFloat("guadagno", ANEMOMETRO_GUADAGNO);
@@ -82,12 +81,9 @@ static void salvaMeteo() {
 #endif
         prefs.end();
     }
-
 #elif defined(NRF52_SERIES)
-
     InternalFS.remove("/meteo.dat");
     File file = InternalFS.open("/meteo.dat", FILE_O_WRITE);
-
     if (file) {
 #ifdef WIND_VELOCITY_PIN
         file.write((const uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
@@ -99,288 +95,186 @@ static void salvaMeteo() {
 #endif
         file.close();
     }
-
 #endif
 }
-
-
 
 // =====================================================
 //  PARSER COMANDI
 // =====================================================
-
 void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 
-if (p == nullptr)
-    return;
+    if (p == nullptr)
+        return;
 
-if (p->which_payload_variant != meshtastic_MeshPacket_decoded_tag)
-    return;
+    if (p->which_payload_variant != meshtastic_MeshPacket_decoded_tag)
+        return;
 
-if (p->decoded.portnum != meshtastic_PortNum_TEXT_MESSAGE_APP)
-    return;
+    if (p->decoded.portnum != meshtastic_PortNum_TEXT_MESSAGE_APP)
+        return;
 
-if (p->to != nodeDB->getNodeNum())
-    return;
+    if (p->to != nodeDB->getNodeNum())
+        return;
 
-
-
-const size_t len = p->decoded.payload.size;
+    const size_t len = p->decoded.payload.size;
 
     if (len == 0 || len > 200)
         return;
 
     String msg((const char*)p->decoded.payload.bytes, len);
-
     msg.trim();
 
     if (msg.isEmpty())
         return;
 
- // =====================================================
-    //  VERIFICA PASSWORD
-    // =====================================================
-#ifdef CMD_PASSWORD
-    if (!msg.startsWith(CMD_PASSWORD " ")) {
-        sendConfirm(p, "Accesso negato: password errata o mancante.");
-        return;
-    }
-    // Rimuoviamo la password, lasciamo solo il comando
-    msg = msg.substring(strlen(CMD_PASSWORD) + 1);
-    msg.trim();
-#else
-    // Nessuna password configurata: nodo bloccato per sicurezza
-    sendConfirm(p, "Password non configurata: impostare CMD_PASSWORD nel firmware.");
-    return;
-#endif
-
-/////////////////////////////////////////////
 // =====================================================
-    //  STATO
-    // =====================================================
+//  IL TUO GRANDE BLOCCO UNICO DI SICUREZZA
+// =====================================================
 #ifdef CMD_PASSWORD
-    if (msg.equals("STATO")) {
-        char stato[180];
-        int offset = 0;
+    if (msg.startsWith(CMD_PASSWORD " ")) {
+        
+        msg = msg.substring(strlen(CMD_PASSWORD) + 1);
+        msg.trim();
+
+        // --- COMANDO STATO ---
+        if (msg.equals(COMANDO_STATO)) {
+            char stato[180];
+            int offset = 0;
 
 #ifdef HAS_WIND_DIRECTION
-        offset += snprintf(stato + offset, sizeof(stato) - offset,
-            "Offset Nord: %.0f | Magnete Invertito: %s | ", 
-            WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO");
+            offset += snprintf(stato + offset, sizeof(stato) - offset,
+                "Offset Nord: %.0f | Magnete Invertito: %s | ", 
+                WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO");
 #endif
 
 #ifdef WIND_VELOCITY_PIN
-        offset += snprintf(stato + offset, sizeof(stato) - offset,
-            "Guadagno: %.2f | Attrito: %.2f | ", 
-            ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO);
+            offset += snprintf(stato + offset, sizeof(stato) - offset,
+                "Guadagno: %.2f | Attrito: %.2f | ", 
+                ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO);
 #endif
 
 #if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
-        offset += snprintf(stato + offset, sizeof(stato) - offset,
-            "%s: %s | ", RELAY_1_NAME, digitalRead(RELAY_1_PIN) == HIGH ? "ON" : "OFF");
+            offset += snprintf(stato + offset, sizeof(stato) - offset,
+                "%s: %s | ", RELAY_1_NAME, digitalRead(RELAY_1_PIN) == HIGH ? "ON" : "OFF");
 #endif
 
 #if defined(RELAY_2_PIN) && defined(RELAY_2_NAME)
-        offset += snprintf(stato + offset, sizeof(stato) - offset,
-            "%s: %s", RELAY_2_NAME, digitalRead(RELAY_2_PIN) == HIGH ? "ON" : "OFF");
+            offset += snprintf(stato + offset, sizeof(stato) - offset,
+                "%s: %s", RELAY_2_NAME, digitalRead(RELAY_2_PIN) == HIGH ? "ON" : "OFF");
 #endif
 
-        sendConfirm(p, stato);
-        return;
-    }
-#endif
-    ////////////////////////////////////////////
+            sendConfirm(p, stato);
+            return;
+        }
 
-
-
-    // =====================================================
-    //  INVERTI DIREZIONE
-    // =====================================================
+        // --- INVERTI DIREZIONE ---
 #if defined(HAS_WIND_DIRECTION) && defined(COMANDO_INVERTI)
-    if (msg.equals(COMANDO_INVERTI)) {
-        WIND_DIRECTION_INVERT = !WIND_DIRECTION_INVERT;
-        salvaMeteo();
-        char buf[64];
-        snprintf(buf, sizeof(buf), "OK Magnete invertito: %s", 
-                 WIND_DIRECTION_INVERT ? "SI" : "NO");
-        sendConfirm(p, buf);
-        return;
-    }
+        if (msg.equals(COMANDO_INVERTI)) {
+            WIND_DIRECTION_INVERT = !WIND_DIRECTION_INVERT;
+            salvaMeteo();
+            char buf[64];
+            snprintf(buf, sizeof(buf), "OK Magnete invertito: %s", 
+                     WIND_DIRECTION_INVERT ? "SI" : "NO");
+            sendConfirm(p, buf);
+            return;
+        }
 #endif
 
-    // =====================================================
-    //  GUADAGNO
-    // =====================================================
+        // --- GUADAGNO ---
 #if defined(WIND_VELOCITY_PIN) && defined(COMANDO_GUADAGNO)
-
-    if (msg.startsWith(COMANDO_GUADAGNO)) {
-
-        float value =
-            msg.substring(strlen(COMANDO_GUADAGNO) + 1).toFloat();
-
-        if (!isnan(value) && value > 0.0f && value < 100.0f) {
-
-            ANEMOMETRO_GUADAGNO = value;
-
-            salvaMeteo();
-            LOG_INFO(
-                "METEO REMOTE: Guadagno %.3f",
-                ANEMOMETRO_GUADAGNO
-            );
-
-
-            char buf[64];
-            snprintf(buf, sizeof(buf), "OK nuovo guadagno: %.1f salvato", ANEMOMETRO_GUADAGNO);
-
-            sendConfirm(p, buf);
-
+        if (msg.startsWith(COMANDO_GUADAGNO)) {
+            float value = msg.substring(strlen(COMANDO_GUADAGNO) + 1).toFloat();
+            if (!isnan(value) && value > 0.0f && value < 100.0f) {
+                ANEMOMETRO_GUADAGNO = value;
+                salvaMeteo();
+                LOG_INFO("METEO REMOTE: Guadagno %.3f", ANEMOMETRO_GUADAGNO);
+                char buf[64];
+                snprintf(buf, sizeof(buf), "OK nuovo guadagno: %.1f salvato", ANEMOMETRO_GUADAGNO);
+                sendConfirm(p, buf);
+            }
+            return;
         }
-
-        return;
-    }
-
 #endif
 
-
-    // =====================================================
-    //  ATTRITO
-    // =====================================================
-
+        // --- ATTRITO ---
 #if defined(WIND_VELOCITY_PIN) && defined(COMANDO_ATTRITO)
-
-    if (msg.startsWith(COMANDO_ATTRITO)) {
-
-        float value =
-            msg.substring(strlen(COMANDO_ATTRITO) + 1).toFloat();
-
-        if (!isnan(value) && value >= 0.0f && value < 100.0f) {
-
-            ANEMOMETRO_ATTRITO = value;
-
-            salvaMeteo();
-
-            LOG_INFO(
-                "METEO REMOTE: Attrito %.3f",
-                ANEMOMETRO_ATTRITO
-            );
-            
-            char buf[64];
-            snprintf(buf, sizeof(buf), "OK nuovo attrito: %.1f salvato", ANEMOMETRO_ATTRITO);
-
-            sendConfirm(p, buf);
+        if (msg.startsWith(COMANDO_ATTRITO)) {
+            float value = msg.substring(strlen(COMANDO_ATTRITO) + 1).toFloat();
+            if (!isnan(value) && value >= 0.0f && value < 100.0f) {
+                ANEMOMETRO_ATTRITO = value;
+                salvaMeteo();
+                LOG_INFO("METEO REMOTE: Attrito %.3f", ANEMOMETRO_ATTRITO);
+                char buf[64];
+                snprintf(buf, sizeof(buf), "OK nuovo attrito: %.1f salvato", ANEMOMETRO_ATTRITO);
+                sendConfirm(p, buf);
+            }
+            return;
         }
-
-        return;
-    }
-
 #endif
 
-
-    // =====================================================
-    //  OFFSET DIREZIONE
-    // =====================================================
-
+        // --- OFFSET DIREZIONE ---
 #if defined(HAS_WIND_DIRECTION) && defined(COMANDO_DIREZIONE)
+        if (msg.startsWith(COMANDO_DIREZIONE)) {
+            float value = msg.substring(strlen(COMANDO_DIREZIONE) + 1).toFloat();
+            if (!isnan(value) && value >= -360.0f && value <= 360.0f) {
+                WIND_NORTH_OFFSET = value;
+                salvaMeteo();
+                LOG_INFO("METEO REMOTE: Offset %.1f", WIND_NORTH_OFFSET);
+                char buf[64];
+                snprintf(buf, sizeof(buf), "OK nuovo offset direzione vento: %.1f salvato", WIND_NORTH_OFFSET);
+                sendConfirm(p, buf);
+            }
+            return;
+        }
+#endif
 
-    if (msg.startsWith(COMANDO_DIREZIONE)) {
-
-        float value =
-            msg.substring(strlen(COMANDO_DIREZIONE) + 1).toFloat();
-
-        if (!isnan(value) && value >= -360.0f && value <= 360.0f) {
-
-            WIND_NORTH_OFFSET = value;
-
-            salvaMeteo();
-
-            LOG_INFO(
-                "METEO REMOTE: Offset %.1f",
-                WIND_NORTH_OFFSET
-            );
-
+        // --- RELAY 1 ---
+#if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
+        if (msg.equals(String(CMD_RELAY_ON) + " " + RELAY_1_NAME)) {
+            digitalWrite(RELAY_1_PIN, HIGH);
+            LOG_INFO("REMOTE: %s ON", RELAY_1_NAME);
             char buf[64];
-            snprintf(buf, sizeof(buf), "OK nuovo offset direzione vento: %.1f salvato", WIND_NORTH_OFFSET);
-
+            snprintf(buf, sizeof(buf), "OK %s ON", RELAY_1_NAME);
             sendConfirm(p, buf);
+            return;
         }
 
-        return;
-    }
-
+        if (msg.equals(String(CMD_RELAY_OFF) + " " + RELAY_1_NAME)) {
+            digitalWrite(RELAY_1_PIN, LOW);
+            LOG_INFO("REMOTE: %s OFF", RELAY_1_NAME);
+            char buf[64];
+            snprintf(buf, sizeof(buf), "OK %s OFF", RELAY_1_NAME);
+            sendConfirm(p, buf);
+            return;
+        }
 #endif
 
-
-    // =====================================================
-    //  RELAY 1
-    // =====================================================
-
-#if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
-
-if (msg.equals(String(CMD_RELAY_ON) + " " + RELAY_1_NAME)) {
-
-    digitalWrite(RELAY_1_PIN, HIGH);
-
-    LOG_INFO("REMOTE: %s ON", RELAY_1_NAME);
-
-    char buf[64];
-    snprintf(buf, sizeof(buf), "OK %s ON", RELAY_1_NAME);
-    sendConfirm(p, buf);
-
-    return;
-}
-
-if (msg.equals(String(CMD_RELAY_OFF) + " " + RELAY_1_NAME)) {
-
-    digitalWrite(RELAY_1_PIN, LOW);
-
-    LOG_INFO("REMOTE: %s OFF", RELAY_1_NAME);
-
-    char buf[64];
-    snprintf(buf, sizeof(buf), "OK %s OFF", RELAY_1_NAME);
-    sendConfirm(p, buf);
-
-    return;
-}
-
-#endif
-
-
-    // =====================================================
-    //  RELAY 2
-    // =====================================================
-
+        // --- RELAY 2 ---
 #if defined(RELAY_2_PIN) && defined(RELAY_2_NAME)
+        if (msg.equals(String(CMD_RELAY_ON) + " " + RELAY_2_NAME)) {
+            digitalWrite(RELAY_2_PIN, HIGH);
+            LOG_INFO("REMOTE: %s ON", RELAY_2_NAME);
+            char buf[64];
+            snprintf(buf, sizeof(buf), "OK %s ON", RELAY_2_NAME);
+            sendConfirm(p, buf);
+            return;
+        }
 
-if (msg.equals(String(CMD_RELAY_ON) + " " + RELAY_2_NAME)) {
-
-    digitalWrite(RELAY_2_PIN, HIGH);
-
-    LOG_INFO("REMOTE: %s ON", RELAY_2_NAME);
-
-    char buf[64];
-    snprintf(buf, sizeof(buf), "OK %s ON", RELAY_2_NAME);
-    sendConfirm(p, buf);
-
-    return;
-}
-
-if (msg.equals(String(CMD_RELAY_OFF) + " " + RELAY_2_NAME)) {
-
-    digitalWrite(RELAY_2_PIN, LOW);
-
-    LOG_INFO("REMOTE: %s OFF", RELAY_2_NAME);
-
-    char buf[64];
-    snprintf(buf, sizeof(buf), "OK %s OFF", RELAY_2_NAME);
-    sendConfirm(p, buf);
-
-    return;
-}
-
+        if (msg.equals(String(CMD_RELAY_OFF) + " " + RELAY_2_NAME)) {
+            digitalWrite(RELAY_2_PIN, LOW);
+            LOG_INFO("REMOTE: %s OFF", RELAY_2_NAME);
+            char buf[64];
+            snprintf(buf, sizeof(buf), "OK %s OFF", RELAY_2_NAME);
+            sendConfirm(p, buf);
+            return;
+        }
 #endif
-}
-///////////////////////////////////////////////
 
+    } // Chiude l'if password
+#endif // Chiude la macro globale CMD_PASSWORD
+
+} // Chiude la funzione checkMultiRelayCommand
+
+/////////////////////////////////////////////////////
 
 
 ProcessMessage TextMessageModule::handleReceived(const meshtastic_MeshPacket &mp)
