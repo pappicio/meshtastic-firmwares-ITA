@@ -219,6 +219,9 @@ boolean onsleep=false;
 float ANEMOMETRO_GUADAGNO   = 1.38f;
 float ANEMOMETRO_ATTRITO    = 0.30f;
 float WIND_NORTH_OFFSET     = 0.0f;
+
+float RAIN_GAUGE_FACTOR = 0.279;
+
 bool WIND_DIRECTION_INVERT  = false;
 ///////////////////////////////////////////////
 
@@ -365,6 +368,36 @@ void windVelocityISR() {
 }
 #endif
 #endif
+
+
+#ifdef RAIN_SENSOR_PIN
+#if defined(ARCH_ESP32)
+// ISR memorizzata in IRAM per la massima efficienza
+volatile uint32_t rain_pulse_count = 0;
+volatile unsigned long last_micros_rain = 0; 
+
+void IRAM_ATTR rainGaugeISR() {
+    unsigned long calcolo_tempo = micros();
+    // Debounce pluviometro: 100ms sono sicuri per evitare doppi conteggi da rimbalzo fisico
+    if (calcolo_tempo - last_micros_rain > 100000) {
+        rain_pulse_count++;
+        last_micros_rain = calcolo_tempo;
+    }
+}
+#else
+volatile uint32_t rain_pulse_count;
+volatile unsigned long last_micros_rain;
+
+void rainGaugeISR() {
+    unsigned long calcolo_tempo = micros();
+    if (calcolo_tempo - last_micros_rain > 100000) {
+        rain_pulse_count++;
+        last_micros_rain = calcolo_tempo;
+    }
+}
+#endif
+#endif
+
 /////////////////////////////////////////////
 
 #ifndef PIO_UNIT_TESTING
@@ -798,11 +831,15 @@ void setup()
 // -------------------------------------------------------------
     // RECUPERO TARATURE ANEMOMETRO UNIVERSALE
     // -------------------------------------------------------------
-#if defined(WIND_VELOCITY_PIN) || defined(HAS_WIND_DIRECTION)
+#if defined(WIND_VELOCITY_PIN) || defined(HAS_WIND_DIRECTION) || defined(RAIN_SENSOR_PIN)
 
     #if defined(ARCH_ESP32) || defined(ESP32)
     Preferences prefs;
     if (prefs.begin("meteo", true)) {
+#ifdef RAIN_SENSOR_PIN
+        RAIN_GAUGE_FACTOR = prefs.getFloat("rainfactor", 0.279); // Default 0.279 se non trovato
+#endif
+
 #ifdef WIND_VELOCITY_PIN
         ANEMOMETRO_GUADAGNO = prefs.getFloat("guadagno", ANEMOMETRO_GUADAGNO);
         ANEMOMETRO_ATTRITO  = prefs.getFloat("attrito", ANEMOMETRO_ATTRITO);
@@ -822,6 +859,11 @@ void setup()
             file.read(&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
             file.read(&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
 #endif
+
+#ifdef RAIN_SENSOR_PIN
+            file.read(&RAIN_GAUGE_FACTOR, sizeof(RAIN_GAUGE_FACTOR));
+#endif
+
 #ifdef HAS_WIND_DIRECTION
             file.read(&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
             file.read(&WIND_DIRECTION_INVERT, sizeof(WIND_DIRECTION_INVERT));
@@ -831,22 +873,21 @@ void setup()
     }
     #endif
 
-    LOG_INFO("[METEO] Config attiva -> "
+   // 1. Costruiamo la stringa di formato in modo condizionale
+String logMsg = "[METEO] Config attiva -> ";
 #ifdef WIND_VELOCITY_PIN
-        "G: %.2f | A: %.2f | "
+    logMsg += "G: " + String(ANEMOMETRO_GUADAGNO, 2) + " | A: " + String(ANEMOMETRO_ATTRITO, 2) + " | ";
+#endif
+#ifdef RAIN_SENSOR_PIN
+    logMsg += "Rain Factor: " + String(RAIN_GAUGE_FACTOR, 3) + " | ";
 #endif
 #ifdef HAS_WIND_DIRECTION
-        "Nord Off: %.1f | Invertito: %s"
+    logMsg += "Nord Off: " + String(WIND_NORTH_OFFSET, 1) + " | Invertito: " + String(WIND_DIRECTION_INVERT ? "SI" : "NO");
 #endif
-        ,
-#ifdef WIND_VELOCITY_PIN
-        ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO,
-#endif
-#ifdef HAS_WIND_DIRECTION
-        WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO"
-#endif
-    );
 
+// 2. Inviamo al log una stringa pulita
+LOG_INFO("%s", logMsg.c_str());
+   
 #endif
     // -------------------------------------------------------------
 
@@ -1177,6 +1218,17 @@ void setup()
     
     LOG_INFO("Anemometro allineato con PULL-UP esterno e FALLING su pin %d", WIND_VELOCITY_PIN);
 #endif
+
+#ifdef RAIN_SENSOR_PIN
+    // 1. Configura il pin in INPUT (assumendo il tuo PULL-UP esterno da 10k)
+    pinMode(RAIN_SENSOR_PIN, INPUT);
+    
+    // 2. Imposta FALLING: conta il momento in cui la bascula chiude il contatto a massa
+    attachInterrupt(digitalPinToInterrupt(RAIN_SENSOR_PIN), rainGaugeISR, FALLING);
+    
+    LOG_INFO("Pluviometro allineato su pin %d", RAIN_SENSOR_PIN);
+#endif
+
 ///////////////////////////////////////////////////////
 
 

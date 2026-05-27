@@ -507,7 +507,7 @@ void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
     if (ciclo_attuale != 0 && ciclo_attuale != 3) {
         return; // Nei cicli intermedi esce subito tenendo l'ultimo vento calcolato
     }
-
+ LOG_INFO("[MONITOR] Vento attuale (ultimi 5s): %.2f km/h", vento_salvato_globale);
     // --- ZONA CRITICA SICURA (Scatta ogni 15 secondi reali) ---
     noInterrupts();
     uint32_t pulses = wind_pulse_count;
@@ -533,6 +533,69 @@ void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
 }
 #endif
 
+#ifdef RAIN_SENSOR_PIN
+
+// --- Variabili Globali ---
+extern volatile uint32_t rain_pulse_count;
+
+float pioggia_ultima_ora = 0.0f;     // Logica timeout 1h
+float pioggia_totale_24h = 0.0f;     // Logica 24h
+unsigned long ultima_goccia_ms = 0;
+unsigned long inizio_finestra_24h = 0;
+bool finestra_attiva_24h = false;
+
+// --- Funzione Principale (Richiamata ogni 15 secondi) ---
+void aggiornaPioggiaLocale(uint8_t ciclo_attuale) {
+
+    
+    // Scatta solo al ciclo 0 e al ciclo 3 (Intervallo preciso di 15 secondi)
+    if (ciclo_attuale != 0 && ciclo_attuale != 3) {
+        return; // Nei cicli intermedi esce subito tenendo l'ultimo vento calcolato
+    }
+
+    
+        LOG_INFO("[MONITOR] Pioggia 1h: %.3f mm | Totale 24h: %.3f mm", pioggia_ultima_ora, pioggia_totale_24h);
+    
+    // 1. Lettura sicura interrupt
+    noInterrupts();
+    uint32_t pulses = rain_pulse_count;
+    rain_pulse_count = 0; 
+    interrupts();
+
+    float mm_rilevati = (float)pulses * RAIN_GAUGE_FACTOR;
+
+    // 2. Se è caduta pioggia, aggiorniamo gli stati
+    if (mm_rilevati > 0) {
+        // Aggiorna 1 ora
+        pioggia_ultima_ora += mm_rilevati;
+        ultima_goccia_ms = millis(); 
+
+        // Aggiorna 24 ore
+        if (!finestra_attiva_24h) {
+            inizio_finestra_24h = millis();
+            finestra_attiva_24h = true;
+        }
+        pioggia_totale_24h += mm_rilevati;
+    }
+
+    // 3. Gestione Timeout 1 ora (Reset automatico se non piove da 1 ora)
+    if (pioggia_ultima_ora > 0 && (millis() - ultima_goccia_ms >= 3600000UL)) {
+        pioggia_ultima_ora = 0.0f;
+    }
+
+    // 4. Gestione Finestra 24 ore (Reset dopo 24 ore di attività)
+    if (finestra_attiva_24h && (millis() - inizio_finestra_24h >= 86400000UL)) {
+        pioggia_totale_24h = 0.0f;
+        finestra_attiva_24h = false;
+    }
+
+    // 5. Log
+    if (mm_rilevati > 0) {
+        LOG_INFO("[METEO] Pioggia 15s: %.3f | 1h: %.3f | 24h: %.3f", mm_rilevati, pioggia_ultima_ora, pioggia_totale_24h);
+    }
+}
+
+#endif
 ///////////////////////////////////////////////
 
 // Task di sistema per il loop di controllo
@@ -555,10 +618,14 @@ void MeshService::fanControlTask(void *pvParameters) {
         // OGNI 5 SECONDI: Lettura Anemometro (Il valore perfetto)
         // =========================================================================
 #ifdef WIND_VELOCITY_PIN
-
        aggiornaMeteoLocale(cicli); // <--- Passiamo il contatore dei cicli qui!
-        LOG_INFO("[MONITOR] Vento attuale (ultimi 5s): %.2f km/h", vento_salvato_globale);
 #endif
+
+#ifdef RAIN_SENSOR_PIN
+        aggiornaPioggiaLocale(cicli);
+ 
+#endif
+
 
         // =========================================================================
         // OGNI 30 SECONDI: Controllo Ventola e Reboot (Eseguiti solo al ciclo 0)

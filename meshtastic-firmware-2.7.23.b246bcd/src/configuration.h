@@ -763,11 +763,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ////////////////////////////////////////////// Pin per DS18B20
-#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+///#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
 ////////////////////////////// --- SENSORI DHT (11/22) ---
-//#define DHT_TEMP_PIN 6
+#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
         #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
@@ -811,6 +811,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     extern float WIND_NORTH_OFFSET;
     // Definisci il comando esatto in minuscolo, pronto per il parsing
     #define COMANDO_DIREZIONE "direzione vento" 
+#endif
+
+#define RAIN_SENSOR_PIN 48
+#ifdef RAIN_SENSOR_PIN
+   #define COMANDO_RAINOFFSET "offset pioggia"
+    extern float RAIN_GAUGE_FACTOR;  
+    //////#define MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR 0
 #endif
 
 //#define WIND_VELOCITY_PIN 47

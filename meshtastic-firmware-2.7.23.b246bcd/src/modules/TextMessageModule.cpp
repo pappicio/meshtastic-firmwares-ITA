@@ -227,6 +227,25 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
         }
 #endif
 
+// --- CALIBRAZIONE PLUVIOMETRO ---
+#if defined(RAIN_SENSOR_PIN) && defined(COMANDO_RAINOFFSET)
+        if (msg.startsWith(COMANDO_RAINOFFSET)) {
+            // Usa strlen(COMANDO_RAINOFFSET) invece di "11" per essere dinamico
+            float value = msg.substring(strlen(COMANDO_RAINOFFSET) + 1).toFloat();
+            
+            if (!isnan(value) && value > 0.0f && value < 1.0f) {
+                RAIN_GAUGE_FACTOR = value;
+                salvaMeteo();
+                LOG_INFO("METEO REMOTE: Nuovo Rain Factor %.3f", RAIN_GAUGE_FACTOR);
+                
+                char buf[64];
+                snprintf(buf, sizeof(buf), "OK nuovo rain factor: %.3f salvato", RAIN_GAUGE_FACTOR);
+                sendConfirm(p, buf);
+            }
+            return;
+        }
+#endif
+
         // --- RELAY 1 ---
 #if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
         if (msg.equals(String(CMD_RELAY_ON) + " " + RELAY_1_NAME)) {

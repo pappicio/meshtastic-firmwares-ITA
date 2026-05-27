@@ -160,6 +160,13 @@ extern float fanHum;
 extern boolean onsleep;
 
 static bool isTelemetryBusy = false;
+
+#ifdef RAIN_SENSOR_PIN
+// ATTENZIONE: Qui le variabili sono già dichiarate extern altrove, 
+    // quindi le usiamo direttamente senza il tipo (float) davanti.
+    extern float pioggia_ultima_ora;
+    extern float pioggia_totale_24h;
+#endif
 ///////////////////////////////////////////////
 
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
@@ -1016,6 +1023,43 @@ if (!leggisolouno)
 }
 #endif
 
+
+// 3. Fusione dati Pioggia nel pacchetto telemetria
+#ifdef RAIN_SENSOR_PIN
+
+if (!leggisolouno) 
+{
+
+    // 1h: Inviato sempre, anche se è 0.000, per mantenere l'App attiva
+    m->variant.environment_metrics.rainfall_1h = pioggia_ultima_ora;
+    m->variant.environment_metrics.has_rainfall_1h = true; 
+    
+    // 24h: Inviato sempre per mantenere aggiornato il totale giornaliero
+    m->variant.environment_metrics.rainfall_24h = pioggia_totale_24h;
+    m->variant.environment_metrics.has_rainfall_24h = true;
+ 
+ 
+
+    LOG_INFO("METEO PIOGGIA: Invio 1h=%.3f mm, 24h=%.3f mm", pioggia_ultima_ora, pioggia_totale_24h);
+
+      // Diamo il via libera alla trasmissione della telemetria ambientale
+        valid = true; 
+        hasSensor = true; 
+}
+#else
+
+// 1h: Inviato sempre, anche se è 0.000, per mantenere l'App attiva
+    m->variant.environment_metrics.rainfall_1h = 0.0f;
+    m->variant.environment_metrics.has_rainfall_1h = false; 
+    
+    // 24h: Inviato sempre per mantenere aggiornato il totale giornaliero
+    m->variant.environment_metrics.rainfall_24h = 0.0f;
+    m->variant.environment_metrics.has_rainfall_24h = false;
+
+#endif
+
+///////////////////////////////////////////////
+
     isTelemetryBusy = false;
 ///////////////////////////////////////////////
 
@@ -1289,6 +1333,10 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         LOG_INFO("Send: soil_temperature=%f, soil_moisture=%u", m.variant.environment_metrics.soil_temperature,
                  m.variant.environment_metrics.soil_moisture);
 
+                LOG_INFO("Send:  Rainfall_1h = %f, has = %d", m.variant.environment_metrics.rainfall_1h, m.variant.environment_metrics.has_rainfall_1h);
+                LOG_INFO("Send:  Rainfall_24h = %f, has = %d", m.variant.environment_metrics.rainfall_24h, m.variant.environment_metrics.has_rainfall_24h);
+
+                
         meshtastic_MeshPacket *p = allocDataProtobuf(m);
         p->to = dest;
         p->decoded.want_response = false;

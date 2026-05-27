@@ -855,19 +855,23 @@ extern const pb_msgdesc_t meshtastic_SEN5XState_msg;
 #define meshtastic_Nau7802Config_fields &meshtastic_Nau7802Config_msg
 #define meshtastic_SEN5XState_fields &meshtastic_SEN5XState_msg
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 /* Maximum encoded size of messages (where known) */
 #define MESHTASTIC_MESHTASTIC_TELEMETRY_PB_H_MAX_SIZE meshtastic_Telemetry_size
 #define meshtastic_AirQualityMetrics_size        150
 #define meshtastic_DeviceMetrics_size            27
-#define meshtastic_EnvironmentMetrics_size       161
+#define meshtastic_EnvironmentMetrics_size       255
 #define meshtastic_HealthMetrics_size            11
 #define meshtastic_HostMetrics_size              264
 #define meshtastic_LocalStats_size               87
 #define meshtastic_Nau7802Config_size            16
 #define meshtastic_PowerMetrics_size             81
 #define meshtastic_SEN5XState_size               27
-#define meshtastic_Telemetry_size                272
+#define meshtastic_Telemetry_size                360
 #define meshtastic_TrafficManagementStats_size   42
+//////////////////////////////////////////////////////////////////////////////////////
+
+
 
 #ifdef __cplusplus
 } /* extern "C" */

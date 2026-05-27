@@ -192,6 +192,7 @@ String readSEN5xProductName(TwoWire *i2cBus, uint8_t address)
 bool detectSHT21SerialNumber(TwoWire *i2cBus, uint8_t address)
 {
 
+    
     i2cBus->beginTransmission(address);
     i2cBus->write(0xFA);
     i2cBus->write(0x0F);
