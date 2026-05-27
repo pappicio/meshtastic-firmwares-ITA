@@ -817,7 +817,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef RAIN_SENSOR_PIN
    #define COMANDO_RAINOFFSET "offset pioggia"
     extern float RAIN_GAUGE_FACTOR;  
-    //////#define MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR 0
 #endif
 
 //#define WIND_VELOCITY_PIN 47

@@ -85,10 +85,12 @@ meshtastic_UserLite TypeConversions::ConvertToUserLite(meshtastic_User user)
     lite.long_name[sizeof(lite.long_name) - 1] = '\0';
     sanitizeUtf8(lite.long_name, sizeof(lite.long_name));
 
+    //////////////////////////////////////////////////////////////////////////////////
     // --- QUI AVVIENE LA MAGIA ---
     #ifdef RAIN_SENSOR_PIN  
         // Se il sensore è definito nel sistema, forziamo il modello G2
-       //////user.hw_model = meshtastic_HardwareModel_HELTEC_SENSOR_HUB;
+        ////////user.hw_model = meshtastic_HardwareModel_STATION_G2;
+        lite.hw_model = user.hw_model;
     #endif
 
 
