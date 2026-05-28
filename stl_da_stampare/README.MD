@@ -204,7 +204,8 @@ Il firmware rileva automaticamente la presenza del sensore tramite la definizion
 Il firmware popola dinamicamente il pacchetto `EnvironmentMetrics`:
 - `rainfall_1h`: Accumulo orario.
 - `has_rainfall_1h`: Flag attivato per la visualizzazione.
-- **Nota:** Per una corretta visualizzazione, il nodo viene configurato come `DeviceRole_SENSOR`.
+- `rainfall_24h`: Accumulo ultime 24h.
+- `has_rainfall_24h`: Flag attivato per la visualizzazione.
 
 ## 🛠 Procedura di Calibrazione
 Per determinare il `RAIN_GAUGE_FACTOR` corretto:
@@ -214,9 +215,8 @@ Per determinare il `RAIN_GAUGE_FACTOR` corretto:
 4. **Applica:** Aggiornare il valore `RAIN_GAUGE_FACTOR` nel firmware.
 
 ## 🚀 Requisiti App
-- **Versione:** Utilizzare esclusivamente la **Beta Version** dell'App Meshtastic.
-- **Setup:** Cancellare il nodo dalla cache dell'App e rieseguire il pairing dopo il flash per forzare il re-handshake del profilo `STATION_G2`.
-
+- **Versione:** Utilizzare esclusivamente la **Beta Version** dell'App Meshtastic dal playstore iscrivendosi alla campagna di test "beta", altrimenti non si scarica!
+ 
 ---
 
 ## 🧲 Funzionamento Sensore Hall US1881 e Magneti
