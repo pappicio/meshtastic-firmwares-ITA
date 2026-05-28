@@ -190,13 +190,10 @@ Il firmware rileva automaticamente la presenza del sensore tramite la definizion
 ```cpp
 // --- Impostazioni Pluviometro (configuration.h) ---
 #define RAIN_SENSOR_PIN 48          // GPIO collegato al segnale del sensore Hall
-#define RAIN_GAUGE_FACTOR 0.2794    // mm di pioggia per singolo impulso
-#define COMANDO_RAINOFFSET 0.0      // Offset di calibrazione (mm)
-
 // --- Logica di attivazione Station Mode ---
 #ifdef RAIN_SENSOR_PIN
-   #define HAS_PLUVIOMETER 1
-   #define MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR 0
+    #define RAIN_GAUGE_FACTOR 0.2794    // mm di pioggia per singolo impulso
+    #define COMANDO_RAINOFFSET 0.0      // Offset di calibrazione (mm)
 #endif
 ```
 ---
