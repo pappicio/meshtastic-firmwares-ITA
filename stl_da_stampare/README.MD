@@ -231,6 +231,40 @@ Il sistema di rilevamento si basa sulla variazione di campo magnetico indotta da
   - **Precisione:** Segnale digitale pulito, ideale per essere letto tramite interrupt sull'ESP32.
 
 ---
+
+## 🔗 Connessione al Nodo per invio comandi via CLI o a mezzo messaggio privato diretto al nodo target da altro nodo. A comando eseguoto, il nodo da conferma con risposta al messaggio privato!
+
+Il nodo supporta diverse interfacce di comunicazione per la configurazione e il monitoraggio:
+
+- **USB (Direct):** Collega il cavo USB al PC. Il nodo viene rilevato come porta seriale (es. `/dev/ttyACM0` o `COMx`).
+- **LAN/Wi-Fi:** Se il nodo è in rete, puoi connetterti tramite il suo indirizzo IP sulla porta 443 (o la porta definita per l'interfaccia web/CLI).
+- **CLI (Command Line Interface):** - Per inviare comandi via terminale: `meshtastic --port <PORTA_O_IP> --sendtext "comando"`
+  - Esempio (Stato): `meshtastic --port COM3 --sendtext "password_mia stato"`
+
+## 📥 Scaricamento Dati (DOS/Terminal)
+Per estrarre i log o i dati storici dal nodo tramite riga di comando:
+- **Comando di dump:** `meshtastic --port <PORTA> --getall`
+- **Scaricamento su file:** `meshtastic --port <PORTA> --getall > dati_stazione.txt`
+  *Questo comando esporta in un file di testo locale tutto lo stato attuale, inclusi i contatori del pluviometro.*
+
+## ⌨️ Gestione e Controllo Remoto
+Puoi inviare comandi al nodo tramite Messaggio Privato (DM) dall'App Meshtastic (o via CLI).
+
+- **Visualizzazione Stato:**
+  Invia il comando: `stato`
+  *Risposta:* Il nodo invierà un report con: Pioggia 1h, Pioggia 24h, Offset attuale e stato sensori.
+
+- **Modifica Parametri (Calibrazione):**
+  Sintassi: `password comando parametro`
+  - *Esempio Offset:* `mypassword offset 0.5`
+  - *Esempio Fattore:* `mypassword fattore 0.28`
+
+- **Nota Sicurezza:** La password viene verificata internamente dal firmware prima di applicare qualsiasi modifica ai parametri di calibrazione.
+
+
+---
+
 FINE!
+
 ---
 
