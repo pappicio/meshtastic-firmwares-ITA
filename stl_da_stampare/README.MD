@@ -33,7 +33,7 @@ I sensori lavorano direttamente sui livelli logici a **3.3V** della Heltec per e
 | | GND | **GND** | Massa comune |
 | | SDA | **GPIO 21** (SDA) | Condiviso sul bus I2C (OLED/Sensori) |
 | | SCL | **GPIO 22** (SCL) | Condiviso sul bus I2C (OLED/Sensori) |
-| | DIR | **GND** | Fissato a massa per incremento gradi in senso orario |
+
 
 > ⚠️ **Nota di Installazione sul Tetto:** Poiché l'US1881 lavora in modalità Open-Drain (tira a massa quando attivo), l'uso del pull-up è obbligatorio. Per installazioni all'esterno con cavi lunghi, è fortemente consigliato aggiungere una resistenza di **Pull-Up esterna fisica da 4.7 kΩ** tra il pin di OUT e la linea 3.3V per tagliare alla radice i disturbi elettromagnetici indotti dal cavo.
 
