@@ -730,7 +730,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "Meshtastic Mods"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH Mods"
 #define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTMS"
 
 #define USERPREFS_SPLASH_TEXT "MTMS"
@@ -813,7 +813,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define COMANDO_DIREZIONE "direzione vento" 
 #endif
 
-#define RAIN_SENSOR_PIN 48
+#define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
 #ifdef RAIN_SENSOR_PIN
    #define COMANDO_RAINOFFSET "offset pioggia"
     extern float RAIN_GAUGE_FACTOR;  
