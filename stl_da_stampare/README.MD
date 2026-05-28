@@ -33,7 +33,7 @@ I sensori lavorano direttamente sui livelli logici a **3.3V** della Heltec per e
 | | GND | **GND** | Massa comune |
 | | SDA | **GPIO 21** (SDA) | Condiviso sul bus I2C (OLED/Sensori) |
 | | SCL | **GPIO 22** (SCL) | Condiviso sul bus I2C (OLED/Sensori) |
-| | DIR | **GND** | Fissato a massa per incremento gradi in senso orario |
+
 
 > ⚠️ **Nota di Installazione sul Tetto:** Poiché l'US1881 lavora in modalità Open-Drain (tira a massa quando attivo), l'uso del pull-up è obbligatorio. Per installazioni all'esterno con cavi lunghi, è fortemente consigliato aggiungere una resistenza di **Pull-Up esterna fisica da 4.7 kΩ** tra il pin di OUT e la linea 3.3V per tagliare alla radice i disturbi elettromagnetici indotti dal cavo.
 
@@ -171,6 +171,100 @@ I comandi possono essere inviati da qualsiasi nodo della rete Mesh tramite un me
 #endif
 
 ```
-
-The end!!!
 ---
+
+# 🌧️ Meshtastic Rain Gauge (Pluviometro)
+
+Stazione di rilevamento precipitazioni basata su sensore ad effetto Hall per ecosistema Meshtastic.
+
+## ⚙️ Principio di Funzionamento
+Il sistema utilizza un sensore ad effetto Hall **US1881** per rilevare il basculamento di un pluviometro meccanico.
+
+- **Sensore:** US1881 (Digital Hall Effect).
+- **Meccanica:** Due magneti contrapposti (Nord/Sud) montati sul bilanciere. Questa configurazione garantisce una commutazione precisa ad ogni scatto, indipendentemente dalla direzione del basculamento.
+- **Logica:** Ogni impulso (impulso elettrico) viene conteggiato e convertito in volume di pioggia tramite un fattore di conversione costante.
+
+## 🛠 Configurazione Firmware
+Il firmware rileva automaticamente la presenza del sensore tramite la definizione del pin.
+
+```cpp
+// --- Impostazioni Pluviometro (configuration.h) ---
+#define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'      // GPIO collegato al segnale del sensore Hall
+// --- Logica di attivazione Station Mode ---
+
+ 
+#ifdef RAIN_SENSOR_PIN
+   #define COMANDO_RAINOFFSET "offset pioggia"
+    extern float RAIN_GAUGE_FACTOR;   //regolazione ml
+#endif
+```
+---
+
+## 📊 Mapping Dati Telemetrici
+Il firmware popola dinamicamente il pacchetto `EnvironmentMetrics`:
+- `rainfall_1h`: Accumulo orario.
+- `has_rainfall_1h`: Flag attivato per la visualizzazione.
+- `rainfall_24h`: Accumulo ultime 24h.
+- `has_rainfall_24h`: Flag attivato per la visualizzazione.
+
+## 🛠 Procedura di Calibrazione
+Per determinare il `RAIN_GAUGE_FACTOR` corretto:
+1. **Misura:** Versare esattamente 100ml di acqua nel ricevitore.
+2. **Conta:** Segnare il numero totale di scatti (impulsi) del bilanciere.
+3. **Calcola:** `Fattore = (Volume_mm3 / Area_cm2) / Numero_Scatti`.
+4. **Applica:** Aggiornare il valore `RAIN_GAUGE_FACTOR` nel firmware.
+
+## 🚀 Requisiti App
+- **Versione:** Utilizzare esclusivamente la **Beta Version** dell'App Meshtastic dal playstore iscrivendosi alla campagna di test "beta", altrimenti non si scarica!
+ 
+---
+
+## 🧲 Funzionamento Sensore Hall US1881 e Magneti
+
+Il sistema di rilevamento si basa sulla variazione di campo magnetico indotta dal basculante del pluviometro.
+
+- **Il Sensore US1881:** È un sensore digitale a effetto Hall. Quando il campo magnetico (Nord o Sud) supera una determinata soglia, il sensore commuta lo stato del pin di uscita (OUT) verso massa (GND).
+- **Configurazione a Magneti Contrapposti:** Sul bilanciere sono montati due magneti con polarità opposte. Questa disposizione garantisce un impulso netto ad ogni scatto, eliminando le incertezze meccaniche.
+- **Nota Tecnica (Pull-up):** Il sensore US1881 ha un'uscita di tipo "Open Drain". Per funzionare correttamente con l'ESP32, è **obbligatorio** collegare una resistenza di pull-up da **10kΩ tra il pin VCC (V+) e il pin OUT**. Senza questa resistenza, il segnale rimarrebbe "flottante" e il microcontrollore non riuscirebbe a rilevare correttamente gli impulsi.
+- **Vantaggi:**
+  - **Assenza di contatti meccanici:** Maggiore durata e assenza di ossidazione.
+  - **Precisione:** Segnale digitale pulito, ideale per essere letto tramite interrupt sull'ESP32.
+
+---
+
+## 🔗 Connessione al Nodo per invio comandi via CLI o a mezzo messaggio privato diretto al nodo target da altro nodo. A comando eseguoto, il nodo da conferma con risposta al messaggio privato!
+
+Il nodo supporta diverse interfacce di comunicazione per la configurazione e il monitoraggio:
+
+- **USB (Direct):** Collega il cavo USB al PC. Il nodo viene rilevato come porta seriale (es. `/dev/ttyACM0` o `COMx`).
+- **LAN/Wi-Fi:** Se il nodo è in rete, puoi connetterti tramite il suo indirizzo IP sulla porta 443 (o la porta definita per l'interfaccia web/CLI).
+- **CLI (Command Line Interface):** - Per inviare comandi via terminale: `meshtastic --port <PORTA_O_IP> --sendtext "comando"`
+  - Esempio (Stato): `meshtastic --port COM3 --sendtext "password_mia stato"`
+
+## 📥 Scaricamento Dati (DOS/Terminal)
+Per estrarre i log o i dati storici dal nodo tramite riga di comando:
+- **Comando di dump:** `meshtastic --port <PORTA> --getall`
+- **Scaricamento su file:** `meshtastic --port <PORTA> --getall > dati_stazione.txt`
+  *Questo comando esporta in un file di testo locale tutto lo stato attuale, inclusi i contatori del pluviometro.*
+
+## ⌨️ Gestione e Controllo Remoto
+Puoi inviare comandi al nodo tramite Messaggio Privato (DM) dall'App Meshtastic (o via CLI).
+
+- **Visualizzazione Stato:**
+  Invia il comando: `stato`
+  *Risposta:* Il nodo invierà un report con: Pioggia 1h, Pioggia 24h, Offset attuale e stato sensori.
+
+- **Modifica Parametri (Calibrazione):**
+  Sintassi: `password comando parametro`
+  - *Esempio Offset:* `mypassword offset 0.5`
+  - *Esempio Fattore:* `mypassword fattore 0.28`
+
+- **Nota Sicurezza:** La password viene verificata internamente dal firmware prima di applicare qualsiasi modifica ai parametri di calibrazione.
+
+
+---
+
+FINE!
+
+---
+
