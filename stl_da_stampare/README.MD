@@ -171,6 +171,69 @@ I comandi possono essere inviati da qualsiasi nodo della rete Mesh tramite un me
 #endif
 
 ```
-
-The end!!!
 ---
+
+# 🌧️ Meshtastic Rain Gauge (Pluviometro)
+
+Stazione di rilevamento precipitazioni basata su sensore ad effetto Hall per ecosistema Meshtastic.
+
+## ⚙️ Principio di Funzionamento
+Il sistema utilizza un sensore ad effetto Hall **US1881** per rilevare il basculamento di un pluviometro meccanico.
+
+- **Sensore:** US1881 (Digital Hall Effect).
+- **Meccanica:** Due magneti contrapposti (Nord/Sud) montati sul bilanciere. Questa configurazione garantisce una commutazione precisa ad ogni scatto, indipendentemente dalla direzione del basculamento.
+- **Logica:** Ogni impulso (impulso elettrico) viene conteggiato e convertito in volume di pioggia tramite un fattore di conversione costante.
+
+## 🛠 Configurazione Firmware
+Il firmware rileva automaticamente la presenza del sensore tramite la definizione del pin.
+
+```cpp
+// --- Impostazioni Pluviometro (configuration.h) ---
+#define RAIN_SENSOR_PIN 48          // GPIO collegato al segnale del sensore Hall
+#define RAIN_GAUGE_FACTOR 0.2794    // mm di pioggia per singolo impulso
+#define COMANDO_RAINOFFSET 0.0      // Offset di calibrazione (mm)
+
+// --- Logica di attivazione Station Mode ---
+#ifdef RAIN_SENSOR_PIN
+   #define HAS_PLUVIOMETER 1
+   #define MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR 0
+   // Il nodo viene automaticamente promosso a stazione meteo
+   user.hw_model = meshtastic_HardwareModel_STATION_G2; 
+#endif
+```
+---
+
+## 📊 Mapping Dati Telemetrici
+Il firmware popola dinamicamente il pacchetto `EnvironmentMetrics`:
+- `rainfall_1h`: Accumulo orario.
+- `has_rainfall_1h`: Flag attivato per la visualizzazione.
+- **Nota:** Per una corretta visualizzazione, il nodo viene configurato come `DeviceRole_SENSOR`.
+
+## 🛠 Procedura di Calibrazione
+Per determinare il `RAIN_GAUGE_FACTOR` corretto:
+1. **Misura:** Versare esattamente 100ml di acqua nel ricevitore.
+2. **Conta:** Segnare il numero totale di scatti (impulsi) del bilanciere.
+3. **Calcola:** `Fattore = (Volume_mm3 / Area_cm2) / Numero_Scatti`.
+4. **Applica:** Aggiornare il valore `RAIN_GAUGE_FACTOR` nel firmware.
+
+## 🚀 Requisiti App
+- **Versione:** Utilizzare esclusivamente la **Beta Version** dell'App Meshtastic.
+- **Setup:** Cancellare il nodo dalla cache dell'App e rieseguire il pairing dopo il flash per forzare il re-handshake del profilo `STATION_G2`.
+
+---
+
+## 🧲 Funzionamento Sensore Hall US1881 e Magneti
+
+Il sistema di rilevamento si basa sulla variazione di campo magnetico indotta dal basculante del pluviometro.
+
+- **Il Sensore US1881:** È un sensore digitale a effetto Hall. Quando il campo magnetico (Nord o Sud) supera una determinata soglia, il sensore commuta lo stato del pin di uscita (OUT) verso massa (GND).
+- **Configurazione a Magneti Contrapposti:** Sul bilanciere sono montati due magneti con polarità opposte. Questa disposizione garantisce un impulso netto ad ogni scatto, eliminando le incertezze meccaniche.
+- **Nota Tecnica (Pull-up):** Il sensore US1881 ha un'uscita di tipo "Open Drain". Per funzionare correttamente con l'ESP32, è **obbligatorio** collegare una resistenza di pull-up da **10kΩ tra il pin VCC (V+) e il pin OUT**. Senza questa resistenza, il segnale rimarrebbe "flottante" e il microcontrollore non riuscirebbe a rilevare correttamente gli impulsi.
+- **Vantaggi:**
+  - **Assenza di contatti meccanici:** Maggiore durata e assenza di ossidazione.
+  - **Precisione:** Segnale digitale pulito, ideale per essere letto tramite interrupt sull'ESP32.
+
+---
+FINE!
+---
+
