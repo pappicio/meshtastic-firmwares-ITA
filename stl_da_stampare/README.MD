@@ -197,8 +197,6 @@ Il firmware rileva automaticamente la presenza del sensore tramite la definizion
 #ifdef RAIN_SENSOR_PIN
    #define HAS_PLUVIOMETER 1
    #define MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR 0
-   // Il nodo viene automaticamente promosso a stazione meteo
-   user.hw_model = meshtastic_HardwareModel_STATION_G2; 
 #endif
 ```
 ---
