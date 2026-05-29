@@ -992,8 +992,15 @@ if (!leggisolouno)
 #ifdef WIND_VELOCITY_PIN
     // Diciamo a questo file che la variabile esiste ed è aggiornata altrove
     extern float vento_salvato_globale; 
-    
+    static float wind_gust = 0.0f;
+    static float wind_lull = 9999.0f;
+    static uint32_t last_gust_reset = 0;
+
     calcolovel = vento_salvato_globale; // Legge la fotografia del vento più recente senza toccare gli interrupt
+    
+    if (calcolovel > wind_gust) wind_gust = calcolovel;
+    if (calcolovel < wind_lull) wind_lull = calcolovel;
+
     if (calcolovel >= 0.0f) {
         ha_vel = true;
     }
@@ -1008,28 +1015,53 @@ if (!leggisolouno)
             m->variant.environment_metrics.wind_speed = calcolovel;
             m->variant.environment_metrics.has_wind_direction = true; // Abilita Dir
             m->variant.environment_metrics.has_wind_speed = true;     // Abilita Vel
+            
+            // CASO 1
+            m->variant.environment_metrics.wind_gust = wind_gust;
+            m->variant.environment_metrics.wind_lull = wind_lull;
+            m->variant.environment_metrics.has_wind_gust = true;
+            m->variant.environment_metrics.has_wind_lull = true;
+
             LOG_INFO("METEO COMPLETO: [REALE] Dir = %u° | [REALE] Vel = %.2f km/h", (uint32_t)calcolodir, calcolovel);
         }
         // CASO 2: Solo Banderuola reale -> Velocità fasulla (2.5 km/h) per svegliare l'App
         else if (ha_dir && !ha_vel) {
             m->variant.environment_metrics.wind_direction = (uint32_t)calcolodir;
-            m->variant.environment_metrics.wind_speed = 2.5f; 
+            m->variant.environment_metrics.wind_speed = 0.0f; 
             m->variant.environment_metrics.has_wind_direction = true; // Abilita Dir
             m->variant.environment_metrics.has_wind_speed = true;     // SVEGLIA l'app anche per la velocità!
+            
+            m->variant.environment_metrics.wind_gust = 0.0f;
+            m->variant.environment_metrics.wind_lull = 0.0f;
+            m->variant.environment_metrics.has_wind_gust = false;
+            m->variant.environment_metrics.has_wind_lull = false;
+
             LOG_INFO("METEO PARZIALE: [REALE] Dir = %u° | [FASULLO] Vel = 2.50 km/h", (uint32_t)calcolodir);
         }
         // CASO 3: Solo Anemometro reale -> Direzione fasulla (180° = Sud) per orientare l'App
         else if (!ha_dir && ha_vel) {
-            m->variant.environment_metrics.wind_direction = 180; 
+            m->variant.environment_metrics.wind_direction = 180; //NORD!!!!!
             m->variant.environment_metrics.wind_speed = calcolovel;
             m->variant.environment_metrics.has_wind_direction = true; // SVEGLIA l'app anche per la direzione!
             m->variant.environment_metrics.has_wind_speed = true;     // Abilita Vel
+            // CASO 3
+            m->variant.environment_metrics.wind_gust = wind_gust;
+            m->variant.environment_metrics.wind_lull = wind_lull;
+            m->variant.environment_metrics.has_wind_gust = true;
+            m->variant.environment_metrics.has_wind_lull = true;
             LOG_INFO("METEO PARZIALE: [FASULLO] Dir = 180° | [REALE] Vel = %.2f km/h", calcolovel);
         }
 
         // Diamo il via libera alla trasmissione della telemetria ambientale
         valid = true; 
         hasSensor = true; 
+
+        // dopo l'invio, al posto del reset immediato:
+        if (millis() - last_gust_reset >= 86400000UL) { // 24h in ms
+            wind_gust = 0.0f;
+            wind_lull = 9999.0f;
+            last_gust_reset = millis();
+        }
     }
 }
 #endif

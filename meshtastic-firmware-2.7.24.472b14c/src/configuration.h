@@ -723,10 +723,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "MeshTastic Mods"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTM1"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Mesh Mods"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MESH"
 
-#define USERPREFS_SPLASH_TEXT "MTM1"
+#define USERPREFS_SPLASH_TEXT "MESH"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -784,7 +784,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
-#define CMD_PASSWORD "changeme"
+#define CMD_PASSWORD "Password"
 
 //comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
 //password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
@@ -820,7 +820,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
 #ifdef RAIN_SENSOR_PIN
-   #define COMANDO_RAINOFFSET "factor pioggia"
+   #define COMANDO_RAINOFFSET "fattore pioggia"
     extern float RAIN_GAUGE_FACTOR;  
 #endif
 
@@ -931,22 +931,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- NETWORK E WIFI ---
-//#undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
-//#define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
+#undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
+#define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
 
-//#undef USERPREFS_NETWORK_WIFI_ENABLED
-//#define USERPREFS_NETWORK_WIFI_ENABLED true
+#undef USERPREFS_NETWORK_WIFI_ENABLED
+#define USERPREFS_NETWORK_WIFI_ENABLED true
 
-//#undef USERPREFS_NETWORK_WIFI_SSID
-//#define USERPREFS_NETWORK_WIFI_SSID "ssid"
+#undef USERPREFS_NETWORK_WIFI_SSID
+#define USERPREFS_NETWORK_WIFI_SSID "SS_ID"
 
-//#undef USERPREFS_NETWORK_WIFI_PSK
-//#define USERPREFS_NETWORK_WIFI_PSK "password"
+#undef USERPREFS_NETWORK_WIFI_PSK
+#define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
-//#define MY_STATIC_IP      192, 168, 1, 250
-//#define MY_STATIC_GATEWAY 192, 168, 1, 1
-//#define MY_STATIC_SUBNET  255, 255, 255, 0
+#define MY_STATIC_IP      192, 168, 1, 250
+#define MY_STATIC_GATEWAY 192, 168, 1, 1
+#define MY_STATIC_SUBNET  255, 255, 255, 0
 
 // --- MQTT ---
 // #undef USERPREFS_MQTT_ENABLED
