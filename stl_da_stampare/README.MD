@@ -175,6 +175,8 @@ Intanto, orima di avvitare per bene chiedere piu volte la telemetria e arrivare 
 | `/anemometro [guadagno] [attrito]` | Modifica istantaneamente i fattori di calcolo della velocità del vento. | `/anemometro 1.45 0.35` |
 | `/direzione [offset_gradi]` | Imposta l'offset angolare (in gradi) per allineare il Nord della banderuola. | `/direzione 180.0` |
 
+ma direzione solo se nn hai gia calibrato, se invece la rotazione della banderuola risulta invertita, allora tocca invertire col comando ***inverti direzione***
+
 > 💡 **Nota sulla persistenza:** All'invio del comando, i valori vengono applicati immediatamente in RAM a tutti i moduli di calcolo e salvati contemporaneamente nella Flash (`Preferences` su ESP32 e `/meteo.dat` su LittleFS per nRF52). Al riavvio del nodo, i dati personalizzati verranno ricaricati automaticamente.
 
 ```cpp
