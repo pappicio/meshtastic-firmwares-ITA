@@ -151,10 +151,11 @@ I comandi possono essere inviati da qualsiasi nodo della rete Mesh tramite un me
 
 Intanto, orima di avvitare per bene chiedere piu volte la telemetria e arrivare a 180 gradi precisi, bloccare a 180 gradi il ritire con un supporto vhe lo tenga fermo sulal base, poi con app bussola dal telefono, puntare a NORD (di solito segna 0 gradi il nord) fatto cio, allineare la banderuola che punta al nord, parallela al telefono che punta al nord, serrare la banderuola e svincolare il rotore banderuola, state puntanto a NORD, ma l'app segna 180°, nn chiedetemi perch ema ragiona cosi, in virtu di questa sub della app android meshtastic che sottrare 180 al gradi che le vengono passati dal firmware mesjtastic dal nodo:
 
+***((wind_direction ?: 0) + 180)***
 ```cpp
             wind_speed?.let { ws ->
                 @Suppress("MagicNumber")
-                val normalizedBearing = ***((wind_direction ?: 0) + 180)*** % 360
+                val normalizedBearing = ((wind_direction ?: 0) + 180) % 360
                 add(
                     VectorMetricInfo(
                         label = Res.string.wind,
