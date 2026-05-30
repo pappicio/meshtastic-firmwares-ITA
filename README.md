@@ -1,6 +1,9 @@
 # meshtastic-firmwares-ITA
 ***meshtastic-firmware-2.7.22.96dd647 (ultima release alpha)***
 
+***per recurerare dati sul teminale:***
+
+***python -u -m meshtastic --host 192.168.1.250 --listen > log.txt 2>&1***
 
 🇮🇹 Meshtastic Italia "Smart Power" Edition
 
