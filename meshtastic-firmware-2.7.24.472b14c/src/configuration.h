@@ -807,7 +807,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
  
 
-#define WIND_VELOCITY_PIN 47
+#define WIND_VELOCITY_PIN 47  //heltec v4 pin libero ed è ok!'
 
 #ifdef WIND_VELOCITY_PIN
     extern float ANEMOMETRO_GUADAGNO;
