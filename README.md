@@ -1,5 +1,5 @@
 # meshtastic-firmwares-ITA
-***meshtastic-firmware-2.7.22.96dd647 (ultima release alpha)***
+***meshtastic-firmware-2.7.24 (ultima release alpha)***
 
 ***per recurerare dati sul teminale:***
 
