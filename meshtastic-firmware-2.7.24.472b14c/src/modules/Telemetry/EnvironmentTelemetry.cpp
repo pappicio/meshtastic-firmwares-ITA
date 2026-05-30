@@ -994,8 +994,7 @@ if (!leggisolouno)
     extern float vento_salvato_globale; 
     extern float wind_gust_globale;
     extern float wind_lull_globale;
-    static uint32_t last_gust_reset = 0;
-
+     
     calcolovel = vento_salvato_globale; // Legge la fotografia del vento più recente senza toccare gli interrupt
    
     if (calcolovel >= 0.0f) {
@@ -1117,7 +1116,7 @@ Wire.beginTransmission(EnvironmentTelemetryModule::AS5600_ADDR);
 
     // 2. Richiediamo i 2 byte successivi (0x0C e 0x0D)
         // 2. Richiediamo i 2 byte successivi (0x0C e 0x0D)
-        Wire.requestFrom(EnvironmentTelemetryModule::AS5600_ADDR, 2);
+        Wire.requestFrom((uint8_t)EnvironmentTelemetryModule::AS5600_ADDR, (uint8_t)2);
         if (Wire.available() >= 2) {
             uint8_t msb = Wire.read(); // Byte alto
             uint8_t lsb = Wire.read(); // Byte basso

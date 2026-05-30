@@ -164,12 +164,18 @@ void esp32Setup()
         IPAddress gateway(MY_STATIC_GATEWAY);     
         IPAddress subnet(MY_STATIC_SUBNET);    
         
-        if (!WiFi.config(local_IP, gateway, subnet)) {
+    #ifdef MY_STATIC_DNS
+        IPAddress dns(MY_STATIC_DNS);
+        if (!WiFi.config(local_IP, gateway, subnet, dns)) {
+    #else
+        if (!WiFi.config(local_IP, gateway, subnet, gateway)) {
+    #endif
             LOG_ERROR("Configurazione IP Statico Fallita!");
         } else {
             LOG_INFO("IP Statico applicato con successo!");
         }
-    #endif
+#endif
+    
 
     // --- 2. INIZIALIZZAZIONE SERVER OTA ---
     // Questo apre la porta 3232 sull'IP impostato sopra e ti evita di salire sul tetto
