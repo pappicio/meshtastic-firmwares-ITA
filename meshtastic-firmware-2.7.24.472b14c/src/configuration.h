@@ -773,7 +773,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-//////////// --- CONFIGURAZIONE TEMP ANALOGICO ---
+//////////// --- CONFIGURAZIONE NTC ANALOGICO ---
 
 //#define ANALOG_TEMP_PIN 34  // Pin ADC (solo pin che supportano analogRead, es. GPIO 34)
 #if defined(ANALOG_TEMP_PIN)
