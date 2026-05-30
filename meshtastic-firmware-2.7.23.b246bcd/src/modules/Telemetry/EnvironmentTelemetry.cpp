@@ -981,15 +981,12 @@ if (!leggisolouno)
 #ifdef WIND_VELOCITY_PIN
     // Diciamo a questo file che la variabile esiste ed è aggiornata altrove
     extern float vento_salvato_globale; 
-    static float wind_gust = 0.0f;
-    static float wind_lull = 9999.0f;
+    extern float wind_gust_globale;
+    extern float wind_lull_globale;
     static uint32_t last_gust_reset = 0;
 
     calcolovel = vento_salvato_globale; // Legge la fotografia del vento più recente senza toccare gli interrupt
-    
-    if (calcolovel > wind_gust) wind_gust = calcolovel;
-    if (calcolovel < wind_lull) wind_lull = calcolovel;
-
+   
     if (calcolovel >= 0.0f) {
         ha_vel = true;
     }
@@ -1006,8 +1003,8 @@ if (!leggisolouno)
             m->variant.environment_metrics.has_wind_speed = true;     // Abilita Vel
             
             // CASO 1
-            m->variant.environment_metrics.wind_gust = wind_gust;
-            m->variant.environment_metrics.wind_lull = wind_lull;
+            m->variant.environment_metrics.wind_gust = wind_gust_globale;
+            m->variant.environment_metrics.wind_lull = wind_lull_globale;
             m->variant.environment_metrics.has_wind_gust = true;
             m->variant.environment_metrics.has_wind_lull = true;
 
@@ -1034,8 +1031,8 @@ if (!leggisolouno)
             m->variant.environment_metrics.has_wind_direction = true; // SVEGLIA l'app anche per la direzione!
             m->variant.environment_metrics.has_wind_speed = true;     // Abilita Vel
             // CASO 3
-            m->variant.environment_metrics.wind_gust = wind_gust;
-            m->variant.environment_metrics.wind_lull = wind_lull;
+            m->variant.environment_metrics.wind_gust = wind_gust_globale;
+            m->variant.environment_metrics.wind_lull = wind_lull_globale;
             m->variant.environment_metrics.has_wind_gust = true;
             m->variant.environment_metrics.has_wind_lull = true;
             LOG_INFO("METEO PARZIALE: [FASULLO] Dir = 180° | [REALE] Vel = %.2f km/h", calcolovel);
@@ -1045,12 +1042,7 @@ if (!leggisolouno)
         valid = true; 
         hasSensor = true; 
 
-        // dopo l'invio, al posto del reset immediato:
-        if (millis() - last_gust_reset >= 86400000UL) { // 24h in ms
-            wind_gust = 0.0f;
-            wind_lull = 9999.0f;
-            last_gust_reset = millis();
-        }
+
     }
 }
 #endif
@@ -1365,9 +1357,10 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         LOG_INFO("Send: soil_temperature=%f, soil_moisture=%u", m.variant.environment_metrics.soil_temperature,
                  m.variant.environment_metrics.soil_moisture);
 
+///////////////////////////////////////////////
                 LOG_INFO("Send:  Rainfall_1h = %f, has = %d", m.variant.environment_metrics.rainfall_1h, m.variant.environment_metrics.has_rainfall_1h);
                 LOG_INFO("Send:  Rainfall_24h = %f, has = %d", m.variant.environment_metrics.rainfall_24h, m.variant.environment_metrics.has_rainfall_24h);
-
+///////////////////////////////////////////////
                 
         meshtastic_MeshPacket *p = allocDataProtobuf(m);
         p->to = dest;

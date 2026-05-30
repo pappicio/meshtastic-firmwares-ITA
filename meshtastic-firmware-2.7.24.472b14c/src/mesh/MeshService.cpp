@@ -333,7 +333,14 @@ float readI2CTemp(uint8_t addr) {
 
 ///////////////////////////////////////////////
 void checkInternalFan() {
-    
+
+    time_t now = time(nullptr);
+    if (now > 1000000000UL) {
+        LOG_INFO("[NTP] NTP: SI");
+    } else {
+        LOG_INFO("[NTP] NTP: NO");
+    }
+
     float currentTemp = -999.0f;
     fanHum = 0.0f;
     fanTemp = -999.0f;
@@ -433,22 +440,46 @@ void checkInternalFan() {
 void checkAutoReboot() {
     // Esegui tutto solo se la macro è definita e maggiore di 0
 #if defined(AUTO_REBOOT_DAYS) && (AUTO_REBOOT_DAYS > 0)
-
     // Calcolo soglia a 64bit (86.400.000 ms in un giorno)
+    time_t now = time(nullptr);
+    struct tm *t = localtime(&now);
     static const uint64_t threshold = (uint64_t)AUTO_REBOOT_DAYS * 86400000ULL;
+    static int lastRebootDay = -1;
 
+    bool dariavviare = false;
+
+if (now > 1000000000UL) {
+    // NTP disponibile - reboot alle 03:00 dopo X giorni uptime
+    if ((millis() / 86400000UL) >= AUTO_REBOOT_DAYS && t->tm_hour == 3 && t->tm_min == 0 && lastRebootDay != t->tm_mday) {
+        lastRebootDay = t->tm_mday;
+        LOG_INFO("GHOST: NTP reboot alle 03:00 dopo %d giorni uptime", AUTO_REBOOT_DAYS);
+        dariavviare = true;
+    }
+} else {
+    // NTP non disponibile - fallback millis()
     if (millis() > threshold) {
+        LOG_INFO("GHOST: Uptime limit reached (%d days). No NTP.", AUTO_REBOOT_DAYS);
+        dariavviare = true;
+    }
+}
+
+
+    if (dariavviare) {
         LOG_INFO("GHOST: Uptime limit reached (%d days). Cleaning DB and Rebooting...", AUTO_REBOOT_DAYS);
         
         // --- 1. PULIZIA DATABASE (Essenziale per il reset totale) ---
-        if (nodeDB) {
+ #ifdef CLEAN_ALSO_NODEDB
+    if (nodeDB) {
+        #ifdef KEEP_PREFERRED
+            LOG_INFO("GHOST: Resetting NodeDB (keeping favorites)...");
+            nodeDB->resetNodes(true);
+        #else
             LOG_INFO("GHOST: Resetting NodeDB (including favorites)...");
-            // resetNodes(bool keepFavorites)
-            // Passiamo 'false' per eliminare anche i preferiti
-            nodeDB->resetNodes(false); 
-            
-            delay(1000); // Tempo per il salvataggio su disco
-        }
+            nodeDB->resetNodes(false);
+        #endif
+        delay(1000);
+    }
+#endif
 
         delay(1000); 
 
@@ -501,6 +532,9 @@ extern volatile uint32_t wind_pulse_count;
 // Questa variabile ora conterrà i m/s pronti per essere passati a Meshtastic
 float vento_salvato_globale = 0.0f; 
 
+float wind_gust_globale = 0.0f;
+float wind_lull_globale = 9999.0f;
+
 void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
 
     // Scatta solo al ciclo 0 e al ciclo 3 (Intervallo preciso di 15 secondi)
@@ -526,10 +560,42 @@ void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
         vento_salvato_globale = 0.0f; 
     }
 
+    if (vento_salvato_globale > wind_gust_globale) wind_gust_globale = vento_salvato_globale;
+    if (vento_salvato_globale < wind_lull_globale) wind_lull_globale = vento_salvato_globale;
+
     // Nel log moltiplichiamo al volo per 3.6f solo per la visualizzazione a schermo.
     // Così sul monitor seriale leggi i km/h e verifichi la taratura con la Ecowitt!
     LOG_INFO("[METEO-SUB] Finestra 15s conclusa (Ciclo %d). Impulsi: %d | Frequenza: %.2f Hz | Velocità: %.2f m/s (%.2f km/h)", 
              ciclo_attuale, pulses, frequenza_hz, vento_salvato_globale, (vento_salvato_globale * 3.6f));
+
+
+
+             ////////////////////////////////////////
+        // dopo l'invio, al posto del reset immediato:
+        time_t now = time(nullptr);
+struct tm *t = localtime(&now);
+static int lastResetDay = -1;
+static uint32_t last_gust_reset = 0;
+
+if (now > 1000000000UL) {
+    // NTP disponibile - reset a mezzanotte
+    if (t->tm_mday != lastResetDay) {
+        wind_gust_globale = 0.0f;
+        wind_lull_globale = 9999.0f;
+        lastResetDay = t->tm_mday;
+        last_gust_reset = millis();
+    }
+} else {
+    // NTP non disponibile - reset ogni 24h con millis()
+    if (millis() - last_gust_reset >= 86400000UL) {
+        wind_gust_globale = 0.0f;
+        wind_lull_globale = 9999.0f;
+        last_gust_reset = millis();
+    }
+}
+////////////////////////////////////////
+
+
 }
 #endif
 
@@ -584,10 +650,29 @@ void aggiornaPioggiaLocale(uint8_t ciclo_attuale) {
     }
 
     // 4. Gestione Finestra 24 ore (Reset dopo 24 ore di attività)
+    // 4. Gestione Finestra 24 ore
+time_t now_rain = time(nullptr);
+struct tm *t_rain = localtime(&now_rain);
+static int lastRainResetDay = -1;
+
+if (now_rain > 1000000000UL) {
+    // NTP disponibile - reset a mezzanotte
+    if (t_rain->tm_mday != lastRainResetDay) {
+        pioggia_totale_24h = 0.0f;
+        finestra_attiva_24h = false;
+        lastRainResetDay = t_rain->tm_mday;
+        inizio_finestra_24h = millis();
+    }
+} else {
+    // NTP non disponibile - reset ogni 24h con millis()
     if (finestra_attiva_24h && (millis() - inizio_finestra_24h >= 86400000UL)) {
         pioggia_totale_24h = 0.0f;
         finestra_attiva_24h = false;
     }
+}
+    
+
+
 
     // 5. Log
     if (mm_rilevati > 0) {

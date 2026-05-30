@@ -684,6 +684,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
+#ifdef AUTO_REBOOT_DAYS
+  #define CLEAN_ALSO_NODEDB //se commentato, nn elimina il nodedb prima del riavvio programmato del nodo
+  #define KEEP_PREFERRED //se commentato, nn mantiene i nodi preferiti al clean nodedb, prima del riavvio programmato del nodo
+#endif
 
 //TX POWER
 #define DBI30 31 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
@@ -784,7 +788,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
-#define CMD_PASSWORD "Password"
+#define CMD_PASSWORD "changeme"
 
 //comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
 //password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
@@ -944,7 +948,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
-#define MY_STATIC_IP      192, 168, 1, 250
+#define MY_STATIC_IP      192, 168, 1, 251
 #define MY_STATIC_GATEWAY 192, 168, 1, 1
 #define MY_STATIC_SUBNET  255, 255, 255, 0
 

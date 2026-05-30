@@ -691,6 +691,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #define AUTO_REBOOT_DAYS 5 //per la tipologia di variabile usata, il termine massimo di giorni per il reboot è 45, nn superarli!!!!!
+#ifdef AUTO_REBOOT_DAYS
+  #define CLEAN_ALSO_NODEDB //se commentato, nn elimina il nodedb prima del riavvio programmato del nodo
+  #define KEEP_PREFERRED //se commentato, nn mantiene i nodi preferiti al clean nodedb, prima del riavvio programmato del nodo
+#endif
 
 //TX POWER
 #define DBI30 31 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
@@ -730,10 +734,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH Mods"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MTMS"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "Mesh Mods"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MESH"
 
-#define USERPREFS_SPLASH_TEXT "MTMS"
+#define USERPREFS_SPLASH_TEXT "MESH"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -748,7 +752,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // --- GESTIONE VENTOLA INTERNA ---
 // IL SENSORE SARA TOTALMENTE INVISIBILE A MESHTASTIC CHE XO DARA INFO COME 
-// POWER TELEMETRI, con voltaggio1/corrente100 e Voltaggio0/corrente0 per indicare ventola accesa/spenta
+// POWER TELEMETRY, con voltaggio/corrente
 
 /////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
 
@@ -763,11 +767,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ////////////////////////////////////////////// Pin per DS18B20
-///#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
 ////////////////////////////// --- SENSORI DHT (11/22) ---
-#define DHT_TEMP_PIN 6
+////#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
         #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
@@ -801,25 +805,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
 
-//#define HAS_WIND_DIRECTION
+#define HAS_WIND_DIRECTION
 // --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
     #define WIND_DIRECTION_INVERT_DEFAULT true
     extern bool WIND_DIRECTION_INVERT; // se avete montato il magnete al CONTRARIO E SEGNA SUD EST, INVECE DI NORD OVERS, POTETE: INVERTIRE IL MAGNETE O ABILITARE QUI
-    #define COMANDO_INVERTI "inverti"
+    #define COMANDO_INVERTI "inverti vento"
     
     extern float WIND_NORTH_OFFSET;
     // Definisci il comando esatto in minuscolo, pronto per il parsing
     #define COMANDO_DIREZIONE "direzione vento" 
 #endif
+ 
 
-#define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
-#ifdef RAIN_SENSOR_PIN
-   #define COMANDO_RAINOFFSET "offset pioggia"
-    extern float RAIN_GAUGE_FACTOR;  
-#endif
-
-//#define WIND_VELOCITY_PIN 47
+#define WIND_VELOCITY_PIN 47  //heltec v4 pin libero ed è ok!'
 
 #ifdef WIND_VELOCITY_PIN
     extern float ANEMOMETRO_GUADAGNO;
@@ -827,6 +826,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     // Definisci i comandi per l'anemometro (es. guadagno e attrito separati o uniti)
     #define COMANDO_GUADAGNO "guadagno anemometro"
     #define COMANDO_ATTRITO  "attrito anemometro"
+#endif
+
+
+#define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
+#ifdef RAIN_SENSOR_PIN
+   #define COMANDO_RAINOFFSET "fattore pioggia"
+    extern float RAIN_GAUGE_FACTOR;  
 #endif
 
 
@@ -936,22 +942,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- NETWORK E WIFI ---
-//#undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
-//#define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
+#undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
+#define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
 
-//#undef USERPREFS_NETWORK_WIFI_ENABLED
-//#define USERPREFS_NETWORK_WIFI_ENABLED true
+#undef USERPREFS_NETWORK_WIFI_ENABLED
+#define USERPREFS_NETWORK_WIFI_ENABLED true
 
-//#undef USERPREFS_NETWORK_WIFI_SSID
-//#define USERPREFS_NETWORK_WIFI_SSID "ssid"
+#undef USERPREFS_NETWORK_WIFI_SSID
+#define USERPREFS_NETWORK_WIFI_SSID "SS_ID"
 
-//#undef USERPREFS_NETWORK_WIFI_PSK
-//#define USERPREFS_NETWORK_WIFI_PSK "password"
+#undef USERPREFS_NETWORK_WIFI_PSK
+#define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
-//#define MY_STATIC_IP      192, 168, 1, 250
-//#define MY_STATIC_GATEWAY 192, 168, 1, 1
-//#define MY_STATIC_SUBNET  255, 255, 255, 0
+#define MY_STATIC_IP      192, 168, 1, 250
+#define MY_STATIC_GATEWAY 192, 168, 1, 1
+#define MY_STATIC_SUBNET  255, 255, 255, 0
 
 // --- MQTT ---
 // #undef USERPREFS_MQTT_ENABLED
