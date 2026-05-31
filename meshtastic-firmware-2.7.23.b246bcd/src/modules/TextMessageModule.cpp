@@ -158,6 +158,11 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO);
 #endif
 
+#ifdef RAIN_SENSOR_PIN
+    offset += snprintf(stato + offset, sizeof(stato) - offset,
+        "Rain Factor: %.3f | ", RAIN_GAUGE_FACTOR);
+#endif
+
 #if defined(RELAY_1_PIN) && defined(RELAY_1_NAME)
             offset += snprintf(stato + offset, sizeof(stato) - offset,
                 "%s: %s | ", RELAY_1_NAME, digitalRead(RELAY_1_PIN) == HIGH ? "ON" : "OFF");

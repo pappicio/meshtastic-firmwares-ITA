@@ -728,9 +728,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
 #define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH MODS"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MM01"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMM"
 
-#define USERPREFS_SPLASH_TEXT "MM01"
+#define USERPREFS_SPLASH_TEXT "MMMM"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -793,7 +793,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
 //password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
 //password /direzione vento 12.1  e ti imposta offset direzione vento a 12,1 ecc ecc ecc.....
-#define COMANDO_STATO "stato"
+#define COMANDO_STATO "stato sensori"
 
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
@@ -941,10 +941,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_ENABLED true
 
 #undef USERPREFS_NETWORK_WIFI_SSID
-#define USERPREFS_NETWORK_WIFI_SSID "SS_ID"
+#define USERPREFS_NETWORK_WIFI_SSID "SSID"
 
 #undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
+#define USERPREFS_NETWORK_WIFI_PSK "WIFI_PASSWORD"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
