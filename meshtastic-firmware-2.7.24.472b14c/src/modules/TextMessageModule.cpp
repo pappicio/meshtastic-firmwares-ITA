@@ -72,12 +72,15 @@ static void salvaMeteo() {
     Preferences prefs;
     if (prefs.begin("meteo", false)) {
 #ifdef WIND_VELOCITY_PIN
-        prefs.putFloat("guadagno", ANEMOMETRO_GUADAGNO);
-        prefs.putFloat("attrito", ANEMOMETRO_ATTRITO);
+    prefs.putFloat("guadagno", ANEMOMETRO_GUADAGNO);
+    prefs.putFloat("attrito", ANEMOMETRO_ATTRITO);
+#endif
+#ifdef RAIN_SENSOR_PIN
+    prefs.putFloat("rainfactor", RAIN_GAUGE_FACTOR);
 #endif
 #ifdef HAS_WIND_DIRECTION
-        prefs.putFloat("diroffset", WIND_NORTH_OFFSET);
-        prefs.putBool("invertito", WIND_DIRECTION_INVERT);
+    prefs.putFloat("diroffset", WIND_NORTH_OFFSET);
+    prefs.putBool("invertito", WIND_DIRECTION_INVERT);
 #endif
         prefs.end();
     }
@@ -86,12 +89,15 @@ static void salvaMeteo() {
     File file = InternalFS.open("/meteo.dat", FILE_O_WRITE);
     if (file) {
 #ifdef WIND_VELOCITY_PIN
-        file.write((const uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
-        file.write((const uint8_t*)&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
+    file.write((const uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
+    file.write((const uint8_t*)&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
+#endif
+#ifdef RAIN_SENSOR_PIN
+    file.write((const uint8_t*)&RAIN_GAUGE_FACTOR, sizeof(RAIN_GAUGE_FACTOR));
 #endif
 #ifdef HAS_WIND_DIRECTION
-        file.write((const uint8_t*)&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
-        file.write((const uint8_t*)&WIND_DIRECTION_INVERT, sizeof(WIND_DIRECTION_INVERT));
+    file.write((const uint8_t*)&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
+    file.write((const uint8_t*)&WIND_DIRECTION_INVERT, sizeof(WIND_DIRECTION_INVERT));
 #endif
         file.close();
     }
