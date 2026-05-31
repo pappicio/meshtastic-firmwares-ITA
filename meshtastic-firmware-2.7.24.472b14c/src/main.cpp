@@ -848,7 +848,7 @@ void setup()
 #endif
 #ifdef HAS_WIND_DIRECTION
         WIND_NORTH_OFFSET     = prefs.getFloat("diroffset", WIND_NORTH_OFFSET);
-        WIND_DIRECTION_INVERT = prefs.getBool("invertito", WIND_DIRECTION_INVERT_DEFAULT);
+        WIND_DIRECTION_INVERT = prefs.getBool("invertito", WIND_DIRECTION_INVERT);
 #endif
         prefs.end();
     }

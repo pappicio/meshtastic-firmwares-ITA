@@ -801,7 +801,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_WIND_DIRECTION
 // --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
 #ifdef HAS_WIND_DIRECTION
-    #define WIND_DIRECTION_INVERT_DEFAULT true
     extern bool WIND_DIRECTION_INVERT; // se avete montato il magnete al CONTRARIO E SEGNA SUD EST, INVECE DI NORD OVERS, POTETE: INVERTIRE IL MAGNETE O ABILITARE QUI
     #define COMANDO_INVERTI "inverti vento"
     
@@ -856,8 +855,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
          // Soglie di temumidità da asciugare per l'isteresi
         #if defined (HAS_HUMIDITY)
-            #define FAN_HUM_START  80.0f 
-            #define FAN_HUM_STOP   60.0f 
+            #define FAN_HUM_START  80.0f  // Accende quando sale 80%
+            #define FAN_HUM_STOP   60.0f  // Spegne quando scende a 60%
         #endif
 
     #endif
@@ -871,7 +870,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
 
 #ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
+    #define FORCE_WAKEUP_MV 3700    // Soglia di sblocco al risveglio
     #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo
 
     // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
@@ -923,12 +922,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
    // Nomi dei Relay (da scrivere dopo la password e lo spazio)
 //#define RELAY_1_PIN 47 //2     pin 2 nn va bene, pin occupato da altro verificare sempre  // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
 #if defined(RELAY_1_PIN)
-    #define RELAY_1_NAME  "luce"
+    #define RELAY_1_NAME  "relay1"
 #endif
 
 //#define RELAY_2_PIN   48 //5 pin 5 occupato, come sopra, verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
 #if defined(RELAY_2_PIN)
-    #define RELAY_2_NAME  "pompa"
+    #define RELAY_2_NAME  "relay2"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
