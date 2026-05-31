@@ -5,6 +5,14 @@
 
 ***python -u -m meshtastic --host 192.168.1.250 --listen > log.txt 2>&1***
 
+
+invece per avere tutti i log sul pc (windows) scaricare
+
+***https://maxbelkov.github.io/visualsyslog/*** visual syslog server, su app inserire nel modulo "rete" in server rsyslog IP lan del PC
+
+sul pc aprire il programma appena scaricato e iniziare a raccogliere dati dal nodo, aprire il file di log per verificare che tutto sia ok nel debug operazioni!
+
+
 🇮🇹 Meshtastic Italia "Smart Power" Edition
 
 
