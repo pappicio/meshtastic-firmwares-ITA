@@ -800,7 +800,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
 //password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
 //password /direzione vento 12.1  e ti imposta offset direzione vento a 12,1 ecc ecc ecc.....
-#define COMANDO_STATO "stato"
+#define COMANDO_STATO "stato sensori"
 
 // Per attivarli basta lasciarli così:
 // Se la direzione del vento è attiva, controlliamo l'offset
@@ -862,8 +862,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
          // Soglie di temumidità da asciugare per l'isteresi
         #if defined (HAS_HUMIDITY)
-            #define FAN_HUM_START  80.0f 
-            #define FAN_HUM_STOP   60.0f 
+            #define FAN_HUM_START  80.0f  // Accende quando sale 80%
+            #define FAN_HUM_STOP   60.0f  // Spegne quando scende a 60%
         #endif
 
     #endif

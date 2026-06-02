@@ -39,32 +39,39 @@ TextMessageModule *textMessageModule;
  * Gestisce i comandi remoti per Relay e Anemometro.
  * Funzione light e atomica per integrazione in FloodingRouter.
  **/
- 
-// ---- Sostituisci tutta la funzione sendConfirm con questa ----
-
 static void sendConfirm(const meshtastic_MeshPacket *req, const char *msg)
 {
-    // Alloca un nuovo pacchetto da zero (non usa allocReply/myReply)
+    if (!req) return;
+
     meshtastic_MeshPacket *p = router->allocForSending();
     if (!p) return;
 
-    // Risposta privata al mittente
-    p->to   = req->from;
+    p->to = req->from;
     p->from = nodeDB->getNodeNum();
-
-    // Stesso canale del messaggio ricevuto
     p->channel = req->channel;
 
     p->decoded.portnum = meshtastic_PortNum_TEXT_MESSAGE_APP;
-    p->want_ack        = false;
+    p->want_ack = false;
 
     size_t len = strnlen(msg, sizeof(p->decoded.payload.bytes));
     memcpy(p->decoded.payload.bytes, msg, len);
     p->decoded.payload.size = (pb_size_t)len;
 
-    // Invia direttamente senza passare per myReply
-    router->send(p);
+    // --- DEBUG LOG ---
+    LOG_INFO("DEBUG SEND: Packet prepared. From: 0x%X, To: 0x%X, Channel: %d", p->from, p->to, p->channel);
+    bool isLocal = isFromUs(req);
+    LOG_INFO("DEBUG SEND: isFromUs result = %d", isLocal);
+
+    if (isLocal) {
+        p->to = nodeDB->getNodeNum();
+        LOG_INFO("DEBUG SEND: Routing to Phone/CLI (sendToPhone)");
+        service->sendToPhone(p);
+    } else {
+        LOG_INFO("DEBUG SEND: Routing to Radio (router->send)");
+        router->send(p);
+    }
 }
+
 
 static void salvaMeteo() {
 
@@ -118,8 +125,29 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
     if (p->decoded.portnum != meshtastic_PortNum_TEXT_MESSAGE_APP)
         return;
 
-    if (p->to != nodeDB->getNodeNum())
-        return;
+    ////if (p->to != nodeDB->getNodeNum())
+    ////    return; --- IGNORE ---
+
+// ==========================================================
+    // MODIFICA CON LOG DI DEBUG PER OGNI VARIABILE
+    // ==========================================================
+    bool direttoANoi = (p->to == nodeDB->getNodeNum());
+    bool localeDaAPI = (p->from == nodeDB->getNodeNum());
+    bool sistemaLocale = (p->from == 0);
+
+    // LOG DI DEBUG: Vediamo cosa cavolo sta succedendo
+    LOG_INFO("DEBUG: Filtro - From: 0x%X, To: 0x%X", p->from, p->to);
+    LOG_INFO("DEBUG: Analisi - DirettoANoi: %d, LocaleDaAPI: %d, SistemaLocale: %d", 
+             direttoANoi, localeDaAPI, sistemaLocale);
+
+    if (!direttoANoi && !localeDaAPI && !sistemaLocale) {
+        LOG_INFO("DEBUG: --- FILTRO SCARTATO (Tutte le condizioni false) ---");
+        return; 
+    }
+    
+    LOG_INFO("DEBUG: --- FILTRO PASSATO (Condizione valida) ---");
+    // ==========================================================
+  
 
     const size_t len = p->decoded.payload.size;
 
@@ -320,7 +348,9 @@ ProcessMessage TextMessageModule::handleReceived(const meshtastic_MeshPacket &mp
     // 👉 TELECOMANDO REMOTO (QUI È IL PUNTO GIUSTO)
 if (mp.to == nodeDB->getNodeNum()) {
 
+ 	LOG_INFO("DEBUG: Messaggio gestito dal modulo.");
     checkMultiRelayCommand(&mp);
+           
  
 }
 ///////////////////////////////////////////////

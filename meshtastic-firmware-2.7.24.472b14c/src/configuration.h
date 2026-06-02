@@ -728,9 +728,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
 #define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH MODS"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMM"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MM01"
 
-#define USERPREFS_SPLASH_TEXT "MMMM"
+#define USERPREFS_SPLASH_TEXT "MM01"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -760,14 +760,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ////////////////////////////////////////////// Pin per DS18B20
-#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
+//#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
 
 ////////////////////////////// --- SENSORI DHT (11/22) ---
-////#define DHT_TEMP_PIN 6
+#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
-        #define DHTTYPE DHT11  // O DHT22 a seconda di cosa hai montato
+        #define DHTTYPE DHT22  // O DHT22 a seconda di cosa hai montato
         #define HAS_HUMIDITY 1  
     #endif
 #endif
@@ -941,10 +941,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_ENABLED true
 
 #undef USERPREFS_NETWORK_WIFI_SSID
-#define USERPREFS_NETWORK_WIFI_SSID "SSID"
+#define USERPREFS_NETWORK_WIFI_SSID "SS_ID"
 
 #undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "WIFI_PASSWORD"
+#define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
