@@ -5,6 +5,16 @@
 
 ***python -u -m meshtastic --host 192.168.1.250 --listen > log.txt 2>&1***
 
+***per inviare comando e ricevere "risposta"***
+
+o da app con messaggio privato e fokrattato as modo, 
+
+oppure
+
+da cli con il seguente comando:
+
+***meshtastic  --host 192.168.1.251 --listen --sendtext "password_comando stato sensori" --dest "!id_nodo"***
+
 
 invece per avere tutti i log sul pc (windows) scaricare
 
