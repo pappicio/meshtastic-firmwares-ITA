@@ -114,19 +114,19 @@ static void salvaMeteo() {
 // =====================================================
 //  PARSER COMANDI
 // =====================================================
-void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
+bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 
     if (p == nullptr)
-        return;
+        return false;
 
     if (p->which_payload_variant != meshtastic_MeshPacket_decoded_tag)
-        return;
+        return false;
 
     if (p->decoded.portnum != meshtastic_PortNum_TEXT_MESSAGE_APP)
-        return;
+        return false;
 
     ////if (p->to != nodeDB->getNodeNum())
-    ////    return; --- IGNORE ---
+    ////    return false; --- IGNORE ---
 
 // ==========================================================
     // MODIFICA CON LOG DI DEBUG PER OGNI VARIABILE
@@ -142,7 +142,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 
     if (!direttoANoi && !localeDaAPI && !sistemaLocale) {
         LOG_INFO("DEBUG: --- FILTRO SCARTATO (Tutte le condizioni false) ---");
-        return; 
+        return false;
     }
     
     LOG_INFO("DEBUG: --- FILTRO PASSATO (Condizione valida) ---");
@@ -152,13 +152,13 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
     const size_t len = p->decoded.payload.size;
 
     if (len == 0 || len > 200)
-        return;
+        return false;
 
     String msg((const char*)p->decoded.payload.bytes, len);
     msg.trim();
 
     if (msg.isEmpty())
-        return;
+        return false;
 
 // =====================================================
 //  IL TUO GRANDE BLOCCO UNICO DI SICUREZZA
@@ -202,7 +202,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 #endif
 
             sendConfirm(p, stato);
-            return;
+            return true;
         }
 
         // --- INVERTI DIREZIONE ---
@@ -214,7 +214,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             snprintf(buf, sizeof(buf), "OK Magnete invertito: %s", 
                      WIND_DIRECTION_INVERT ? "SI" : "NO");
             sendConfirm(p, buf);
-            return;
+            return true;
         }
 #endif
 
@@ -230,7 +230,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 snprintf(buf, sizeof(buf), "OK nuovo guadagno: %.1f salvato", ANEMOMETRO_GUADAGNO);
                 sendConfirm(p, buf);
             }
-            return;
+            return true;
         }
 #endif
 
@@ -246,7 +246,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 snprintf(buf, sizeof(buf), "OK nuovo attrito: %.1f salvato", ANEMOMETRO_ATTRITO);
                 sendConfirm(p, buf);
             }
-            return;
+            return true;
         }
 #endif
 
@@ -262,7 +262,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 snprintf(buf, sizeof(buf), "OK nuovo offset direzione vento: %.1f salvato", WIND_NORTH_OFFSET);
                 sendConfirm(p, buf);
             }
-            return;
+            return true;
         }
 #endif
 
@@ -281,7 +281,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 snprintf(buf, sizeof(buf), "OK nuovo rain factor: %.3f salvato", RAIN_GAUGE_FACTOR);
                 sendConfirm(p, buf);
             }
-            return;
+            return true;
         }
 #endif
 
@@ -293,7 +293,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             char buf[64];
             snprintf(buf, sizeof(buf), "OK %s ON", RELAY_1_NAME);
             sendConfirm(p, buf);
-            return;
+            return true;
         }
 
         if (msg.equals(String(CMD_RELAY_OFF) + " " + RELAY_1_NAME)) {
@@ -302,7 +302,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             char buf[64];
             snprintf(buf, sizeof(buf), "OK %s OFF", RELAY_1_NAME);
             sendConfirm(p, buf);
-            return;
+            return true;
         }
 #endif
 
@@ -314,7 +314,7 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             char buf[64];
             snprintf(buf, sizeof(buf), "OK %s ON", RELAY_2_NAME);
             sendConfirm(p, buf);
-            return;
+            return true;
         }
 
         if (msg.equals(String(CMD_RELAY_OFF) + " " + RELAY_2_NAME)) {
@@ -323,11 +323,12 @@ void checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             char buf[64];
             snprintf(buf, sizeof(buf), "OK %s OFF", RELAY_2_NAME);
             sendConfirm(p, buf);
-            return;
+            return true;
         }
 #endif
-
+ return false;
     } // Chiude l'if password
+    return false;
 #endif // Chiude la macro globale CMD_PASSWORD
 
 } // Chiude la funzione checkMultiRelayCommand
@@ -349,8 +350,13 @@ ProcessMessage TextMessageModule::handleReceived(const meshtastic_MeshPacket &mp
 if (mp.to == nodeDB->getNodeNum()) {
 
  	LOG_INFO("DEBUG: Messaggio gestito dal modulo.");
-    checkMultiRelayCommand(&mp);
-           
+    if (checkMultiRelayCommand(&mp)) 
+    {
+        LOG_INFO("DEBUG: Comando multi-relay riconosciuto e gestito.");
+        return ProcessMessage::STOP; // Let others look at this message also if they want
+    } else {
+        LOG_INFO("DEBUG: Messaggio non riconosciuto come comando multi-relay, nessuna azione intrapresa.");     
+    }
  
 }
 ///////////////////////////////////////////////

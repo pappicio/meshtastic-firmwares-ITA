@@ -951,7 +951,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #undef MESHTASTIC_EXCLUDE_WIFI
 #endif
 
-#define MY_STATIC_IP      192, 168, 1, 250
+#define MY_STATIC_IP      192, 168, 1, 251
 #define MY_STATIC_GATEWAY 192, 168, 1, 1
 #define MY_STATIC_SUBNET  255, 255, 255, 0
 #define MY_STATIC_DNS     8, 8, 8, 8

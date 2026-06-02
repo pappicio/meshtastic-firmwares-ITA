@@ -877,7 +877,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
 
 #ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700         // Soglia di sblocco al risveglio
+    #define FORCE_WAKEUP_MV 3700    // Soglia di sblocco al risveglio
     #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo
 
     // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
@@ -958,7 +958,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #undef MESHTASTIC_EXCLUDE_WIFI
 #endif
 
-#define MY_STATIC_IP      192, 168, 1, 250
+#define MY_STATIC_IP      192, 168, 1, 251
 #define MY_STATIC_GATEWAY 192, 168, 1, 1
 #define MY_STATIC_SUBNET  255, 255, 255, 0
 #define MY_STATIC_DNS     8, 8, 8, 8
