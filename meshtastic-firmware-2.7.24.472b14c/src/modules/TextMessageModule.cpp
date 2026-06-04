@@ -20,7 +20,7 @@
 #elif defined(NRF52_SERIES)
     #include <InternalFileSystem.h>
     // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
-    using namespace Adafruit_InternalFS; 
+    using namespace Adafruit_LittleFS_Namespace; 
 #endif
 // -------------------------------------------------------------
 ///////////////////////////////////////////////
@@ -92,9 +92,10 @@ static void salvaMeteo() {
         prefs.end();
     }
 #elif defined(NRF52_SERIES)
+    using namespace Adafruit_LittleFS_Namespace;
     InternalFS.remove("/meteo.dat");
     File file = InternalFS.open("/meteo.dat", FILE_O_WRITE);
-    if (file) {
+    if (file)  {
 #ifdef WIND_VELOCITY_PIN
     file.write((const uint8_t*)&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
     file.write((const uint8_t*)&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
@@ -149,15 +150,18 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
     // ==========================================================
   
 
-    const size_t len = p->decoded.payload.size;
+ const size_t len = p->decoded.payload.size;
 
     if (len == 0 || len > 200)
         return false;
 
-    String msg((const char*)p->decoded.payload.bytes, len);
+    char tmpbuf[201];
+    memcpy(tmpbuf, p->decoded.payload.bytes, len);
+    tmpbuf[len] = '\0';
+    String msg(tmpbuf);
     msg.trim();
 
-    if (msg.isEmpty())
+    if (msg.length() == 0)
         return false;
 
 // =====================================================

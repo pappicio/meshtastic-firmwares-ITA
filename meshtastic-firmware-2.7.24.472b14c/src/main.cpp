@@ -93,7 +93,7 @@ NRF52Bluetooth *nrf52Bluetooth = nullptr;
 #elif defined(NRF52_SERIES)
     #include <InternalFileSystem.h>
     // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
-    using namespace Adafruit_InternalFS; 
+    using namespace Adafruit_LittleFS_Namespace; 
 #endif
 // -------------------------------------------------------------
 ///////////////////////////////////////////
@@ -588,7 +588,7 @@ void setup()
     Wire.begin();
 #endif
 #endif
-
+//////////////////////////////////////////////////////////
 #if defined(M5STACK_UNITC6L)
     pinMode(LORA_CS, OUTPUT);
     digitalWrite(LORA_CS, 1);

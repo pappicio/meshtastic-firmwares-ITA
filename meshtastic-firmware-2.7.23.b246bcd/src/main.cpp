@@ -92,7 +92,7 @@ NRF52Bluetooth *nrf52Bluetooth = nullptr;
 #elif defined(NRF52_SERIES)
     #include <InternalFileSystem.h>
     // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
-    using namespace Adafruit_InternalFS; 
+    using namespace Adafruit_LittleFS_Namespace; 
 #endif
 // -------------------------------------------------------------
 

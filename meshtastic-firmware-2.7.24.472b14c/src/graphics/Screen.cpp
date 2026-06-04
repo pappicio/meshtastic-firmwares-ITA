@@ -430,7 +430,8 @@ void Screen::doDeepSleep()
 
 void Screen::handleSetOn(bool on, FrameCallback einkScreensaver)
 {
-////////////////////////////////////////////
+ ////////////////////////////////////////////
+#if defined(ARCH_ESP32) || defined(ESP32)
     if (on) {
         // Se NON è un boot a freddo (causale 0) e siamo nei primi 10 secondi, blocca.
         if (wakeCause == ESP_SLEEP_WAKEUP_TIMER && millis() < 15000) 
@@ -439,6 +440,16 @@ void Screen::handleSetOn(bool on, FrameCallback einkScreensaver)
             /////    return; 
         }
     }
+#elif defined(NRF52_SERIES)
+    if (on) {
+        // TODO: Su nRF52 usare NRF_POWER->RESETREAS per rilevare wake da timer
+        if ((NRF_POWER->RESETREAS != 0) && millis() < 15000)
+        {
+        //     LOG_INFO("handleSetOn: Blocco nRF52 (Causale: 0x%X, Tempo: %u)", NRF_POWER->RESETREAS, (unsigned int)millis());
+        //     return;
+        }
+    }
+#endif
 //////////////////////////////////////////////
 
 
