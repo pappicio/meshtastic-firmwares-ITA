@@ -727,10 +727,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH MODS"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MM01"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH MODSxxx"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMXX"
 
-#define USERPREFS_SPLASH_TEXT "MM01"
+#define USERPREFS_SPLASH_TEXT "MMXX"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -941,10 +941,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_ENABLED true
 
 #undef USERPREFS_NETWORK_WIFI_SSID
-#define USERPREFS_NETWORK_WIFI_SSID "SS_ID"
+#define USERPREFS_NETWORK_WIFI_SSID "peppe2"
 
 #undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
+#define USERPREFS_NETWORK_WIFI_PSK "3498692081"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
