@@ -657,7 +657,10 @@ static int lastRainResetDay = -1;
 
 if (now_rain > 1000000000UL) {
     // NTP disponibile - reset a mezzanotte
-    if (t_rain->tm_mday != lastRainResetDay) {
+    if (lastRainResetDay == -1) {
+        // Prima inizializzazione: memorizza solo il giorno, non resettare
+        lastRainResetDay = t_rain->tm_mday;
+    } else if (t_rain->tm_mday != lastRainResetDay) {
         pioggia_totale_24h = 0.0f;
         finestra_attiva_24h = false;
         lastRainResetDay = t_rain->tm_mday;
@@ -670,7 +673,6 @@ if (now_rain > 1000000000UL) {
         finestra_attiva_24h = false;
     }
 }
-    
 
 
 
