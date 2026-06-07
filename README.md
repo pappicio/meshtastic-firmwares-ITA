@@ -588,6 +588,13 @@ Monitor Seriale: Clicca sull'icona della spina o del piccolo monitor per vedere 
 
 anzi, ve lo consiglio se dovreste avere problemi con visual studio code, io mi trovo benisismo a flashare gli esp32 con questo tool!
 
+Guide ufficiali da meshtastic per compilare e flashare
+
+
+* 🔧 [Building Instructions](https://meshtastic.org/docs/development/firmware/build) – Learn how to compile the firmware from source.
+* ⚡ [Flashing Instructions](https://meshtastic.org/docs/getting-started/flashing-firmware/) – Install or update the firmware on your device.
+
+
 ⚠️ Risoluzione Problemi Comuni
 Errore di connessione (Serial Port): Assicurati di avere i driver USB installati (solitamente i CP210x o i driver per ESP32-S3).
 
