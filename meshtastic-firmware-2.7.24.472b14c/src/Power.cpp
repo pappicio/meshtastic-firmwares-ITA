@@ -755,6 +755,7 @@ void Power::powerCommandsCheck()
 ////////////////////////////////////////
     if (shutdownAtMsec && millis() > shutdownAtMsec) {
         shutdownAtMsec = 0;
+        //// al comando shutdown, nn spegne per sempre, ma solo per 24H, poi si riavvia!!!
         shutdown(24 * 3600 * 1000UL);
     }
 ////////////////////////////////////////
