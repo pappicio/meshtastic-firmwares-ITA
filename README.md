@@ -22,6 +22,15 @@ invece per avere tutti i log sul pc (windows) scaricare
 
 sul pc aprire il programma appena scaricato e iniziare a raccogliere dati dal nodo, aprire il file di log per verificare che tutto sia ok nel debug operazioni!
 
+---
+
+***per avere info immediate suelle telemetrie in mqtt:***
+
+meshtastic --host 192.168.1.250 --set telemetry.environment_measurement_enabled true
+
+meshtastic --host 192.168.1.250 --set telemetry.environment_update_interval 300
+
+---
 
 🇮🇹 Meshtastic Italia "Smart Power" Edition
 
