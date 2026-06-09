@@ -86,10 +86,10 @@ std::string MeshPacketSerializer::JsonSerialize(const meshtastic_MeshPacket *mp,
                         msgPayload["gas_resistance"] = new JSONValue(decoded->variant.environment_metrics.gas_resistance);
                     }
                     if (decoded->variant.environment_metrics.has_voltage) {
-                        msgPayload["voltage"] = new JSONValue(decoded->variant.environment_metrics.voltage);
+                        msgPayload["voltagex"] = new JSONValue(decoded->variant.environment_metrics.voltage);
                     }
                     if (decoded->variant.environment_metrics.has_current) {
-                        msgPayload["current"] = new JSONValue(decoded->variant.environment_metrics.current);
+                        msgPayload["currentx"] = new JSONValue(decoded->variant.environment_metrics.current);
                     }
                     if (decoded->variant.environment_metrics.has_lux) {
                         msgPayload["lux"] = new JSONValue(decoded->variant.environment_metrics.lux);
