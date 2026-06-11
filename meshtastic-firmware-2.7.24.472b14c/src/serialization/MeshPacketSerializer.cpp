@@ -430,6 +430,21 @@ std::string MeshPacketSerializer::JsonSerialize(const meshtastic_MeshPacket *mp,
         jsonObj["hop_start"] = new JSONValue((unsigned int)(mp->hop_start));
     }
 
+/////////////////////////////////////////
+// Accediamo direttamente al record dell'utente nel database interno del nodo
+auto me = nodeDB->getMeshNode(nodeDB->getNodeNum());
+
+if (me && me->has_user) {
+    // Se il record esiste, prendiamo i nomi reali dal database
+    jsonObj["long_name"] = new JSONValue(me->user.long_name);
+    jsonObj["short_name"] = new JSONValue(me->user.short_name);
+} else {
+    // Se per qualche motivo il DB è vuoto, mettiamo almeno l'ID
+    jsonObj["long_name"] = new JSONValue(nodeDB->getNodeId().c_str());
+    jsonObj["short_name"] = new JSONValue("Unknown");
+}
+////////////////////////////////////////
+
     // serialize and write it to the stream
     JSONValue *value = new JSONValue(jsonObj);
     std::string jsonStr = value->Stringify();
