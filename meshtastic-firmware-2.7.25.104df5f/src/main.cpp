@@ -873,7 +873,7 @@ void setup()
 
     #elif defined(NRF52_SERIES)
     if (InternalFS.exists("/meteo.dat")) {
-        File file = InternalFS.open("/meteo.dat", FILE_READ);
+        File file = InternalFS.open("/meteo.dat", Adafruit_LittleFS_Namespace::FILE_O_READ);
         if (file) {
 #ifdef WIND_VELOCITY_PIN
             file.read(&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
