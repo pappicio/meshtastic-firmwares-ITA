@@ -10,6 +10,13 @@
 #include "mesh/generated/meshtastic/mqtt.pb.h"
 #include "mesh/generated/meshtastic/telemetry.pb.h"
 #include "modules/RoutingModule.h"
+
+////////////////////////////////////////
+#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+#include "modules/Telemetry/EnvironmentTelemetry.h"
+#endif
+////////////////////////////////////////
+
 #if defined(ARCH_ESP32)
 #include "../mesh/generated/meshtastic/paxcount.pb.h"
 #endif
@@ -765,6 +772,11 @@ void MQTT::publishQueuedMessages()
 
 void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_MeshPacket &mp_decoded, ChannelIndex chIndex)
 {
+
+     LOG_INFO("MQTT onSend from=%u nodeNum=%u isFromUs=%d\n", 
+        mp_decoded.from, nodeDB->getNodeNum(), isFromUs(&mp_decoded));
+
+
     if (mp_encrypted.via_mqtt)
         return; // Don't send messages that came from MQTT back into MQTT
     bool uplinkEnabled = false;
@@ -825,31 +837,31 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         LOG_DEBUG("MQTT Publish %s, %u bytes", topic.c_str(), numBytes);
         publish(topic.c_str(), bytes, numBytes, false);
 
-#if !defined(ARCH_NRF52) ||                                                                                                      \
-    defined(NRF52_USE_JSON) // JSON is not supported on nRF52, see issue #2804 ### Fixed by using ArduinoJson ###
-        if (!moduleConfig.mqtt.json_enabled)
-            return;
-        // handle json topic
-        auto jsonString = MeshPacketSerializer::JsonSerialize(&mp_decoded);
-        if (jsonString.length() == 0)
-            return;
-        // Generate node ID from nodenum for JSON topic
-        std::string nodeIdForJson = nodeDB->getNodeId();
-        std::string topicJson = jsonTopic + channelId + "/" + nodeIdForJson;
-        LOG_INFO("JSON publish PUBLIC message to %s, %u bytes: %s", topicJson.c_str(), jsonString.length(), jsonString.c_str());
-        publish(topicJson.c_str(), jsonString.c_str(), false);
+        ///////////////////////////////////
+// In MeshModule.cpp (o dove risiede la logica MQTT)
+#if !defined(ARCH_NRF52) || defined(NRF52_USE_JSON)
+    if (!moduleConfig.mqtt.json_enabled) return;
 
-        ////////////////////////////////////////
-         // 2. SE il pacchetto è nostro, pubblichiamo ANCHE sul topic privato
-        if (isFromUs(&mp_decoded)) {
-            std::string privateTopic = "mesh/privato/" + nodeIdForJson + "/telemetry";
-            LOG_INFO("JSON publish PRIVATE to %s", privateTopic.c_str());
-            publish(privateTopic.c_str(), jsonString.c_str(), false);
-        }
-        /////////////////////////////////////////
+    auto jsonString = MeshPacketSerializer::JsonSerialize(&mp_decoded);
+    if (jsonString.length() == 0) return;
+
+    std::string nodeIdForJson = nodeDB->getNodeId();
+
+    // SE il flag è attivo e se inviamo noi..., inviamo SOLO al privato
+if (isFromUs(&mp_decoded)) {
+    std::string privateTopic = std::string(moduleConfig.mqtt.root) + "/privato/" + nodeIdForJson + "/telemetry";
+    publish(privateTopic.c_str(), jsonString.c_str(), false);
+    return;
+} else {
+    std::string topicJson = jsonTopic + channelId + "/" + nodeIdForJson;
+    publish(topicJson.c_str(), jsonString.c_str(), false);
+}
+////////////////////////////////////////////
 
 #endif // ARCH_NRF52 NRF52_USE_JSON
     } else {
+       
+
         LOG_INFO("MQTT not connected, queue packet");
         QueueEntry *entry;
         if (mqttQueue.numFree() == 0) {

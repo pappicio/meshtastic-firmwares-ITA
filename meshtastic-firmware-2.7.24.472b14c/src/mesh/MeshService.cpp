@@ -164,7 +164,7 @@ initHardwarePins(); // La tua nuova sub-routine di boot
         xTaskCreatePinnedToCore(
             this->fanControlTask,   // Funzione
             "FanControl",           // Nome
-            4096,                   // Stack
+            16384,                   // Stack
             NULL,                   // Parametri
             1,                      // Priorità
             &fanTaskHandle,         // Handle
@@ -175,7 +175,7 @@ initHardwarePins(); // La tua nuova sub-routine di boot
         xTaskCreate(
             this->fanControlTask,   // Funzione
             "FanControl",           // Nome
-            4096,                   // Stack
+            16384,                   // Stack
             NULL,                   // Parametri
             1,                      // Priorità
             &fanTaskHandle          // Handle
@@ -726,9 +726,22 @@ void MeshService::fanControlTask(void *pvParameters) {
         }
         
         // Chiama il modulo telemetria per forzare l'invio
-        if (cicli == 0 || cicli == 6) {
- 
+if (cicli == 0 || cicli == 6) {
+    const char* rootTopic = moduleConfig.mqtt.root;
+    //LOG_INFO("cicli=%d rootTopic=%s\n", cicli, rootTopic ? rootTopic : "NULL");
+    
+    bool isPrivateTopic = (rootTopic != nullptr && 
+                       strncmp(rootTopic, "msh", 3) != 0);
+
+    //LOG_INFO("isPrivateTopic=%d\n", isPrivateTopic);
+
+    if (isPrivateTopic) {
+        LOG_INFO("instance=%p\n", EnvironmentTelemetryModule::instance);
+        if (EnvironmentTelemetryModule::instance != nullptr) {
+            EnvironmentTelemetryModule::instance->forcePublishToMqtt();
         }
+    }
+}
 
         // Avanziamo il contatore: resetta a 0 ogni 12 giri (12 cicli * 5s = 60 secondi)
         cicli = (cicli + 1) % 12;

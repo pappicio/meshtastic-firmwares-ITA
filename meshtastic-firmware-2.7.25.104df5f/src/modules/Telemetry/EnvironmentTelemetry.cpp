@@ -22,8 +22,6 @@
 #include "target_specific.h"
 #include <OLEDDisplay.h>
 
- 
-
 
 
 ///////////////////////////////////////////////
@@ -31,7 +29,9 @@
 
 #include <Wire.h>
 
+#include "mqtt/MQTT.h"
 ///////////////////////////////////////////////
+
 
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
 
@@ -637,8 +637,75 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
     return false; // Let others look at this message also if they want
 }
 
- 
+///////////////////////////////////////////////
 
+void EnvironmentTelemetryModule::forcePublishToMqtt() {
+    LOG_INFO("forcePublishToMqtt chiamata\n");
+
+    // ─── Pacchetto 1: Environment ───
+    meshtastic_Telemetry tEnv = meshtastic_Telemetry_init_zero;
+    tEnv.which_variant = meshtastic_Telemetry_environment_metrics_tag;
+    getEnvironmentTelemetry(&tEnv);
+
+    meshtastic_MeshPacket pEnv = meshtastic_MeshPacket_init_zero;
+    pEnv.which_payload_variant = meshtastic_MeshPacket_decoded_tag;
+    pEnv.decoded.portnum = meshtastic_PortNum_TELEMETRY_APP;
+    pEnv.hop_limit = 0;
+    pEnv.id = generatePacketId();
+    pEnv.to   = nodeDB->getNodeNum();
+    pEnv.from = nodeDB->getNodeNum();
+    pEnv.channel = 0;
+    pEnv.want_ack = false;
+    pEnv.rx_time = getValidTime(RTCQuality::RTCQualityDevice, true);
+
+    pb_ostream_t streamEnv = pb_ostream_from_buffer(pEnv.decoded.payload.bytes, sizeof(pEnv.decoded.payload.bytes));
+    pb_encode(&streamEnv, &meshtastic_Telemetry_msg, &tEnv);
+    pEnv.decoded.payload.size = streamEnv.bytes_written;
+
+    // ─── Pacchetto 2: Device (batteria, uptime, voltage) ───
+    meshtastic_Telemetry tDev = meshtastic_Telemetry_init_zero;
+    tDev.which_variant = meshtastic_Telemetry_device_metrics_tag;
+    tDev.variant.device_metrics.battery_level  = powerStatus->getBatteryChargePercent();
+    tDev.variant.device_metrics.voltage        = powerStatus->getBatteryVoltageMv() / 1000.0f;
+    tDev.variant.device_metrics.uptime_seconds = millis() / 1000;
+    tDev.variant.device_metrics.has_battery_level  = true;
+    tDev.variant.device_metrics.has_voltage        = true;
+    tDev.variant.device_metrics.has_uptime_seconds = true;
+     
+    tDev.variant.device_metrics.air_util_tx = airTime->utilizationTXPercent();
+    tDev.variant.device_metrics.channel_utilization = airTime->channelUtilizationPercent();
+    tDev.variant.device_metrics.has_air_util_tx = true;
+    tDev.variant.device_metrics.has_channel_utilization = true;
+
+    meshtastic_MeshPacket pDev = meshtastic_MeshPacket_init_zero;
+    pDev.which_payload_variant = meshtastic_MeshPacket_decoded_tag;
+    pDev.decoded.portnum = meshtastic_PortNum_TELEMETRY_APP;
+    pDev.hop_limit = 0;
+    pDev.id = generatePacketId();
+    pDev.to   = nodeDB->getNodeNum();
+    pDev.from = nodeDB->getNodeNum();
+    pDev.channel = 0;
+    pDev.want_ack = false;
+    
+    pDev.rx_time = getValidTime(RTCQuality::RTCQualityDevice, true);
+ 
+    pb_ostream_t streamDev = pb_ostream_from_buffer(pDev.decoded.payload.bytes, sizeof(pDev.decoded.payload.bytes));
+    pb_encode(&streamDev, &meshtastic_Telemetry_msg, &tDev);
+    pDev.decoded.payload.size = streamDev.bytes_written;
+
+    // ─── Iniezione diretta in MQTT ───
+    if (mqtt) {
+          mqtt->onSend(pEnv, pEnv, 0);
+    
+        LOG_INFO("mqtt->onSend pEnv chiamato\n");
+        mqtt->onSend(pDev, pDev, 0);
+        LOG_INFO("mqtt->onSend pDev chiamato\n");
+    } else {
+        LOG_WARN("MQTT::instance è nullptr, skip\n");
+    }
+
+
+}
 ///////////////////////////////////////////////
 void EnvironmentTelemetryModule::aggiornaTemperaturaBox() {
     // 1. Configurazione FLAG per la lettura

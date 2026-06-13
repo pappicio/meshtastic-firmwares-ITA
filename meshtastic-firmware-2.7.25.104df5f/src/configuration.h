@@ -735,7 +735,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "1 modulo mio"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "modulo mio"
 #define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMX"
 
 #define USERPREFS_SPLASH_TEXT "MMMX"
@@ -952,7 +952,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_SSID "SSID_WIFI"
 
 #undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "PASSWORD_WIFI"
+#define USERPREFS_NETWORK_WIFI_PSK "SSID_PASSWORD"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
@@ -964,17 +964,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MY_STATIC_SUBNET  255, 255, 255, 0
 #define MY_STATIC_DNS     8, 8, 8, 8
 
+
+
 // --- MQTT ---
 #undef USERPREFS_MQTT_ENABLED
 #define USERPREFS_MQTT_ENABLED 1
 #undef USERPREFS_MQTT_ADDRESS
 #define USERPREFS_MQTT_ADDRESS "192.168.1.X"
 #undef USERPREFS_MQTT_USERNAME
-#define USERPREFS_MQTT_USERNAME "mio_utente"
+#define USERPREFS_MQTT_USERNAME "mqtt_user"
 #undef USERPREFS_MQTT_PASSWORD
-#define USERPREFS_MQTT_PASSWORD "mia_password"
+#define USERPREFS_MQTT_PASSWORD "mqtt_password"
 #undef USERPREFS_MQTT_ROOT_TOPIC
-#define USERPREFS_MQTT_ROOT_TOPIC "mesh/XXX"
+#define USERPREFS_MQTT_ROOT_TOPIC "mesh/SXXX" //il root topic deve essere diverso da "msh", qualsiasi cosa va bene anche "provate/XXX" ad esempio
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
