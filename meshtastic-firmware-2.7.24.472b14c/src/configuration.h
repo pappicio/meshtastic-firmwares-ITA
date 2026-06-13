@@ -690,7 +690,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 //TX POWER
-#define DBI30 31 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
+#define DBI30 30 //fino anche a max 30 dbi e oltre, ma attenzione alle norme vigenti!
 
 // TRACEROUTE Intervallo minimo in secondi tra 1 e l'altro! 
 // NON inserire valori minori di 20 secondi, potrebbe saturare il traffico!!!
@@ -727,10 +727,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 #define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "MESH MODSxxx"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMXX"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "1 modulo mio"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMX"
 
-#define USERPREFS_SPLASH_TEXT "MMXX"
+#define USERPREFS_SPLASH_TEXT "MMMX"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -767,7 +767,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
-        #define DHTTYPE DHT22  // O DHT22 a seconda di cosa hai montato
+        #define DHTTYPE DHT22  // DHT11 O DHT22 a seconda di cosa hai montato
         #define HAS_HUMIDITY 1  
     #endif
 #endif
@@ -913,11 +913,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // --- CONFIGURAZIONE RELAY REMOTO ---
-////#define CMD_RELAY_ON  "ApritiSesamo_123!"  // Password esatta per accendere
-////#define CMD_RELAY_OFF "ChiuditiSesamo_123!"   // Password esatta per spegnere
+////#define CMD_RELAY_ON  "accendi"  // Password esatta per accendere
+////#define CMD_RELAY_OFF "spegni"   // Password esatta per spegnere
 
 // per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
-// ApritiSesamo_123! luce
+// password accendi relay1
 
    // Nomi dei Relay (da scrivere dopo la password e lo spazio)
 //#define RELAY_1_PIN 47 //2     pin 2 nn va bene, pin occupato da altro verificare sempre  // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
@@ -941,31 +941,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_ENABLED true
 
 #undef USERPREFS_NETWORK_WIFI_SSID
-#define USERPREFS_NETWORK_WIFI_SSID "SSID"
+#define USERPREFS_NETWORK_WIFI_SSID "SSID_WIFI"
 
 #undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "WIFI_PASSWOED"
+#define USERPREFS_NETWORK_WIFI_PSK "PASSWORD_WIFI"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
     #undef MESHTASTIC_EXCLUDE_WIFI
 #endif
 
-#define MY_STATIC_IP      192, 168, 1, 251
+#define MY_STATIC_IP      192, 168, 1, 250
 #define MY_STATIC_GATEWAY 192, 168, 1, 1
 #define MY_STATIC_SUBNET  255, 255, 255, 0
 #define MY_STATIC_DNS     8, 8, 8, 8
 
 // --- MQTT ---
-// #undef USERPREFS_MQTT_ENABLED
-// #define USERPREFS_MQTT_ENABLED 1
-// #undef USERPREFS_MQTT_ADDRESS
-// #define USERPREFS_MQTT_ADDRESS "mqtt.meshtastic.org"
-// #undef USERPREFS_MQTT_USERNAME
-// #define USERPREFS_MQTT_USERNAME "meshdev"
-// #undef USERPREFS_MQTT_PASSWORD
-// #define USERPREFS_MQTT_PASSWORD "large4cats"
-//#undef USERPREFS_MQTT_ROOT_TOPIC
+#undef USERPREFS_MQTT_ENABLED
+#define USERPREFS_MQTT_ENABLED 1
+#undef USERPREFS_MQTT_ADDRESS
+#define USERPREFS_MQTT_ADDRESS "192.168.1.X"
+#undef USERPREFS_MQTT_USERNAME
+#define USERPREFS_MQTT_USERNAME "mio_utente"
+#undef USERPREFS_MQTT_PASSWORD
+#define USERPREFS_MQTT_PASSWORD "mia_password"
+#undef USERPREFS_MQTT_ROOT_TOPIC
+#define USERPREFS_MQTT_ROOT_TOPIC "mesh/XXX"
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
