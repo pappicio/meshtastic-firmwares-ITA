@@ -1031,35 +1031,7 @@ void Power::readPowerStatus()
 
 ///////////////////////////////////////////////
 
-#ifdef FORCE_SLEEP_MV_FOR_TEST
-    static bool testDone = false; // Per evitare loop infiniti nello stesso ciclo
-    unsigned long currentMillis = millis();
-
-    // Verifichiamo il boot count (se disponibile in RTC memory) 
-    // o semplicemente usiamo i millis per il primo minuto.
-    if (!testDone && currentMillis > 30000) { // 60 secondi di attività
-        
-        LOG_INFO("--- DEBUG SLEEP TEST START ---");
-        LOG_INFO("1 minuto passato. Invio ultima telemetria...");
-
-        if (!onsleep) {
-            onsleep = true;
-            sendlasttelemetry();
-            // Un piccolo delay per essere sicuri che il pacchetto LoRa parta
-            delay(5000); 
-        }
-
-        LOG_ERROR("Entro in Deep Sleep per 30 secondi. Speriamo che lo schermo torni!");
-         
-        testDone = true; 
-
-        // shutdown(tempo_in_ms, ignore_timer)
-        // 30000 ms = 30 secondi
-        shutdown(10000, true); 
-        
-        return; 
-    }
-#endif
+ 
 
 
 // ============================================================
