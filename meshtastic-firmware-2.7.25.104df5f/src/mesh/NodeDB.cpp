@@ -843,7 +843,11 @@ void NodeDB::installDefaultModuleConfig()
     moduleConfig.has_mqtt = true;
 
 ////////////////////////////////////////////
-    moduleConfig.mqtt.json_enabled = true; // default abilitato
+#ifdef USERPREFS_MQTT_JSON_ENABLED
+    moduleConfig.mqtt.json_enabled = USERPREFS_MQTT_JSON_ENABLED;
+#else
+    moduleConfig.mqtt.json_enabled = false; // default abilitato
+#endif
 ////////////////////////////////////////////
 
     moduleConfig.has_range_test = true;
