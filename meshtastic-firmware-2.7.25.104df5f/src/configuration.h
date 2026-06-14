@@ -733,12 +733,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- INFO PROPRIETARIO ---
-#define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
+//////#define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "modulo mio"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMX"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "1modulo mio"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMM"
 
-#define USERPREFS_SPLASH_TEXT "MMMX"
+#define USERPREFS_SPLASH_TEXT "MMMM"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -949,10 +949,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_NETWORK_WIFI_ENABLED true
 
 #undef USERPREFS_NETWORK_WIFI_SSID
-#define USERPREFS_NETWORK_WIFI_SSID "SSID_WIFI"
+#define USERPREFS_NETWORK_WIFI_SSID "ssid_mio"
 
 #undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "SSID_PASSWORD"
+#define USERPREFS_NETWORK_WIFI_PSK "password_mia"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
@@ -970,13 +970,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #undef USERPREFS_MQTT_ENABLED
 #define USERPREFS_MQTT_ENABLED 1
 #undef USERPREFS_MQTT_ADDRESS
-#define USERPREFS_MQTT_ADDRESS "192.168.1.X"
+#define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
 #undef USERPREFS_MQTT_USERNAME
-#define USERPREFS_MQTT_USERNAME "mqtt_user"
+#define USERPREFS_MQTT_USERNAME "mqttuser"
 #undef USERPREFS_MQTT_PASSWORD
-#define USERPREFS_MQTT_PASSWORD "mqtt_password"
+#define USERPREFS_MQTT_PASSWORD "mqttpassword"
 #undef USERPREFS_MQTT_ROOT_TOPIC
-#define USERPREFS_MQTT_ROOT_TOPIC "mesh/SXXX" //il root topic deve essere diverso da "msh", qualsiasi cosa va bene anche "provate/XXX" ad esempio
+#define USERPREFS_MQTT_ROOT_TOPIC "mesh/XXX" //il root topic deve essere diverso da "msh", qualsiasi cosa va bene anche "provate/XXX" ad esempio
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////

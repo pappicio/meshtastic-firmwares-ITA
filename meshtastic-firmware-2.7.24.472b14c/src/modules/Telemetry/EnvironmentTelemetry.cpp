@@ -169,6 +169,9 @@ extern boolean onsleep;
 
 static bool isTelemetryBusy = false;
 
+volatile bool EnvironmentTelemetryModule::pendingMqttPublish = false;
+
+
 #ifdef RAIN_SENSOR_PIN
 // ATTENZIONE: Qui le variabili sono già dichiarate extern altrove, 
     // quindi le usiamo direttamente senza il tipo (float) davanti.
@@ -288,6 +291,14 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 
 int32_t EnvironmentTelemetryModule::runOnce()
 {
+
+////forzioamo mqtt publish topic privato
+    if (pendingMqttPublish) {
+        pendingMqttPublish = false;
+        forcePublishToMqtt();
+    }
+/////////////////////////
+
     // 1. Gestione Deep Sleep (Codice originale)
     if (sleepOnNextExecution == true) {
         sleepOnNextExecution = false;

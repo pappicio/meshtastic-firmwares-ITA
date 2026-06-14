@@ -69,6 +69,8 @@ extern float fanTemp;
 extern float fanHum; 
  
 extern EnvironmentTelemetryModule *environmentTelemetryModule;
+ 
+
 ///////////////////////////////////////////////
 
 
@@ -164,7 +166,7 @@ initHardwarePins(); // La tua nuova sub-routine di boot
         xTaskCreatePinnedToCore(
             this->fanControlTask,   // Funzione
             "FanControl",           // Nome
-            16384,                   // Stack
+            4096,                   // Stack
             NULL,                   // Parametri
             1,                      // Priorità
             &fanTaskHandle,         // Handle
@@ -175,7 +177,7 @@ initHardwarePins(); // La tua nuova sub-routine di boot
         xTaskCreate(
             this->fanControlTask,   // Funzione
             "FanControl",           // Nome
-            16384,                   // Stack
+            4096,                   // Stack
             NULL,                   // Parametri
             1,                      // Priorità
             &fanTaskHandle          // Handle
@@ -683,7 +685,36 @@ if (now_rain > 1000000000UL) {
 }
 
 #endif
+
+
 ///////////////////////////////////////////////
+static bool isPrivateIpAddress(const IPAddress &ip)
+{
+    constexpr struct {
+        uint32_t network;
+        uint32_t mask;
+    } privateCidrRanges[] = {
+        {.network = 192u << 24 | 168 << 16, .mask = 0xffff0000},
+        {.network = 172u << 24 | 16 << 16, .mask = 0xfff00000},
+        {.network = 169u << 24 | 254 << 16, .mask = 0xffff0000},
+        {.network = 10u << 24, .mask = 0xff000000},
+        {.network = 127u << 24 | 1, .mask = 0xffffffff},
+        {.network = 100u << 24 | 64 << 16, .mask = 0xffc00000},
+    };
+    const uint32_t addr = ntohl(ip);
+    for (const auto &cidrRange : privateCidrRanges) {
+        if (cidrRange.network == (addr & cidrRange.mask)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+/////////////////////////////////////////
+
+
+
 
 // Task di sistema per il loop di controllo
 void MeshService::fanControlTask(void *pvParameters) {
@@ -727,18 +758,12 @@ void MeshService::fanControlTask(void *pvParameters) {
         
         // Chiama il modulo telemetria per forzare l'invio
 if (cicli == 0 || cicli == 6) {
-    const char* rootTopic = moduleConfig.mqtt.root;
-    //LOG_INFO("cicli=%d rootTopic=%s\n", cicli, rootTopic ? rootTopic : "NULL");
-    
-    bool isPrivateTopic = (rootTopic != nullptr && 
-                       strncmp(rootTopic, "msh", 3) != 0);
-
-    //LOG_INFO("isPrivateTopic=%d\n", isPrivateTopic);
-
-    if (isPrivateTopic) {
-        LOG_INFO("instance=%p\n", EnvironmentTelemetryModule::instance);
+    IPAddress brokerIp;
+    brokerIp.fromString(moduleConfig.mqtt.address);
+   
+    if ( isPrivateIpAddress(brokerIp)) {
         if (EnvironmentTelemetryModule::instance != nullptr) {
-            EnvironmentTelemetryModule::instance->forcePublishToMqtt();
+            EnvironmentTelemetryModule::pendingMqttPublish = true; // solo flag, niente chiamate
         }
     }
 }

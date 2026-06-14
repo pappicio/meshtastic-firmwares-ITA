@@ -12,9 +12,7 @@
 #include "modules/RoutingModule.h"
 
 ////////////////////////////////////////
-#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
-#include "modules/Telemetry/EnvironmentTelemetry.h"
-#endif
+ 
 ////////////////////////////////////////
 
 #if defined(ARCH_ESP32)
@@ -772,11 +770,6 @@ void MQTT::publishQueuedMessages()
 
 void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_MeshPacket &mp_decoded, ChannelIndex chIndex)
 {
-
-     LOG_INFO("MQTT onSend from=%u nodeNum=%u isFromUs=%d\n", 
-        mp_decoded.from, nodeDB->getNodeNum(), isFromUs(&mp_decoded));
-
-
     if (mp_encrypted.via_mqtt)
         return; // Don't send messages that came from MQTT back into MQTT
     bool uplinkEnabled = false;
