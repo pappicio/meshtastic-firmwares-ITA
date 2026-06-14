@@ -841,6 +841,15 @@ void NodeDB::installDefaultModuleConfig()
 
     moduleConfig.version = DEVICESTATE_CUR_VER;
     moduleConfig.has_mqtt = true;
+
+////////////////////////////////////////////
+#ifdef USERPREFS_MQTT_JSON_ENABLED
+    moduleConfig.mqtt.json_enabled = USERPREFS_MQTT_JSON_ENABLED;
+#else
+    moduleConfig.mqtt.json_enabled = false; // default abilitato
+#endif
+////////////////////////////////////////////
+
     moduleConfig.has_range_test = true;
     moduleConfig.has_serial = true;
     moduleConfig.has_store_forward = true;
