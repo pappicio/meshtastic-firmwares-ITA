@@ -88,6 +88,9 @@ TaskHandle_t fanTaskHandle = NULL;
 // Prototipi
 void checkInternalFan();
 void checkAutoReboot();
+
+std::string MeshService::globalPrivateBuffer = "";
+
 ///////////////////////////////////////////////
 
 // --- BLOCCHI ESISTENTI (NON TOCCARLI) ---

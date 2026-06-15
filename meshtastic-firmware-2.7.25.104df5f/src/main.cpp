@@ -222,7 +222,7 @@ boolean onsleep=false;
 ///////////////////////////////////////////////
 
 // --- DEFINIZIONE REALE CON VALORI INIZIALI IN RAM ---
-float ANEMOMETRO_GUADAGNO   = 1.38f;
+float ANEMOMETRO_GUADAGNO   = 0.703f;
 float ANEMOMETRO_ATTRITO    = 0.30f;
 float WIND_NORTH_OFFSET     = 0.0f;
 

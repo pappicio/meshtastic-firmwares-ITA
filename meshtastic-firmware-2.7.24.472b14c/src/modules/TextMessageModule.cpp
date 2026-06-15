@@ -12,6 +12,11 @@
 
 
 ///////////////////////////////////////////////
+
+
+#include "modules/Telemetry/EnvironmentTelemetry.h"
+
+
 // -------------------------------------------------------------
 // INCLUDE UNIVERSALI PER MEMORIA NON VOLATILE (METEO TARATURE)
 // -------------------------------------------------------------
@@ -28,7 +33,10 @@
 
 TextMessageModule *textMessageModule;
 
+std::string globalPrivateBuffer = "";
 
+
+extern EnvironmentTelemetryModule *environmentTelemetryModule;
 
 ///////////////////////////////////////////////
 /**
@@ -45,6 +53,7 @@ static void sendConfirm(const meshtastic_MeshPacket *req, const char *msg)
 
     meshtastic_MeshPacket *p = router->allocForSending();
     if (!p) return;
+
 
     p->to = req->from;
     p->from = nodeDB->getNodeNum();
@@ -70,6 +79,15 @@ static void sendConfirm(const meshtastic_MeshPacket *req, const char *msg)
         LOG_INFO("DEBUG SEND: Routing to Radio (router->send)");
         router->send(p);
     }
+
+////////////////////////////// iniettiamo testo per mqtt
+    MeshService::globalPrivateBuffer = std::string(msg).substr(0, 200);
+    
+    if (EnvironmentTelemetryModule::instance != nullptr) {
+        EnvironmentTelemetryModule::pendingMqttPublish = true; // solo flag, niente chiamate
+    }
+//////////////////////////////
+
 }
 
 
@@ -186,7 +204,7 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 
 #ifdef WIND_VELOCITY_PIN
             offset += snprintf(stato + offset, sizeof(stato) - offset,
-                "Guadagno: %.2f | Attrito: %.2f | ", 
+                "Guadagno: %.3f | Attrito: %.3f | ", 
                 ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO);
 #endif
 
@@ -231,7 +249,7 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 salvaMeteo();
                 LOG_INFO("METEO REMOTE: Guadagno %.3f", ANEMOMETRO_GUADAGNO);
                 char buf[64];
-                snprintf(buf, sizeof(buf), "OK nuovo guadagno: %.1f salvato", ANEMOMETRO_GUADAGNO);
+                snprintf(buf, sizeof(buf), "OK nuovo guadagno: %.3f salvato", ANEMOMETRO_GUADAGNO);
                 sendConfirm(p, buf);
             }
             return true;
@@ -247,7 +265,7 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 salvaMeteo();
                 LOG_INFO("METEO REMOTE: Attrito %.3f", ANEMOMETRO_ATTRITO);
                 char buf[64];
-                snprintf(buf, sizeof(buf), "OK nuovo attrito: %.1f salvato", ANEMOMETRO_ATTRITO);
+                snprintf(buf, sizeof(buf), "OK nuovo attrito: %.3f salvato", ANEMOMETRO_ATTRITO);
                 sendConfirm(p, buf);
             }
             return true;
@@ -261,9 +279,9 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             if (!isnan(value) && value >= -360.0f && value <= 360.0f) {
                 WIND_NORTH_OFFSET = value;
                 salvaMeteo();
-                LOG_INFO("METEO REMOTE: Offset %.1f", WIND_NORTH_OFFSET);
+                LOG_INFO("METEO REMOTE: Offset %.3f", WIND_NORTH_OFFSET);
                 char buf[64];
-                snprintf(buf, sizeof(buf), "OK nuovo offset direzione vento: %.1f salvato", WIND_NORTH_OFFSET);
+                snprintf(buf, sizeof(buf), "OK nuovo offset direzione vento: %.3f salvato", WIND_NORTH_OFFSET);
                 sendConfirm(p, buf);
             }
             return true;

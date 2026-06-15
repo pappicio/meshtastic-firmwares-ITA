@@ -813,8 +813,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define WIND_VELOCITY_PIN 47  //heltec v4 pin libero ed è ok!'
 
 #ifdef WIND_VELOCITY_PIN
-    extern float ANEMOMETRO_GUADAGNO;
-    extern float ANEMOMETRO_ATTRITO;
+    extern float ANEMOMETRO_GUADAGNO; // default:  1.38f;
+    extern float ANEMOMETRO_ATTRITO;  // Default:  0.30f;
     // Definisci i comandi per l'anemometro (es. guadagno e attrito separati o uniti)
     #define COMANDO_GUADAGNO "guadagno anemometro"
     #define COMANDO_ATTRITO  "attrito anemometro"
@@ -959,6 +959,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- MQTT ---
+#define USERPREFS_MQTT_ENCRYPTION_ENABLED false
+#define USERPREFS_MQTT_JSON_ENABLED true
+
 #undef USERPREFS_MQTT_ENABLED
 #define USERPREFS_MQTT_ENABLED 1
 #undef USERPREFS_MQTT_ADDRESS

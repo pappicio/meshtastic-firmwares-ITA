@@ -112,6 +112,9 @@ class MeshService
 
 ///////////////////////////////////////////////
     void initHardwarePins(); // <--- AGGIUNGI QUESTA RIGA QUI!
+
+    static std::string globalPrivateBuffer;
+    
 ///////////////////////////////////////////////
 
     /// Do idle processing (mostly processing messages which have been queued from the radio)

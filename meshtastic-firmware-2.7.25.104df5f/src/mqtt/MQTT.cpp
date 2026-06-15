@@ -831,7 +831,6 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         publish(topic.c_str(), bytes, numBytes, false);
 
         ///////////////////////////////////
-// In MeshModule.cpp (o dove risiede la logica MQTT)
 #if !defined(ARCH_NRF52) || defined(NRF52_USE_JSON)
     if (!moduleConfig.mqtt.json_enabled) return;
 
@@ -840,17 +839,31 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
 
     std::string nodeIdForJson = nodeDB->getNodeId();
 
-    // SE il flag è attivo e se inviamo noi..., inviamo SOLO al privato
-if (isFromUs(&mp_decoded)) {
-    std::string privateTopic = std::string(moduleConfig.mqtt.root) + "/privato/" + nodeIdForJson + "/telemetry";
-    publish(privateTopic.c_str(), jsonString.c_str(), false);
-    return;
-} else {
-    std::string topicJson = jsonTopic + channelId + "/" + nodeIdForJson;
-    publish(topicJson.c_str(), jsonString.c_str(), false);
-}
-////////////////////////////////////////////
+    // 1. Setup condizioni di rete
+    IPAddress brokerIp;
+    brokerIp.fromString(moduleConfig.mqtt.address);
+    bool canPublishPrivate = isPrivateIpAddress(brokerIp);
+    
+    // 2. Controllo destinazione: è un comando diretto a noi?
+    bool isForUs = (mp_decoded.to == nodeDB->getNodeNum());
 
+    // 3. GESTIONE RISPOSTA (Sempre se per noi e su rete privata)
+    if (canPublishPrivate && isForUs && !MeshService::globalPrivateBuffer.empty()) {
+        std::string privateTopic = std::string(moduleConfig.mqtt.root) + "/privato/" + nodeIdForJson + "/risposta";
+        publish(privateTopic.c_str(), MeshService::globalPrivateBuffer.c_str(), false);
+        MeshService::globalPrivateBuffer.clear();
+    }
+
+    // 4. GESTIONE TELEMETRIA E INVIO STANDARD
+    if (isFromUs(&mp_decoded) && canPublishPrivate) {
+        std::string telemetryTopic = std::string(moduleConfig.mqtt.root) + "/privato/" + nodeIdForJson + "/telemetry";
+        publish(telemetryTopic.c_str(), jsonString.c_str(), false);
+        return; // <--- AGGIUNTO: Esce esattamente come facevi prima
+    } else {
+        std::string topicJson = jsonTopic + channelId + "/" + nodeIdForJson;
+        publish(topicJson.c_str(), jsonString.c_str(), false);
+    }
+////////////////////////////////////////////
 #endif // ARCH_NRF52 NRF52_USE_JSON
     } else {
        

@@ -707,7 +707,6 @@ void EnvironmentTelemetryModule::forcePublishToMqtt() {
     // ─── Iniezione diretta in MQTT ───
     if (mqtt) {
           mqtt->onSend(pEnv, pEnv, 0);
-    
         LOG_INFO("mqtt->onSend pEnv chiamato\n");
         mqtt->onSend(pDev, pDev, 0);
         LOG_INFO("mqtt->onSend pDev chiamato\n");

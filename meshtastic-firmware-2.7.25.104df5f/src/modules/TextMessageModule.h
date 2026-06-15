@@ -21,7 +21,7 @@ class TextMessageModule : public SinglePortModule, public Observable<const mesht
     TextMessageModule() : SinglePortModule("text", meshtastic_PortNum_TEXT_MESSAGE_APP) {}
 
     bool recentlySeen(uint32_t id);
-
+ 
   protected:
     /** Called to handle a particular incoming message
      *
@@ -37,3 +37,9 @@ class TextMessageModule : public SinglePortModule, public Observable<const mesht
 };
 
 extern TextMessageModule *textMessageModule;
+
+    
+////////////////////////////////////
+extern std::string globalPrivateBuffer;
+////////////////////////////////////
+
