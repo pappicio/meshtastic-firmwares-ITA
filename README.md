@@ -15,8 +15,23 @@ oppure
 
 da cli con il seguente comando:
 
-***meshtastic  --host 192.168.1.251 --listen --sendtext "password_comando stato sensori" --dest "!id_nodo"***
+***meshtastic  --host 192.168.1.251 --sendtext "password_comando stato sensori" --dest "!id_nodo"***
 
+### 📡 Integrazione Broker MQTT Privato (Feedback in tempo reale)
+
+Ora il sistema supporta il **feedback automatico via MQTT**. Quando un comando viene impartito al nodo (tramite CLI o App), la risposta non viene solo rimbalzata via radio, ma pubblicata istantaneamente sul broker MQTT privato.
+
+#### **Come funziona**
+* **Destinazione**: La risposta viene inviata solo se il comando è esplicitamente diretto al tuo nodo (es. tramite `--dest "!id_nodo"`).
+* **Condizioni**: Il broker MQTT deve essere attivo (`moduleConfig.mqtt.enabled = true`) e l'indirizzo IP deve essere rilevato come **rete privata**.
+* **Topic di ricezione**: 
+  `mesh/SA01/privato/[!id_nodo]/risposta`
+
+#### **Esempio di flusso Operativo**
+
+1. **Invio Comando (da CLI):**
+   ```bash
+   meshtastic --host 192.168.1.251 --sendtext "password_comando stato" --dest "!699c0a00"
 
 invece per avere tutti i log sul pc (windows) scaricare
 
