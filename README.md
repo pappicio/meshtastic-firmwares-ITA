@@ -31,8 +31,10 @@ Se vuoi aprire il progetto direttamente in Visual Studio Code con tutte le dipen
    cd C:\percorso\della\tua\cartella\meshtastic-firmware
 
    Digita il comando per aprire VS Code sul progetto corrente:
+
+   code .
    
-code .
+
 
 
 
