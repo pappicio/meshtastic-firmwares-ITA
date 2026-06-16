@@ -852,6 +852,7 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         std::string privateTopic = std::string(moduleConfig.mqtt.root) + "/privato/" + nodeIdForJson + "/risposta";
         publish(privateTopic.c_str(), MeshService::globalPrivateBuffer.c_str(), false);
         MeshService::globalPrivateBuffer.clear();
+        return; // <--- AGGIUNGO QUESTO!
     }
 
     // 4. GESTIONE TELEMETRIA E INVIO STANDARD
@@ -861,6 +862,7 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         return; // <--- AGGIUNTO: Esce esattamente come facevi prima
     } else {
         std::string topicJson = jsonTopic + channelId + "/" + nodeIdForJson;
+        LOG_INFO("JSON publish message to %s, %u bytes: %s", topicJson.c_str(), jsonString.length(), jsonString.c_str());
         publish(topicJson.c_str(), jsonString.c_str(), false);
     }
 ////////////////////////////////////////////
