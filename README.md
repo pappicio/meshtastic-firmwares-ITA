@@ -3,6 +3,43 @@
 
 ***aggiuntoa ultima release alpha: meshtastic-firmware-2.7.25 (ultima alpha)***
 
+
+---
+
+## 🚀 Novità: Supporto Arduino OTA (Over-The-Air)
+È stato implementato il supporto ad **Arduino OTA**. Questo permette di flashare il firmware sul nodo direttamente via Wi-Fi, senza dover scollegare il dispositivo o salire sul tetto per attaccare il cavo USB.
+
+> ⚠️ **Limitazione Hardware:** Questa funzionalità è supportata **esclusivamente dai microcontrollori della famiglia ESP32** (es. Heltec V3/V4), in quanto dotati di modulo Wi-Fi integrato. Non è utilizzabile su architetture prive di Wi-Fi nativo come nRF52 (es. RAK) o RP2040.
+
+### 📌 Prerequisiti Importanti
+1. **Conoscere l'IP esatto:** Per l'invio del firmware è fondamentale conoscere l'indirizzo IP statico o dinamico (es. `192.168.1.251`) assegnato al dispositivo target all'interno della stessa rete locale.
+2. **Posizione nel Terminale:** Tutti i comandi d'ambiente e di flash vanno eseguiti **obbligatoriamente** all'interno della cartella principale del progetto (la *root*), ovvero dove è presente il file `platformio.ini`.
+
+per upload su wifi, da dos shell e nella cartella principale del progetto meshtastic, digitare:
+
+***pio run -e heltec-v4 -t upload --upload-port 192.168.1.251***
+
+(se trattasi di heltec v4 avente ip:192.168.1.251 sulla rete LAN domestica)
+---
+
+## 💻 Come avviare l'ambiente di sviluppo (VS Code)
+Se vuoi aprire il progetto direttamente in Visual Studio Code con tutte le dipendenze di PlatformIO correttamente allineate tramite terminale:
+
+1. Apri il prompt dei comandi (**DOS shell**).
+2. Spostati nella cartella del progetto:
+   ```cmd
+   cd C:\percorso\della\tua\cartella\meshtastic-firmware
+
+   Digita il comando per aprire VS Code sul progetto corrente:
+
+   code .
+   
+
+
+
+
+
+
 ***per recurerare dati sul teminale:***
 
 ***python -u -m meshtastic --host 192.168.1.250 --listen > log.txt 2>&1***
@@ -15,8 +52,23 @@ oppure
 
 da cli con il seguente comando:
 
-***meshtastic  --host 192.168.1.251 --listen --sendtext "password_comando stato sensori" --dest "!id_nodo"***
+***meshtastic  --host 192.168.1.251 --sendtext "password_comando stato sensori" --dest "!id_nodo"***
 
+### 📡 Integrazione Broker MQTT Privato (Feedback in tempo reale)
+
+Ora il sistema supporta il **feedback automatico via MQTT**. Quando un comando viene impartito al nodo (tramite CLI o App), la risposta non viene solo rimbalzata via radio, ma pubblicata istantaneamente sul broker MQTT privato.
+
+#### **Come funziona**
+* **Destinazione**: La risposta viene inviata solo se il comando è esplicitamente diretto al tuo nodo (es. tramite `--dest "!id_nodo"`).
+* **Condizioni**: Il broker MQTT deve essere attivo (`moduleConfig.mqtt.enabled = true`) e l'indirizzo IP deve essere rilevato come **rete privata**.
+* **Topic di ricezione**: 
+  `mesh/SA01/privato/[!id_nodo]/risposta`
+
+#### **Esempio di flusso Operativo**
+
+1. **Invio Comando (da CLI):**
+   ```bash
+   meshtastic --host 192.168.1.251 --sendtext "password_comando stato" --dest "!699c0a00"
 
 invece per avere tutti i log sul pc (windows) scaricare
 
