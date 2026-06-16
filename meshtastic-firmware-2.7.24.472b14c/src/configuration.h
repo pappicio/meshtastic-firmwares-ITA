@@ -977,7 +977,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define USERPREFS_MQTT_PASSWORD "mqtt_password"
     #undef USERPREFS_MQTT_ROOT_TOPIC
     
-    #define USERPREFS_MQTT_ROOT_TOPIC 
+    #undef USERPREFS_MQTT_ROOT_TOPIC
 
     #ifdef USERPREFS_CONFIG_OWNER_SHORT_NAME
         #define USERPREFS_MQTT_ROOT_TOPIC "mesh/" USERPREFS_CONFIG_OWNER_SHORT_NAME
