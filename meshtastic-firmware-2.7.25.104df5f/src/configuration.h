@@ -682,7 +682,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Nodo Router di backup. Introduce un leggero ritardo prima di ripetere, lasciando la precedenza ai Router principali.
 
 // Ruolo standard: partecipa attivamente, scala i tempi di invio se la rete è congestionata (>40 nodi).
-//#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
 
 #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
 // Nodo Client fisso (casa/ufficio). Ottimizza il routing sapendo di non essere in movimento.
@@ -735,10 +735,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // --- INFO PROPRIETARIO ---
 //////#define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
-#define USERPREFS_CONFIG_OWNER_LONG_NAME "1modulo mio"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMM"
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "1 modulo mio"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "XXXX"
 
-#define USERPREFS_SPLASH_TEXT "MMMM"
+#define USERPREFS_SPLASH_TEXT "XXXX"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -942,44 +942,57 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- NETWORK E WIFI ---
-#undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
-#define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
 
-#undef USERPREFS_NETWORK_WIFI_ENABLED
-#define USERPREFS_NETWORK_WIFI_ENABLED true
-
-#undef USERPREFS_NETWORK_WIFI_SSID
-#define USERPREFS_NETWORK_WIFI_SSID "ssid_mio"
-
-#undef USERPREFS_NETWORK_WIFI_PSK
-#define USERPREFS_NETWORK_WIFI_PSK "password_mia"
-
-// --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 #ifdef MESHTASTIC_EXCLUDE_WIFI
     #undef MESHTASTIC_EXCLUDE_WIFI
 #endif
 
-#define MY_STATIC_IP      192, 168, 1, 250
-#define MY_STATIC_GATEWAY 192, 168, 1, 1
-#define MY_STATIC_SUBNET  255, 255, 255, 0
-#define MY_STATIC_DNS     8, 8, 8, 8
+#define HAS_WIFI 1
+#if defined(HAS_WIFI) && (HAS_WIFI == 1)
+    #undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
+    #define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
 
+    #undef USERPREFS_NETWORK_WIFI_ENABLED
+    #define USERPREFS_NETWORK_WIFI_ENABLED true
 
+    #undef USERPREFS_NETWORK_WIFI_SSID
+    #define USERPREFS_NETWORK_WIFI_SSID "wifi_ssid"
+
+    #undef USERPREFS_NETWORK_WIFI_PSK
+    #define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
+
+// --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
+
+    #define MY_STATIC_IP      192, 168, 1, 251
+    #define MY_STATIC_GATEWAY 192, 168, 1, 1
+    #define MY_STATIC_SUBNET  255, 255, 255, 0
+    #define MY_STATIC_DNS     8, 8, 8, 8
+
+#endif
 
 // --- MQTT ---
-#define USERPREFS_MQTT_ENCRYPTION_ENABLED false
-#define USERPREFS_MQTT_JSON_ENABLED true
-
-#undef USERPREFS_MQTT_ENABLED
 #define USERPREFS_MQTT_ENABLED 1
-#undef USERPREFS_MQTT_ADDRESS
-#define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
-#undef USERPREFS_MQTT_USERNAME
-#define USERPREFS_MQTT_USERNAME "mqttuser"
-#undef USERPREFS_MQTT_PASSWORD
-#define USERPREFS_MQTT_PASSWORD "mqttpassword"
-#undef USERPREFS_MQTT_ROOT_TOPIC
-#define USERPREFS_MQTT_ROOT_TOPIC "mesh/XXX" //il root topic deve essere diverso da "msh", qualsiasi cosa va bene anche "provate/XXX" ad esempio
+#if defined (USERPREFS_MQTT_ENABLED) && (USERPREFS_MQTT_ENABLED == 1)
+    #define USERPREFS_MQTT_ENCRYPTION_ENABLED false
+    #define USERPREFS_MQTT_JSON_ENABLED true
+    #undef USERPREFS_MQTT_ENABLED
+    #define USERPREFS_MQTT_ENABLED 1
+    #undef USERPREFS_MQTT_ADDRESS
+    #define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
+    #undef USERPREFS_MQTT_USERNAME
+    #define USERPREFS_MQTT_USERNAME "mqtt_user"
+    #undef USERPREFS_MQTT_PASSWORD
+    #define USERPREFS_MQTT_PASSWORD "mqtt_password"
+    #undef USERPREFS_MQTT_ROOT_TOPIC
+    
+    #define USERPREFS_MQTT_ROOT_TOPIC 
+
+    #ifdef USERPREFS_CONFIG_OWNER_SHORT_NAME
+        #define USERPREFS_MQTT_ROOT_TOPIC "mesh/" USERPREFS_CONFIG_OWNER_SHORT_NAME
+    #else
+        #define USERPREFS_MQTT_ROOT_TOPIC "mesh/generico/"
+    #endif
+#endif
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////

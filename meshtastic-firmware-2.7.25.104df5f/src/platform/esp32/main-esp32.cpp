@@ -12,6 +12,14 @@
 
 #if HAS_WIFI
 #include "mesh/wifi/WiFiAPClient.h"
+
+//////////////////////////////////
+//////////////////////////////////
+#include <WiFi.h>        // <-- AGGIUNGI QUESTO PER SICUREZZA
+#include <ArduinoOTA.h> 
+//////////////////////////////////
+//////////////////////////////////
+
 #endif
 
 #include "esp_mac.h"
@@ -150,36 +158,50 @@ void esp32Setup()
     LOG_DEBUG("Number of Device Reboots: %d", rebootCounter);
 
 ////////////////////////////////////////////////////////////////////////
-#if !MESHTASTIC_EXCLUDE_WIFI
-    String version = MeshtasticOTA::getVersion();
-    if (version.isEmpty()) {
-        LOG_INFO("MeshtasticOTA firmware not available");
-    } else {
-        LOG_INFO("MeshtasticOTA firmware version %s", version.c_str());
-    }
-    
-    // --- 1. CONFIGURAZIONE IP STATICO (DA CONFIGURATION.H) ---
+#if HAS_WIFI && !MESHTASTIC_EXCLUDE_WIFI
+    // --- 1. CONFIGURAZIONE IP STATICO ---
     #if defined(MY_STATIC_IP) && defined(MY_STATIC_GATEWAY) && defined(MY_STATIC_SUBNET)
         IPAddress local_IP(MY_STATIC_IP);  
         IPAddress gateway(MY_STATIC_GATEWAY);     
         IPAddress subnet(MY_STATIC_SUBNET);    
         
-    #ifdef MY_STATIC_DNS
-        IPAddress dns(MY_STATIC_DNS);
-        if (!WiFi.config(local_IP, gateway, subnet, dns)) {
-    #else
-        if (!WiFi.config(local_IP, gateway, subnet, gateway)) {
+        #ifdef MY_STATIC_DNS
+            IPAddress dns(MY_STATIC_DNS);
+            if (!WiFi.config(local_IP, gateway, subnet, dns)) {
+                LOG_ERROR("Configurazione IP Statico Fallita!");
+            } else {
+                LOG_INFO("IP Statico applicato con successo!");
+            }
+        #else
+            if (!WiFi.config(local_IP, gateway, subnet, gateway)) {
+                LOG_ERROR("Configurazione IP Statico Fallita!");
+            } else {
+                LOG_INFO("IP Statico applicato con successo!");
+            }
+        #endif
     #endif
-            LOG_ERROR("Configurazione IP Statico Fallita!");
-        } else {
-            LOG_INFO("IP Statico applicato con successo!");
-        }
-#endif
-    
 
-    // --- 2. INIZIALIZZAZIONE SERVER OTA ---
-    // Questo apre la porta 3232 sull'IP impostato sopra e ti evita di salire sul tetto
-    MeshtasticOTA::initialize();
+    // --- 2. INIZIALIZZAZIONE ARDUINO OTA ---
+    ArduinoOTA.setPort(3232);
+
+    #ifdef USERPREFS_CONFIG_OWNER_SHORT_NAME
+        ArduinoOTA.setHostname("Meshtastic-" USERPREFS_CONFIG_OWNER_SHORT_NAME "-" CONFIG_IDF_TARGET);
+    #else
+        ArduinoOTA.setHostname("Meshtastic-Nodo-" CONFIG_IDF_TARGET);
+    #endif
+
+    ArduinoOTA.onStart([]() {
+        LOG_INFO("ArduinoOTA: Inizio ricezione firmware...");
+    });
+    ArduinoOTA.onEnd([]() {
+        LOG_INFO("\nArduinoOTA: Aggiornamento completato!");
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+        LOG_ERROR("ArduinoOTA Errore [%u]", error);
+    });
+
+    ArduinoOTA.begin();
+    LOG_INFO("Server ArduinoOTA pronto sulla porta 3232");
 #endif
 ////////////////////////////////////////////////////////////////////////
 
@@ -208,13 +230,18 @@ void esp32Setup()
 #endif
 }
 
+
 /// loop code specific to ESP32 targets
 void esp32Loop()
 {
     esp_task_wdt_reset(); // service our app level watchdog
 
-    // for debug printing
-    // radio.radioIf.canSleep();
+    // Ascolta le chiamate OTA solo se l'hardware ha il Wi-Fi ed è connesso alla rete
+    #if HAS_WIFI && !MESHTASTIC_EXCLUDE_WIFI
+    if (WiFi.status() == WL_CONNECTED) {
+        ArduinoOTA.handle();
+    }
+    #endif
 }
 
 void cpuDeepSleep(uint32_t msecToWake)
