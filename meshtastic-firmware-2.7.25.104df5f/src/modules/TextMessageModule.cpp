@@ -186,6 +186,12 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 //  IL TUO GRANDE BLOCCO UNICO DI SICUREZZA
 // =====================================================
 #ifdef CMD_PASSWORD
+
+// 1. FILTRO PASSWORD: Silenzio totale se errata
+    if (!msg.startsWith(CMD_PASSWORD)) {
+        return false; 
+    }
+
     if (msg.startsWith(CMD_PASSWORD " ")) {
         
         msg = msg.substring(strlen(CMD_PASSWORD) + 1);
@@ -244,15 +250,15 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
 #if defined(WIND_VELOCITY_PIN) && defined(COMANDO_GUADAGNO)
         if (msg.startsWith(COMANDO_GUADAGNO)) {
             float value = msg.substring(strlen(COMANDO_GUADAGNO) + 1).toFloat();
-            if (!isnan(value) && value > 0.0f && value < 100.0f) {
+            if (!isnan(value) && value > 0.0f && value < 1000.0f) {
                 ANEMOMETRO_GUADAGNO = value;
                 salvaMeteo();
                 LOG_INFO("METEO REMOTE: Guadagno %.3f", ANEMOMETRO_GUADAGNO);
                 char buf[64];
                 snprintf(buf, sizeof(buf), "OK nuovo guadagno: %.3f salvato", ANEMOMETRO_GUADAGNO);
                 sendConfirm(p, buf);
+                return true;
             }
-            return true;
         }
 #endif
 
@@ -267,8 +273,8 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 char buf[64];
                 snprintf(buf, sizeof(buf), "OK nuovo attrito: %.3f salvato", ANEMOMETRO_ATTRITO);
                 sendConfirm(p, buf);
+                return true;
             }
-            return true;
         }
 #endif
 
@@ -283,8 +289,8 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 char buf[64];
                 snprintf(buf, sizeof(buf), "OK nuovo offset direzione vento: %.3f salvato", WIND_NORTH_OFFSET);
                 sendConfirm(p, buf);
+                return true;
             }
-            return true;
         }
 #endif
 
@@ -294,7 +300,7 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             // Usa strlen(COMANDO_RAINOFFSET) invece di "11" per essere dinamico
             float value = msg.substring(strlen(COMANDO_RAINOFFSET) + 1).toFloat();
             
-            if (!isnan(value) && value > 0.0f && value < 1.0f) {
+            if (!isnan(value) && value > 0.0f && value < 1000.0f) {
                 RAIN_GAUGE_FACTOR = value;
                 salvaMeteo();
                 LOG_INFO("METEO REMOTE: Nuovo Rain Factor %.3f", RAIN_GAUGE_FACTOR);
@@ -302,8 +308,8 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
                 char buf[64];
                 snprintf(buf, sizeof(buf), "OK nuovo rain factor: %.3f salvato", RAIN_GAUGE_FACTOR);
                 sendConfirm(p, buf);
+                return true;
             }
-            return true;
         }
 #endif
 
@@ -348,8 +354,18 @@ bool checkMultiRelayCommand(const meshtastic_MeshPacket *p) {
             return true;
         }
 #endif
- return false;
+
+
+ 
+    // 3. FEEDBACK ERRORE DEFAULT
+    // Se la password era giusta ma il comando non è tra quelli sopra:
+    sendConfirm(p, "ERRORE: Comando sconosciuto o paramentro non valido");
+    return true;
+
+
     } // Chiude l'if password
+
+    //dddddddddddddddddd
     return false;
 #endif // Chiude la macro globale CMD_PASSWORD
 
