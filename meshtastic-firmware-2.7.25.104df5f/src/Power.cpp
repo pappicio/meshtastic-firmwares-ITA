@@ -30,6 +30,8 @@
 
 ///////////////////////////////////////////////
 #include "modules/Telemetry/EnvironmentTelemetry.h"
+#include "comandiremoti.h"
+#include "comandiremoti.h" // <--- AGGIUNGI QUESTA RIGA!
 ///////////////////////////////////////////////
 
 
@@ -1057,8 +1059,8 @@ void Power::readPowerStatus()
     if (batteryVoltageMv != -1 && batteryVoltageMv != 3100) {
         
         // 1. ISTERESI SECCA
-        if (batteryVoltageMv >= FORCE_WAKEUP_MV) systemArmed = true;
-        if (batteryVoltageMv < FORCE_SLEEP_MV) systemArmed = false;
+        if (batteryVoltageMv >= force_wakeup_mv) systemArmed = true;
+        if (batteryVoltageMv < force_sleep_mv) systemArmed = false;
 
         // 2. PROTEZIONE
         if (!systemArmed) {
@@ -1073,7 +1075,7 @@ void Power::readPowerStatus()
                     sendlasttelemetry();
                     delay(5000); 
                 }
-                uint32_t sleepTimeMs = (uint32_t)FORCE_WAKEUP_HR * 3600000UL;
+                uint32_t sleepTimeMs = (uint32_t)force_wakeup_hr * 3600000UL;
                 shutdown(sleepTimeMs, true);
                 return;
             }

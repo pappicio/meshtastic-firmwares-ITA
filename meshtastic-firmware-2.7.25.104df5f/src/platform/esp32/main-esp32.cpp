@@ -114,6 +114,33 @@ void enableSlowCLK()
 }
 #endif
 
+
+
+// SPOSTA QUESTA FUNZIONE PRIMA DI esp32Setup()
+void checkResetReason() {
+    esp_reset_reason_t reason = esp_reset_reason();
+    
+    // Ignoriamo i casi che non ci interessano per il log
+    if (reason == ESP_RST_POWERON || reason == ESP_RST_DEEPSLEEP || reason == ESP_RST_UNKNOWN) return;
+
+    String r = "Sconosciuto";
+    switch (reason) {
+        case ESP_RST_EXT:      r = "Reset esterno (PIN)"; break;
+        case ESP_RST_SW:       r = "Riavvio software"; break;
+        case ESP_RST_PANIC:    r = "PANIC (Crash)"; break;
+        case ESP_RST_INT_WDT:  r = "Watchdog (Interrupt WDT)"; break;
+        case ESP_RST_TASK_WDT: r = "Watchdog (Task WDT)"; break;
+        case ESP_RST_WDT:      r = "Watchdog (Generico)"; break;
+        case ESP_RST_BROWNOUT: r = "BROWNOUT (Calo tensione)"; break;
+        case ESP_RST_SDIO:     r = "Reset SDIO"; break;
+        default:               r = "Altro"; break;
+    }
+    
+    LOG_ERROR("CRITICAL: Riavvio non previsto! Motivo: %s", r.c_str());
+}
+
+
+
 void esp32Setup()
 {
     /* We explicitly don't want to do call randomSeed,
@@ -202,6 +229,7 @@ void esp32Setup()
 
     ArduinoOTA.begin();
     LOG_INFO("Server ArduinoOTA pronto sulla porta 3232");
+    checkResetReason();
 #endif
 ////////////////////////////////////////////////////////////////////////
 
@@ -210,7 +238,7 @@ void esp32Setup()
 // Since we are turning on watchdogs rather late in the release schedule, we really don't want to catch any
 // false positives.  The wait-to-sleep timeout for shutting down radios is 30 secs, so pick 45 for now.
 // #define APP_WATCHDOG_SECS 45
-#define APP_WATCHDOG_SECS 90
+#define APP_WATCHDOG_SECS 180 //90
 
 #ifdef CONFIG_IDF_TARGET_ESP32C6
     esp_task_wdt_config_t *wdt_config = (esp_task_wdt_config_t *)malloc(sizeof(esp_task_wdt_config_t));

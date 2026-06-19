@@ -95,7 +95,16 @@ NRF52Bluetooth *nrf52Bluetooth = nullptr;
     // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
     using namespace Adafruit_LittleFS_Namespace; 
 #endif
+
+#include "comandiremoti.h"
+
 // -------------------------------------------------------------
+
+
+#include "main.h"
+
+
+
 ///////////////////////////////////////////
 
 #ifdef ARCH_ESP32
@@ -220,16 +229,7 @@ float fanHum = 0.0f;
 boolean onsleep=false;
 
 ///////////////////////////////////////////////
-
-// --- DEFINIZIONE REALE CON VALORI INIZIALI IN RAM ---
-float ANEMOMETRO_GUADAGNO   = 0.703f;
-float ANEMOMETRO_ATTRITO    = 0.30f;
-float WIND_NORTH_OFFSET     = 0.0f;
-
-float RAIN_GAUGE_FACTOR = 337.888;
-
-bool WIND_DIRECTION_INVERT  = false;
-///////////////////////////////////////////////
+ 
 
 
 // The I2C address of the RTC Module (if found)
@@ -846,73 +846,10 @@ void setup()
     }
 #endif
 
-
-/////////////////////////////////////////////////
-// -------------------------------------------------------------
-    // RECUPERO TARATURE ANEMOMETRO UNIVERSALE
-    // -------------------------------------------------------------
-#if defined(WIND_VELOCITY_PIN) || defined(HAS_WIND_DIRECTION) || defined(RAIN_SENSOR_PIN)
-
-    #if defined(ARCH_ESP32) || defined(ESP32)
-    Preferences prefs;
-    if (prefs.begin("meteo", true)) {
-#ifdef RAIN_SENSOR_PIN
-        RAIN_GAUGE_FACTOR = prefs.getFloat("rainfactor", 0.279); // Default 0.279 se non trovato
-#endif
-
-#ifdef WIND_VELOCITY_PIN
-        ANEMOMETRO_GUADAGNO = prefs.getFloat("guadagno", ANEMOMETRO_GUADAGNO);
-        ANEMOMETRO_ATTRITO  = prefs.getFloat("attrito", ANEMOMETRO_ATTRITO);
-#endif
-#ifdef HAS_WIND_DIRECTION
-        WIND_NORTH_OFFSET     = prefs.getFloat("diroffset", WIND_NORTH_OFFSET);
-        WIND_DIRECTION_INVERT = prefs.getBool("invertito", WIND_DIRECTION_INVERT);
-#endif
-        prefs.end();
-    }
-
-    #elif defined(NRF52_SERIES)
-    if (InternalFS.exists("/meteo.dat")) {
-        File file = InternalFS.open("/meteo.dat", Adafruit_LittleFS_Namespace::FILE_O_READ);
-        if (file) {
-#ifdef WIND_VELOCITY_PIN
-            file.read(&ANEMOMETRO_GUADAGNO, sizeof(ANEMOMETRO_GUADAGNO));
-            file.read(&ANEMOMETRO_ATTRITO, sizeof(ANEMOMETRO_ATTRITO));
-#endif
-
-#ifdef RAIN_SENSOR_PIN
-            file.read(&RAIN_GAUGE_FACTOR, sizeof(RAIN_GAUGE_FACTOR));
-#endif
-
-#ifdef HAS_WIND_DIRECTION
-            file.read(&WIND_NORTH_OFFSET, sizeof(WIND_NORTH_OFFSET));
-            file.read(&WIND_DIRECTION_INVERT, sizeof(WIND_DIRECTION_INVERT));
-#endif
-            file.close();
-        }
-    }
-    #endif
-
-   // 1. Costruiamo la stringa di formato in modo condizionale
-String logMsg = "[METEO] Config attiva -> ";
-#ifdef WIND_VELOCITY_PIN
-    logMsg += "G: " + String(ANEMOMETRO_GUADAGNO, 2) + " | A: " + String(ANEMOMETRO_ATTRITO, 2) + " | ";
-#endif
-#ifdef RAIN_SENSOR_PIN
-    logMsg += "Rain Factor: " + String(RAIN_GAUGE_FACTOR, 3) + " | ";
-#endif
-#ifdef HAS_WIND_DIRECTION
-    logMsg += "Nord Off: " + String(WIND_NORTH_OFFSET, 1) + " | Invertito: " + String(WIND_DIRECTION_INVERT ? "SI" : "NO");
-#endif
-
-// 2. Inviamo al log una stringa pulita
-LOG_INFO("%s", logMsg.c_str());
-   
-#endif
-    // -------------------------------------------------------------
-
-/////////////////////////////////////////////////
-
+//////////////////////////////
+// 1. Carica tutta la configurazione dinamica (Sistema + Meteo + Ventola + Batteria)
+caricavariabili();
+//////////////////////////////
 
 
     router = new ReliableRouter();
@@ -1357,6 +1294,8 @@ void scannerToSensorsMap(const std::unique_ptr<ScanI2CTwoWire> &i2cScanner, Scan
 }
 #endif
 
+
+
 #ifndef PIO_UNIT_TESTING
 void loop()
 {
@@ -1455,3 +1394,5 @@ void loop()
     }
 }
 #endif
+
+ 

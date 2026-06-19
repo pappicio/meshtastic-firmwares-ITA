@@ -30,6 +30,7 @@
 #include <Wire.h>
 
 #include "mqtt/MQTT.h"
+#include "comandiremoti.h"
 ///////////////////////////////////////////////
 
 

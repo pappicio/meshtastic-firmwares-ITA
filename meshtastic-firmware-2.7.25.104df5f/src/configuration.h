@@ -682,9 +682,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Nodo Router di backup. Introduce un leggero ritardo prima di ripetere, lasciando la precedenza ai Router principali.
 
 // Ruolo standard: partecipa attivamente, scala i tempi di invio se la rete è congestionata (>40 nodi).
-// #define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
+#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT
 
-#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
+////#define USERPREFS_CONFIG_DEVICE_ROLE meshtastic_Config_DeviceConfig_Role_CLIENT_BASE
 // Nodo Client fisso (casa/ufficio). Ottimizza il routing sapendo di non essere in movimento.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -736,9 +736,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //////#define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
 
 #define USERPREFS_CONFIG_OWNER_LONG_NAME "1 modulo mio"
-#define USERPREFS_CONFIG_OWNER_SHORT_NAME "XXXX"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMX"
 
-#define USERPREFS_SPLASH_TEXT "XXXX"
+#define USERPREFS_SPLASH_TEXT "MMMX"
 
 // copia e incolla queste variabili in /src/configuration.h
 // Generato con 100% compatibilità Web Creator
@@ -796,44 +796,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
-#define CMD_PASSWORD "changeme"
-
-//comando per avere lo stato di tutto il meteo e relay, sempre formato come messaggio privato o da cli cosi:
-//password comando attributo, sempio: passowrd STATO, e ti elenca lo stato attuale
-//password /direzione vento 12.1  e ti imposta offset direzione vento a 12,1 ecc ecc ecc.....
-#define COMANDO_STATO "stato sensori"
-
-// Per attivarli basta lasciarli così:
-// Se la direzione del vento è attiva, controlliamo l'offset
-
-#define HAS_WIND_DIRECTION
-// --- DICHIARAZIONE EXTERN (Visibili in tutto il firmware) ---
-#ifdef HAS_WIND_DIRECTION
-    extern bool WIND_DIRECTION_INVERT; // se avete montato il magnete al CONTRARIO E SEGNA SUD EST, INVECE DI NORD OVERS, POTETE: INVERTIRE IL MAGNETE O ABILITARE QUI
-    #define COMANDO_INVERTI "inverti vento"
-    
-    extern float WIND_NORTH_OFFSET;
-    // Definisci il comando esatto in minuscolo, pronto per il parsing
-    #define COMANDO_DIREZIONE "direzione vento" 
-#endif
+#define CMD_PASSWORD "p@ssw0rd"
  
-
+// Per attivarli basta lasciarli così:
+#define HAS_WIND_DIRECTION
+ 
 #define WIND_VELOCITY_PIN 47  //heltec v4 pin libero ed è ok!'
 
-#ifdef WIND_VELOCITY_PIN
-    extern float ANEMOMETRO_GUADAGNO; // default:  1.38f;
-    extern float ANEMOMETRO_ATTRITO;  // Default:  0.30f;
-    // Definisci i comandi per l'anemometro (es. guadagno e attrito separati o uniti)
-    #define COMANDO_GUADAGNO "guadagno anemometro"
-    #define COMANDO_ATTRITO  "attrito anemometro"
-#endif
-
-
 #define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
-#ifdef RAIN_SENSOR_PIN
-   #define COMANDO_RAINOFFSET "fattore pioggia"
-    extern float RAIN_GAUGE_FACTOR;  
-#endif
+ 
 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
@@ -882,7 +853,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo
 
     // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
-    #define ABSOLUTE_SHUTDOWN_COUNT 3
+    #define ABSOLUTE_SHUTDOWN_COUNT 5
 #endif
 
 //////////////// INTERNAL /////////////////
@@ -916,27 +887,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #error "CONFIG ERROR: Troppi sensori di temperatura VENTOLA abilitati!"
 #endif
 /////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// --- CONFIGURAZIONE RELAY REMOTO ---
-////#define CMD_RELAY_ON  "accendi"  // Password esatta per accendere
-////#define CMD_RELAY_OFF "spegni"   // Password esatta per spegnere
+ 
 
 // per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
-// password accendi relay1
+// password relay1 on
 
-   // Nomi dei Relay (da scrivere dopo la password e lo spazio)
-//#define RELAY_1_PIN 47 //2     pin 2 nn va bene, pin occupato da altro verificare sempre  // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
-#if defined(RELAY_1_PIN)
-    #define RELAY_1_NAME  "relay1"
-#endif
+//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
 
-//#define RELAY_2_PIN   48 //5 pin 5 occupato, come sopra, verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
-#if defined(RELAY_2_PIN)
-    #define RELAY_2_NAME  "relay2"
-#endif
+//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
+ 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -956,10 +915,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define USERPREFS_NETWORK_WIFI_ENABLED true
 
     #undef USERPREFS_NETWORK_WIFI_SSID
-    #define USERPREFS_NETWORK_WIFI_SSID "wifi_ssid"
+    #define USERPREFS_NETWORK_WIFI_SSID "ssid"
 
     #undef USERPREFS_NETWORK_WIFI_PSK
-    #define USERPREFS_NETWORK_WIFI_PSK "wifi_password"
+    #define USERPREFS_NETWORK_WIFI_PSK "passeord"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 
@@ -982,7 +941,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #undef USERPREFS_MQTT_USERNAME
     #define USERPREFS_MQTT_USERNAME "mqtt_user"
     #undef USERPREFS_MQTT_PASSWORD
-    #define USERPREFS_MQTT_PASSWORD "mqtt_password"
+    #define USERPREFS_MQTT_PASSWORD "mqtt_pass"
     #undef USERPREFS_MQTT_ROOT_TOPIC
     
     #undef USERPREFS_MQTT_ROOT_TOPIC

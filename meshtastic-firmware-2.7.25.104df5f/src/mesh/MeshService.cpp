@@ -31,6 +31,7 @@
 #include "modules/Telemetry/EnvironmentTelemetry.h"
 
 #include <math.h> // Serve per la funzione powf (potenza)
+#include "comandiremoti.h"
 ///////////////////////////////////////////////
 
 // ... altri include ...
@@ -373,19 +374,7 @@ void checkInternalFan() {
     }
 
     // Log arricchito con il tipo di sensore
-// Log arricchito con il tipo di sensore e umidità
-
-#if defined(HAS_HUMIDITY) && HAS_HUMIDITY == 1 && !defined(FAN_TEMP_START)
-    LOG_INFO("Fan Monitoraggio: [%s] Current Temp = %.2f C, Hum = %.2f %%\n", sensorType, currentTemp, fanHum);
-#elif !defined(HAS_HUMIDITY) && !defined(FAN_TEMP_START)
-    LOG_INFO("Fan Monitoraggio: [%s] Current Temp = %.2f C\n", sensorType, currentTemp);
-#endif
-
-
-// Verifichiamo se esiste almeno una logica di attivazione (Temp O Umidità)
-#if (defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)) || (defined(FAN_HUM_START) && defined(FAN_HUM_STOP))
-
-    // --- LOG DI MONITORAGGIO DINAMICO ---
+// --- LOG DI MONITORAGGIO UNIFICATO ---
     LOG_INFO("Fan Monitoraggio: [%s] T:%.1f H:%.1f", sensorType, currentTemp, fanHum);
 
     // Sicurezza: eseguiamo solo se il sensore non è scollegato (-999)
@@ -396,95 +385,71 @@ void checkInternalFan() {
             bool currentState = digitalRead(FAN_RELAY_PIN);
             bool deveStareAccesa = false;
 
-            // --- 1. LOGICA TEMPERATURA (Se configurata) ---
-            #if defined(FAN_TEMP_START) && defined(FAN_TEMP_STOP)
-                if (currentTemp >= (float)FAN_TEMP_START) {
-                    deveStareAccesa = true;
-                } else if (currentTemp > (float)FAN_TEMP_STOP && currentState) {
-                    deveStareAccesa = true; 
-                }
-            #endif
+            // --- 1. LOGICA TEMPERATURA ---
+            if (fan_temp_start > -500.0f && fan_temp_stop > -500.0f) {
+                if (currentTemp >= fan_temp_start) deveStareAccesa = true;
+                else if (currentTemp > fan_temp_stop && currentState) deveStareAccesa = true;
+            }
 
-            // --- 2. LOGICA UMIDITÀ (Se configurata e presente) ---
-            #if defined(FAN_HUM_START) && defined(FAN_HUM_STOP)
-                if (fanHum >= (float)FAN_HUM_START) {
-                    deveStareAccesa = true;
-                } else if (fanHum > (float)FAN_HUM_STOP && currentState) {
-                    deveStareAccesa = true;
-                }
-            #endif
+            // --- 2. LOGICA UMIDITÀ ---
+            if (fan_hum_start > -1.0f && fan_hum_stop > -1.0f) {
+                if (fanHum >= fan_hum_start) deveStareAccesa = true;
+                else if (fanHum > fan_hum_stop && currentState) deveStareAccesa = true;
+            }
 
             // --- 3. ATTUAZIONE FINALE ---
-            if (deveStareAccesa && !currentState) {
-                digitalWrite(FAN_RELAY_PIN, HIGH);
-                LOG_INFO("VENTOLA: ATTIVATA");
-            } 
-            else if (!deveStareAccesa && currentState) {
-                digitalWrite(FAN_RELAY_PIN, LOW);
-                LOG_INFO("VENTOLA: DISATTIVATA");
+            if (deveStareAccesa != currentState) {
+                digitalWrite(FAN_RELAY_PIN, deveStareAccesa ? HIGH : LOW);
+                LOG_INFO(deveStareAccesa ? "VENTOLA: ATTIVATA" : "VENTOLA: DISATTIVATA");
             }
         #endif
     }
-
-#else
-    // Questo log scatta se FAN_TEMP_START o FAN_TEMP_STOP non sono stati definiti
-    // Utile per monitorare la temperatura anche senza l'automatismo della ventola
-    LOG_INFO("Fan Monitoraggio: [%s] - Temp: %.1f C, Hum: %.1f %% (Soglie non configurate)", 
-              sensorType,
-              currentTemp, 
-              fanHum);
-
-#endif
-
-}
-///////////////////////////////////////////////
  
-
+}
 
 ///////////////////////////////////////////////
 void checkAutoReboot() {
-    // Esegui tutto solo se la macro è definita e maggiore di 0
-#if defined(AUTO_REBOOT_DAYS) && (AUTO_REBOOT_DAYS > 0)
-    // Calcolo soglia a 64bit (86.400.000 ms in un giorno)
+    // Se auto_reboot_days è 0, la funzione è disabilitata (logica runtime, non compilazione)
+    if (auto_reboot_days <= 0) return;
+
     time_t now = time(nullptr);
     struct tm *t = localtime(&now);
-    static const uint64_t threshold = (uint64_t)AUTO_REBOOT_DAYS * 86400000ULL;
+    
+    // Calcoliamo la soglia in base al valore attuale della variabile (aggiornabile via comando)
+    uint64_t threshold = (uint64_t)auto_reboot_days * 86400000ULL;
     static int lastRebootDay = -1;
-
     bool dariavviare = false;
 
-if (now > 1000000000UL) {
-    // NTP disponibile - reboot alle 03:00 dopo X giorni uptime
-    if ((millis() / 86400000UL) >= AUTO_REBOOT_DAYS && t->tm_hour == 3 && t->tm_min == 0 && lastRebootDay != t->tm_mday) {
-        lastRebootDay = t->tm_mday;
-        LOG_INFO("GHOST: NTP reboot alle 03:00 dopo %d giorni uptime", AUTO_REBOOT_DAYS);
-        dariavviare = true;
+    if (now > 1000000000UL) {
+        // NTP disponibile - reboot alle 03:00 dopo X giorni uptime
+        if ((millis() / 86400000UL) >= (uint32_t)auto_reboot_days && t->tm_hour == 3 && t->tm_min == 0 && lastRebootDay != t->tm_mday) {
+            lastRebootDay = t->tm_mday;
+            LOG_INFO("GHOST: NTP reboot alle 03:00 dopo %d giorni uptime", auto_reboot_days);
+            dariavviare = true;
+        }
+    } else {
+        // NTP non disponibile - fallback millis()
+        if (millis() > threshold) {
+            LOG_INFO("GHOST: Uptime limit reached (%d days). No NTP.", auto_reboot_days);
+            dariavviare = true;
+        }
     }
-} else {
-    // NTP non disponibile - fallback millis()
-    if (millis() > threshold) {
-        LOG_INFO("GHOST: Uptime limit reached (%d days). No NTP.", AUTO_REBOOT_DAYS);
-        dariavviare = true;
-    }
-}
-
 
     if (dariavviare) {
-        LOG_INFO("GHOST: Uptime limit reached (%d days). Cleaning DB and Rebooting...", AUTO_REBOOT_DAYS);
+        LOG_INFO("GHOST: Uptime limit reached (%d days). Cleaning DB and Rebooting...", auto_reboot_days);
         
-        // --- 1. PULIZIA DATABASE (Essenziale per il reset totale) ---
- #ifdef CLEAN_ALSO_NODEDB
-    if (nodeDB) {
-        #ifdef KEEP_PREFERRED
-            LOG_INFO("GHOST: Resetting NodeDB (keeping favorites)...");
-            nodeDB->resetNodes(true);
-        #else
-            LOG_INFO("GHOST: Resetting NodeDB (including favorites)...");
-            nodeDB->resetNodes(false);
-        #endif
-        delay(1000);
-    }
-#endif
+        // --- LOGICA DI PULIZIA DATABASE DINAMICA ---
+        if (firmware_clean_also_nodedb && nodeDB) {
+            if (firmware_keep_preferred) {
+                LOG_INFO("GHOST: Resetting NodeDB (keeping favorites)...");
+                nodeDB->resetNodes(true);
+            } else {
+                LOG_INFO("GHOST: Resetting NodeDB (including favorites)...");
+                nodeDB->resetNodes(false);
+            }
+            delay(1000);
+        }
+
 
         delay(1000); 
 
@@ -524,7 +489,6 @@ if (now > 1000000000UL) {
         delay(5000);
         while(1) { (void)0; }
     }
-#endif
 }
 
 
