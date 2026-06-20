@@ -381,7 +381,7 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
 
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
-#define CMD_PASSWORD "p@ssw0rd"
+#define CMD_PASSWORD "password"
  
 // Per attivarli basta lasciarli così:
 #define HAS_WIND_DIRECTION
