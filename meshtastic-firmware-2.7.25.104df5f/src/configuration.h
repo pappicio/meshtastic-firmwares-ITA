@@ -842,6 +842,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #endif
 
+/////////////////////////////////////////////////////////////////////////////////////////
+ 
+ 
+
+//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
+
+//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
+ 
+
+// per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
+// password relay1 on
+//////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -856,7 +868,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define ABSOLUTE_SHUTDOWN_COUNT 5
 #endif
 
-//////////////// INTERNAL /////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // Inizializziamo il contatore a 0
@@ -886,19 +897,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if TOTAL_SENSORS > 1
   #error "CONFIG ERROR: Troppi sensori di temperatura VENTOLA abilitati!"
 #endif
-/////////////////////////////////////////////////////////////////////////////////////////
  
-
-// per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
-// password relay1 on
-
-//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
-
-//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
- 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
 
 // --- NETWORK E WIFI ---
 

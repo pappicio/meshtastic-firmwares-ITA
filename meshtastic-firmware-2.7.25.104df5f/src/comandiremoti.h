@@ -44,7 +44,7 @@ inline bool firmware_keep_preferred = true;
 
 inline float ANEMOMETRO_GUADAGNO = 0.702f;
 inline float ANEMOMETRO_ATTRITO = 0.30f;
-inline float RAIN_GAUGE_FACTOR = 337.876f;
+inline float RAIN_GAUGE_FACTOR = 337.888f;
 inline float WIND_NORTH_OFFSET = 0.0f;
 inline bool WIND_DIRECTION_INVERT = false;
 
