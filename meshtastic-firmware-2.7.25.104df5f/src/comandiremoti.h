@@ -5,17 +5,7 @@
 
 #include "mesh/generated/meshtastic/mesh.pb.h"
 #include "main.h"
-#include "configuration.h"
-
-// --- 1. DEFAULT DI SICUREZZA (Solo Preprocessore) ---
-#ifndef FAN_TEMP_START
-    #define FAN_TEMP_START -999.0f
-    #define FAN_TEMP_STOP  -999.0f
-#endif
-#ifndef FAN_HUM_START
-    #define FAN_HUM_START 0.0f
-    #define FAN_HUM_STOP  0.0f
-#endif
+#include "configuration.h" 
 
 // --- 2. COMANDI (Senza spazi finali) ---
 #define CMD_PASS          "nuova password"
@@ -41,21 +31,51 @@ inline char firmware_cmd_password[32] = CMD_PASSWORD;
 inline int auto_reboot_days = AUTO_REBOOT_DAYS;
 inline bool firmware_clean_also_nodedb = true; 
 inline bool firmware_keep_preferred = true;
-
 inline float ANEMOMETRO_GUADAGNO = 0.702f;
 inline float ANEMOMETRO_ATTRITO = 0.30f;
 inline float RAIN_GAUGE_FACTOR = 337.888f;
 inline float WIND_NORTH_OFFSET = 0.0f;
 inline bool WIND_DIRECTION_INVERT = false;
+inline int force_sleep_mv = 3400;
+inline int force_wakeup_mv = 3700;
+inline int force_wakeup_hr = 12;
+inline bool force_deepsleep_enabled = true;
+inline float fan_temp_start = 42.0f;
+inline float fan_temp_stop  = 35.0f;
+inline float fan_hum_start  = 80.0f;
+inline float fan_hum_stop   = 60.0f;
 
-inline float fan_temp_start = FAN_TEMP_START;
-inline float fan_temp_stop  = FAN_TEMP_STOP;
-inline float fan_hum_start  = FAN_HUM_START;
-inline float fan_hum_stop   = FAN_HUM_STOP;
 
-inline int force_sleep_mv = FORCE_SLEEP_MV;
-inline int force_wakeup_mv = FORCE_WAKEUP_MV;
-inline int force_wakeup_hr = FORCE_WAKEUP_HR;
+
+
+#if !defined(I2C_FAN_SENSOR_ADDR) && !defined(ONEWIRE_TEMP_PIN) && !defined(DHT_TEMP_PIN) && !defined(ANALOG_TEMP_PIN)
+    fan_temp_start = -99.0f
+    fan_temp_stop  = -99.0f
+
+    #ifndef FAN_HUM_START
+        fan_hum_start = 0.0f
+        fan_hum_stop  = 0.0f
+    #endif
+#endif
+ 
+
+
+#ifndef DEEPSLEEP
+    // Valori "dummy" se la macro non è definita
+    force_sleep_mv = -1;
+    force_wakeup_mv = -1;
+    force_wakeup_hr = -1;
+    force_deepsleep_enabled = false;
+#endif
+
+#ifndef FAN_RELAY_PIN
+    // Variabili "fantasma" impostate a -99 per evitare errori di compilazione
+    // se altre parti del codice le leggono comunque
+    fan_temp_start = -99.0f;
+    fan_temp_stop  = -99.0f;
+    fan_hum_start  = -99.0f;
+    fan_hum_stop   = -99.0f;
+#endif
 
 // --- 4. FUNZIONI ---
 void caricavariabili();

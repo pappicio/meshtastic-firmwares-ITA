@@ -1051,7 +1051,8 @@ void Power::readPowerStatus()
 
 
 // ============================================================
-#ifdef FORCE_SLEEP_MV
+if (force_deepsleep_enabled) 
+{
     static bool systemArmed = true; // PARTIAMO OTTIMISTI
     static int shutdownAttempts = 0; 
 
@@ -1083,7 +1084,7 @@ void Power::readPowerStatus()
             onsleep = false;
         }
     }
-#endif
+}
             // ============================================================
 ///////////////////////////////////////////////
 
