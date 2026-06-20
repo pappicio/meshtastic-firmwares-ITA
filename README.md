@@ -334,113 +334,208 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
 #define USERPREFS_CONFIG_SMART_POSITION_ENABLED true
 #define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 900
 
+ 
 
-// ============================================================
-// --- MANUTENZIONE & RADIO ---
-// ============================================================
-// Riavvio hardware automatico per pulizia NodeDB e RAM
-#define AUTO_REBOOT_DAYS 5      // Massimo 45 giorni per limiti variabili
+// --- GESTIONE VENTOLA INTERNA ---
+// IL SENSORE SARA TOTALMENTE INVISIBILE A MESHTASTIC CHE XO DARA INFO COME 
+// POWER TELEMETRY, con voltaggio/corrente
 
-// Potenza di trasmissione LoRa
-#define DBI30 27                // Range: 0-30+ dBi (Attenzione alle norme locali)
+/////////////// --- SORGENTE TEMPERATURA (Scegline UNA) ---
 
-// ============================================================
-// --- GESTIONE VENTOLA & SENSORI (COOLING SYSTEM) ---
-// ============================================================
-// Il sensore sarà usato per il controllo termico e i dati iniettati 
-// nei campi Voltage (Temp/Hum) e Current (Status Dashboard).
 
-/////////////// --- SORGENTE TEMPERATURA (Abilitarne solo UNA) ---
-#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, etc.)
+    
 
+////#define I2C_FAN_SENSOR_ADDR 0x40    // Indirizzo I2C (0x76, 0x38, 0x40, 0x44, ecc.) 
 #ifdef I2C_FAN_SENSOR_ADDR
-    #define HAS_HUMIDITY 1          // 1: Iniezione TT.HH (Temp+Umidità), 0: Solo Temp
-    #define SHOW_ALSO_POWER_METRICS 0 
+    
+    #define HAS_HUMIDITY 1  // Imposta a 1 per attivare il mescolamento TT.HH, 0 per solo Temp
+    
 #endif
 
-//#define ONEWIRE_TEMP_PIN 4        // Sensore DS18B20
+////////////////////////////////////////////// Pin per DS18B20
+//#define ONEWIRE_TEMP_PIN 6     //PER Heltec V4 va benone!!!!!  
 
-/////////////// --- SENSORI DHT (11/22) ---
-//#define DHT_TEMP_PIN 3
+
+////////////////////////////// --- SENSORI DHT (11/22) ---
+#define DHT_TEMP_PIN 6
 #if defined(DHT_TEMP_PIN)
     #ifndef DHTTYPE
-        #define DHTTYPE DHT11       // O DHT22
+        #define DHTTYPE DHT22  // DHT11 O DHT22 a seconda di cosa hai montato
+        #define HAS_HUMIDITY 1  
     #endif
 #endif
 
-/////////////// --- SENSORI NTC ANALOGICI ---
-//#define ANALOG_TEMP_PIN 34 
+
+//////////// --- CONFIGURAZIONE NTC ANALOGICO ---
+
+//#define ANALOG_TEMP_PIN 34  // Pin ADC (solo pin che supportano analogRead, es. GPIO 34)
 #if defined(ANALOG_TEMP_PIN)
+    // Se l'utente non ha definito i parametri, usiamo i default per un 10k standard
     #ifndef NTC_RES_NOMINAL
-        #define NTC_RES_NOMINAL 10000.0f
+        #define NTC_RES_NOMINAL 10000.0f  // Metti 10000 per NTC 10k, 100000 per NTC 100k
     #endif
     #ifndef NTC_BETA
-        #define NTC_BETA 3950.0f
+        #define NTC_BETA 3950.0f  // Beta (di solito 3950 per 10k, 4200 o 3950 per 100k)
     #endif
 #endif
 
-// ============================================================
-// --- CONFIGURAZIONE RELAY VENTOLA & SOGLIE ---
-// ============================================================
-#define FAN_RELAY_PIN 1             // GPIO per il controllo ventola
 
-#if defined(FAN_RELAY_PIN)
-    #define FAN_TEMP_START 42.0f    // Accensione (Isteresi superiore)
-    #define FAN_TEMP_STOP 35.0f     // Spegnimento (Isteresi inferiore)
+//PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
+#define CMD_PASSWORD "p@ssw0rd"
+ 
+// Per attivarli basta lasciarli così:
+#define HAS_WIND_DIRECTION
+ 
+#define WIND_VELOCITY_PIN 47  //heltec v4 pin libero ed è ok!'
+
+#define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
+ 
+
+
+// Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
+// La ventola viene abilitata automaticamente solo se è presente almeno un sensore termico
+
+#if defined(I2C_FAN_SENSOR_ADDR) || defined(ONEWIRE_TEMP_PIN) || defined(DHT_TEMP_PIN) || defined(ANALOG_TEMP_PIN)
+
+// se abilitiamo temp per il box, allora possiamo dire invia telemetrie ogni ora
+    #define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 3600
+    #define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
+
+// possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
+    
+//     #define SHOW_ON_POWER_METRICS
+
+    #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
+
+    #if defined(FAN_RELAY_PIN)
+        // Soglie di temperatura per l'isteresi
+        #ifndef FAN_TEMP_START
+            #define FAN_TEMP_START 42.0f      // Accende a 42 gradi
+        #endif
+
+        #ifndef FAN_TEMP_STOP
+            #define FAN_TEMP_STOP 35.0f       // Spegne quando scende a 35
+        #endif
+
+         // Soglie di temumidità da asciugare per l'isteresi
+        #if defined (HAS_HUMIDITY)
+            #define FAN_HUM_START  80.0f  // Accende quando sale 80%
+            #define FAN_HUM_STOP   60.0f  // Spegne quando scende a 60%
+        #endif
+
+    #endif
+
 #endif
 
-// ============================================================
-// --- PROTEZIONE BATTERIA & SMART RECOVERY ---
-// ============================================================
-#define FORCE_SLEEP_MV 3400         // Soglia Shutdown (Trigger "Last Breath")
+/////////////////////////////////////////////////////////////////////////////////////////
+ 
+ 
+
+//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
+
+//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
+ 
+
+// per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
+// password relay1 on
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
+#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
 
 #ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700    // Soglia di risveglio (Solar Recovery)
-    #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo tra i check
-    #define ABSOLUTE_SHUTDOWN_COUNT 3 // Letture di conferma prima dello spegnimento
+    #define FORCE_WAKEUP_MV 3700    // Soglia di sblocco al risveglio
+    #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo
+
+    // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
+    #define ABSOLUTE_SHUTDOWN_COUNT 5
 #endif
 
-// ============================================================
-// --- CONFIGURAZIONE RELAY REMOTI (DOMOTICA) ---
-// ============================================================
-// Gestione carichi via radio con protezione password
-#define CMD_RELAY_ON  "ApritiSesamo_123!"
-#define CMD_RELAY_OFF "ChiuditiSesamo_123!"
+/////////////////////////////////////////////////////////////////////////////////////////
 
-#define RELAY_1_PIN 2               // GPIO Relay 1
-#define RELAY_1_NAME "luce"
-
-#define RELAY_2_PIN 5               // GPIO Relay 2
-#define RELAY_2_NAME "pompa"
-
-// ============================================================
-// --- LOGICA INTERNA (NON MODIFICARE) ---
-// --- Controllo conflitti sensori temperatura ---
-// ============================================
+// Inizializziamo il contatore a 0
 #define TOTAL_SENSORS 0
+
 #ifdef I2C_FAN_SENSOR_ADDR
   #undef TOTAL_SENSORS
   #define TOTAL_SENSORS 1
 #endif
+
 #ifdef ONEWIRE_TEMP_PIN
   #undef TOTAL_SENSORS
   #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
 #endif
+
 #ifdef DHT_TEMP_PIN
   #undef TOTAL_SENSORS
   #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
 #endif
+
 #ifdef ANALOG_TEMP_PIN
   #undef TOTAL_SENSORS
   #define TOTAL_SENSORS (TOTAL_SENSORS + 1)
 #endif
+
+// Controllo finale
 #if TOTAL_SENSORS > 1
-  #error "CONFIG ERROR: Troppi sensori di temperatura abilitati contemporaneamente!"
+  #error "CONFIG ERROR: Troppi sensori di temperatura VENTOLA abilitati!"
 #endif
-// ============================================================
+ 
 
+// --- NETWORK E WIFI ---
 
+#ifdef MESHTASTIC_EXCLUDE_WIFI
+    #undef MESHTASTIC_EXCLUDE_WIFI
+#endif
 
+#define HAS_WIFI 1
+#if defined(HAS_WIFI) && (HAS_WIFI == 1)
+    #undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
+    #define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
+
+    #undef USERPREFS_NETWORK_WIFI_ENABLED
+    #define USERPREFS_NETWORK_WIFI_ENABLED true
+
+    #undef USERPREFS_NETWORK_WIFI_SSID
+    #define USERPREFS_NETWORK_WIFI_SSID "ssid"
+
+    #undef USERPREFS_NETWORK_WIFI_PSK
+    #define USERPREFS_NETWORK_WIFI_PSK "passeord"
+
+// --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
+
+    #define MY_STATIC_IP      192, 168, 1, 251
+    #define MY_STATIC_GATEWAY 192, 168, 1, 1
+    #define MY_STATIC_SUBNET  255, 255, 255, 0
+    #define MY_STATIC_DNS     8, 8, 8, 8
+
+#endif
+
+// --- MQTT ---
+#define USERPREFS_MQTT_ENABLED 1
+#if defined (USERPREFS_MQTT_ENABLED) && (USERPREFS_MQTT_ENABLED == 1)
+    #define USERPREFS_MQTT_ENCRYPTION_ENABLED false
+    #define USERPREFS_MQTT_JSON_ENABLED true
+    #undef USERPREFS_MQTT_ENABLED
+    #define USERPREFS_MQTT_ENABLED 1
+    #undef USERPREFS_MQTT_ADDRESS
+    #define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
+    #undef USERPREFS_MQTT_USERNAME
+    #define USERPREFS_MQTT_USERNAME "mqtt_user"
+    #undef USERPREFS_MQTT_PASSWORD
+    #define USERPREFS_MQTT_PASSWORD "mqtt_pass"
+    #undef USERPREFS_MQTT_ROOT_TOPIC
+    
+    #undef USERPREFS_MQTT_ROOT_TOPIC
+
+    #ifdef USERPREFS_CONFIG_OWNER_SHORT_NAME
+        #define USERPREFS_MQTT_ROOT_TOPIC "mesh/" USERPREFS_CONFIG_OWNER_SHORT_NAME
+    #else
+        #define USERPREFS_MQTT_ROOT_TOPIC "mesh/generico/"
+    #endif
+#endif
 
 
 ```
