@@ -1,6 +1,6 @@
 # meshtastic-firmwares-ITA
 
-***ultima release alpha: meshtastic-firmware-2.7.25 (ultima alpha)***
+***ultima release alpha: meshtastic-firmware-2.7.25***
 
 
 ---
