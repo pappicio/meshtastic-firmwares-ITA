@@ -80,13 +80,6 @@ Se vuoi aprire il progetto direttamente in Visual Studio Code con tutte le dipen
    code .
    
 
-   
-
-
-
-
-
-
 ***per recurerare dati sul teminale:***
 
 ***python -u -m meshtastic --host 192.168.1.250 --listen > log.txt 2>&1***
