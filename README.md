@@ -44,7 +44,7 @@ Tutti i comandi devono seguire la sintassi:
 ### Esempi di invio
 * **Tramite App Meshtastic:** Invia un Messaggio Diretto (DM) al nodo target con il testo: `mia_pass_123 ventola tstart 26.5`
 * **Tramite CLI (es. Python Meshtastic):**
-  `meshtastic --host 192.168.1.251 --sendtext "mia_pass_123 ventola tstart 26.5" --dest "NODO_TARGET"`
+  `meshtastic --host 192.168.1.251 --sendtext "mia_pass_123 ventola tstart 26.5" --dest "!id_nodo_target"`
   
 ## 📊 Integrazione Dati e Risposte
 * **MQTT:** Se il nodo è collegato a un server MQTT privato, le risposte ai comandi (es. lo stato dei sensori) vengono pubblicate sui topic Meshtastic configurati, permettendo una dashboard centralizzata.
