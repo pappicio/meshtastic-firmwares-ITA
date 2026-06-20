@@ -82,8 +82,6 @@ extern int TCPPort; // set by Portduino
 // Return a human readable string of the form "Meshtastic_ab13"
 const char *getDeviceName();
 
-void caricaMeteo();
-
 extern uint32_t timeLastPowered;
 
 extern uint32_t rebootAtMsec;

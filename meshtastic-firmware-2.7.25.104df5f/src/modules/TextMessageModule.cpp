@@ -14,7 +14,7 @@
 ///////////////////////////////////////////////
 
 
-#include "modules/Telemetry/EnvironmentTelemetry.h"
+//////#include "modules/Telemetry/EnvironmentTelemetry.h"
 #include "comandiremoti.h" // Aggiungi questo in cima al file
 
 // -------------------------------------------------------------
@@ -35,8 +35,6 @@ TextMessageModule *textMessageModule;
 
 std::string globalPrivateBuffer = "";
 
-
-extern EnvironmentTelemetryModule *environmentTelemetryModule;
 
 
 ProcessMessage TextMessageModule::handleReceived(const meshtastic_MeshPacket &mp)

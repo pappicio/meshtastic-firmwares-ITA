@@ -30,7 +30,6 @@
 
 ///////////////////////////////////////////////
 #include "modules/Telemetry/EnvironmentTelemetry.h"
-#include "comandiremoti.h"
 #include "comandiremoti.h" // <--- AGGIUNGI QUESTA RIGA!
 ///////////////////////////////////////////////
 
