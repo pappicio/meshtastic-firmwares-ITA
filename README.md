@@ -5,7 +5,50 @@
 
 
 ---
+# 📡 Mesh-Command-Control (Meshtastic)
 
+Sistema avanzato di telemetria e controllo remoto per nodi Meshtastic (Heltec V4).
+Questo firmware consente la configurazione dinamica e il controllo hardware tramite messaggi protetti.
+
+## 🔑 Utilizzo dei Comandi
+Tutti i comandi devono seguire la sintassi:
+`[PASSWORD_PERSONALE] [COMANDO] [PARAMETRO]`
+
+### Esempi di invio
+* **Tramite App Meshtastic:** Invia un Messaggio Diretto (DM) al nodo target con il testo: `mia_pass_123 ventola tstart 26.5`
+* **Tramite CLI (es. Python Meshtastic):**
+  `meshtastic --host 192.168.1.251 --sendtext "mia_pass_123 ventola tstart 26.5" --dest "NODO_TARGET"`
+
+---
+
+## 📋 NOVITA': Rosa dei Comandi Supportati
+
+| Comando | Descrizione | Parametro | Esempio |
+| :--- | :--- | :--- | :--- |
+| `lista comandi` | Mostra elenco completo | - | `PASS lista comandi` |
+| `stato sensori` | Status completo (Sensori + Sistemi) | - | `PASS stato sensori` |
+| `reboot giorni` | Imposta auto-reboot | Int | `PASS reboot giorni 7` |
+| `nuova password`| Cambia password sistema | String | `PASS nuova password 1234` |
+| `ventola tstart`| Temp. avvio ventola | Float | `PASS ventola tstart 26.0` |
+| `ventola tstop` | Temp. stop ventola | Float | `PASS ventola tstop 22.0` |
+| `ventola hstart`| Umidità avvio ventola | Float | `PASS ventola hstart 80` |
+| `ventola hstop` | Umidità stop ventola | Float | `PASS ventola hstop 70` |
+| `batteria sleep`| Soglia mV per Sleep | Int | `PASS batteria sleep 3200` |
+| `batteria wake` | Soglia mV per Wake | Int | `PASS batteria wake 3500` |
+| `guadagno anemometro` | Guadagno Anemometro | Float | `PASS guadagno anemometro 0.8` |
+| `attrito anemometro` | Attrito Anemometro | Float | `PASS attrito anemometro 0.2` |
+| `fattore pioggia` | Fattore Pluviometro | Float | `PASS fattore pioggia 0.3` |
+| `inverti vento` | Toggle Inversione | - | `PASS inverti vento` |
+| `direzione vento` | Offset Nord Vento | Float | `PASS direzione vento 90` |
+| `relay1` | Controllo Relay 1 | on/off | `PASS relay1 on` |
+| `relay2` | Controllo Relay 2 | on/off | `PASS relay2 off` |
+
+---
+
+## 📊 Integrazione Dati e Risposte
+* **Syslog Gateway:** Ogni operazione è loggata in tempo reale sul NanoPi-R76S (UDP:514).
+* **MQTT:** Se il nodo è collegato a un server MQTT privato, le risposte ai comandi (es. lo stato dei sensori) vengono pubblicate sui topic Meshtastic configurati, permettendo una dashboard centralizzata
+---
 ## 🚀 Novità: Supporto Arduino OTA (Over-The-Air)
 È stato implementato il supporto ad **Arduino OTA**. Questo permette di flashare il firmware sul nodo direttamente via Wi-Fi, senza dover scollegare il dispositivo o salire sul tetto per attaccare il cavo USB.
 
