@@ -5,7 +5,8 @@
 
 
 ---
-# 📡 Mesh-Command-Control (Meshtastic)
+
+# 📡 Novità: Mesh-Command-Control (Meshtastic)
 
 Sistema avanzato di telemetria e controllo remoto per nodi Meshtastic (Heltec V4).
 Questo firmware consente la configurazione dinamica e il controllo hardware tramite messaggi protetti.
@@ -21,7 +22,7 @@ Tutti i comandi devono seguire la sintassi:
 
 ---
 
-## 📋 NOVITA': Rosa dei Comandi Supportati
+## 📋 Rosa dei Comandi Supportati
 
 | Comando | Descrizione | Parametro | Esempio |
 | :--- | :--- | :--- | :--- |
@@ -47,8 +48,9 @@ Tutti i comandi devono seguire la sintassi:
 
 ## 📊 Integrazione Dati e Risposte
 * **Syslog Gateway:** Ogni operazione è loggata in tempo reale sul NanoPi-R76S (UDP:514).
-* **MQTT:** Se il nodo è collegato a un server MQTT privato, le risposte ai comandi (es. lo stato dei sensori) vengono pubblicate sui topic Meshtastic configurati, permettendo una dashboard centralizzata
+* **MQTT:** Se il nodo è collegato a un server MQTT privato, le risposte ai comandi (es. lo stato dei sensori) vengono pubblicate sui topic Meshtastic configurati, permettendo una dashboard centralizzata.
 ---
+
 ## 🚀 Novità: Supporto Arduino OTA (Over-The-Air)
 È stato implementato il supporto ad **Arduino OTA**. Questo permette di flashare il firmware sul nodo direttamente via Wi-Fi, senza dover scollegare il dispositivo o salire sul tetto per attaccare il cavo USB.
 
@@ -76,6 +78,8 @@ Se vuoi aprire il progetto direttamente in Visual Studio Code con tutte le dipen
    Digita il comando per aprire VS Code sul progetto corrente:
 
    code .
+   
+
    
 
 
