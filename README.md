@@ -382,7 +382,7 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
 
 //PASSWORD PER NVIO OCMANDI DA CLI O MESSAGGI PRIVATI
 #define CMD_PASSWORD "password"
- 
+
 // Per attivarli basta lasciarli così:
 #define HAS_WIND_DIRECTION
  
@@ -403,27 +403,8 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
 
 // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
     
-//     #define SHOW_ON_POWER_METRICS
-
+//  #define SHOW_ON_POWER_METRICS
     #define FAN_RELAY_PIN 45 //1 precedentemente pin !, ma il pin 1 su heltec v4 è ADC per lettura batteria, se mettiamo pin 1 perdiamo lettura (voltaggio) batteria  // GPIO fisico del modulo Relay (Verificare che sia libero!)
-
-    #if defined(FAN_RELAY_PIN)
-        // Soglie di temperatura per l'isteresi
-        #ifndef FAN_TEMP_START
-            #define FAN_TEMP_START 42.0f      // Accende a 42 gradi
-        #endif
-
-        #ifndef FAN_TEMP_STOP
-            #define FAN_TEMP_STOP 35.0f       // Spegne quando scende a 35
-        #endif
-
-         // Soglie di temumidità da asciugare per l'isteresi
-        #if defined (HAS_HUMIDITY)
-            #define FAN_HUM_START  80.0f  // Accende quando sale 80%
-            #define FAN_HUM_STOP   60.0f  // Spegne quando scende a 60%
-        #endif
-
-    #endif
 
 #endif
 
@@ -442,14 +423,18 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
 
 
 
+// --- INFO PROPRIETARIO ---
+//////#define USERPREFS_FIRMWARE_EDITION meshtastic_FirmwareEdition_DIY_EDITION
+
+#define USERPREFS_CONFIG_OWNER_LONG_NAME "1 modulo mio"
+#define USERPREFS_CONFIG_OWNER_SHORT_NAME "MMMX"
+
+#define USERPREFS_SPLASH_TEXT "MMMX"
+
+
 // --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
-#define FORCE_SLEEP_MV 3400  // Se attiva questa, abilita tutto il controllo
-
-#ifdef FORCE_SLEEP_MV
-    #define FORCE_WAKEUP_MV 3700    // Soglia di sblocco al risveglio
-    #define FORCE_WAKEUP_HR 12      // Ore di sonno profondo
-
-    // Numero letture di conferma prima dello spegnimento temporizzato, 5 pare essere perfetto!!!
+#define DEEPSLEEP
+#ifdef DEEPSLEEP
     #define ABSOLUTE_SHUTDOWN_COUNT 5
 #endif
 
@@ -502,7 +487,7 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
     #define USERPREFS_NETWORK_WIFI_SSID "ssid"
 
     #undef USERPREFS_NETWORK_WIFI_PSK
-    #define USERPREFS_NETWORK_WIFI_PSK "passeord"
+    #define USERPREFS_NETWORK_WIFI_PSK "password"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 
@@ -536,7 +521,6 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
         #define USERPREFS_MQTT_ROOT_TOPIC "mesh/generico/"
     #endif
 #endif
-
 
 ```
 
