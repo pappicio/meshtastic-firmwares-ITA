@@ -6,7 +6,7 @@
 
 ---
 
-# 📡 Novità: Mesh-Command-Control (Meshtastic)
+# 📡 Mesh-Command-Control (Meshtastic)
 
 Sistema avanzato di telemetria e controllo remoto per nodi Meshtastic (Heltec V4).
 Questo firmware consente la configurazione dinamica e il controllo hardware tramite messaggi protetti.
@@ -22,7 +22,7 @@ Tutti i comandi devono seguire la sintassi:
 
 ---
 
-## 📋 Rosa dei Comandi Supportati
+## 📋 Novità: Rosa dei Comandi Supportati
 
 | Comando | Descrizione | Parametro | Esempio |
 | :--- | :--- | :--- | :--- |
