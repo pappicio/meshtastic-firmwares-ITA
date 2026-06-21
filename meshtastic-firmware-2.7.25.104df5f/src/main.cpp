@@ -99,12 +99,6 @@ NRF52Bluetooth *nrf52Bluetooth = nullptr;
 #include "comandiremoti.h"
 
 // -------------------------------------------------------------
-
-
-////#include "main.h"
-
-
-
 ///////////////////////////////////////////
 
 #ifdef ARCH_ESP32

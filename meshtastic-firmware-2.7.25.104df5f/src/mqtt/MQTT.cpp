@@ -10,11 +10,6 @@
 #include "mesh/generated/meshtastic/mqtt.pb.h"
 #include "mesh/generated/meshtastic/telemetry.pb.h"
 #include "modules/RoutingModule.h"
-
-////////////////////////////////////////
- 
-////////////////////////////////////////
-
 #if defined(ARCH_ESP32)
 #include "../mesh/generated/meshtastic/paxcount.pb.h"
 #endif
@@ -830,7 +825,7 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         LOG_DEBUG("MQTT Publish %s, %u bytes", topic.c_str(), numBytes);
         publish(topic.c_str(), bytes, numBytes, false);
 
-        ///////////////////////////////////
+///////////////////////////////////////////////
 #if !defined(ARCH_NRF52) || defined(NRF52_USE_JSON)
     if (!moduleConfig.mqtt.json_enabled) return;
 
@@ -865,7 +860,8 @@ void MQTT::onSend(const meshtastic_MeshPacket &mp_encrypted, const meshtastic_Me
         LOG_INFO("JSON publish message to %s, %u bytes: %s", topicJson.c_str(), jsonString.length(), jsonString.c_str());
         publish(topicJson.c_str(), jsonString.c_str(), false);
     }
-////////////////////////////////////////////
+///////////////////////////////////////////////
+
 #endif // ARCH_NRF52 NRF52_USE_JSON
     } else {
        

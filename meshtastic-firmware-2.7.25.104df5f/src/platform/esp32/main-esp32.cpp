@@ -116,7 +116,7 @@ void enableSlowCLK()
 
 
 
-// SPOSTA QUESTA FUNZIONE PRIMA DI esp32Setup()
+/////////////////////////////////////////
 void checkResetReason() {
     esp_reset_reason_t reason = esp_reset_reason();
     
@@ -139,7 +139,7 @@ void checkResetReason() {
     LOG_ERROR("CRITICAL: Riavvio non previsto! Motivo: %s", r.c_str());
 }
 
-
+//////////////////////////////////////////
 
 void esp32Setup()
 {
@@ -238,8 +238,9 @@ void esp32Setup()
 // Since we are turning on watchdogs rather late in the release schedule, we really don't want to catch any
 // false positives.  The wait-to-sleep timeout for shutting down radios is 30 secs, so pick 45 for now.
 // #define APP_WATCHDOG_SECS 45
-#define APP_WATCHDOG_SECS 180 //90
-
+////////////////////////////
+#define APP_WATCHDOG_SECS 120 //90
+////////////////////////////
 #ifdef CONFIG_IDF_TARGET_ESP32C6
     esp_task_wdt_config_t *wdt_config = (esp_task_wdt_config_t *)malloc(sizeof(esp_task_wdt_config_t));
     wdt_config->timeout_ms = APP_WATCHDOG_SECS * 1000;
@@ -264,12 +265,15 @@ void esp32Loop()
 {
     esp_task_wdt_reset(); // service our app level watchdog
 
+///////////////////////////////////////////////
     // Ascolta le chiamate OTA solo se l'hardware ha il Wi-Fi ed è connesso alla rete
     #if HAS_WIFI && !MESHTASTIC_EXCLUDE_WIFI
     if (WiFi.status() == WL_CONNECTED) {
         ArduinoOTA.handle();
     }
     #endif
+///////////////////////////////////////////////
+
 }
 
 void cpuDeepSleep(uint32_t msecToWake)
