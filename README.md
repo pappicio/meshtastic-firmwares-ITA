@@ -63,6 +63,9 @@ per upload su wifi, da dos shell e nella cartella principale del progetto meshta
 
 ***pio run -e heltec-v4 -t upload --upload-port 192.168.1.251***
 
+oppure
+
+***pio run -e heltec-v4 -t clean && pio run -e heltec-v4 -t upload --upload-port 192.168.1.251***
 (se trattasi di heltec v4 avente ip:192.168.1.251 sulla rete LAN domestica)
 ---
 
