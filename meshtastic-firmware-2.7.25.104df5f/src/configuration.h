@@ -837,12 +837,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define USERPREFS_SPLASH_TEXT "MMMX"
 
 
-// --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI ---
+// --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI: 
+//default: 3400mah per deelsleep, 4700 mah ---
+//default ore in deepsleep: 12
 #define DEEPSLEEP
-#ifdef DEEPSLEEP
-    #define ABSOLUTE_SHUTDOWN_COUNT 5
-#endif
-
+ 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // Inizializziamo il contatore a 0

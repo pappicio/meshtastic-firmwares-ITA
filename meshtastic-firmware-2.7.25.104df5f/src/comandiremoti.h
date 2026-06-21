@@ -44,38 +44,10 @@ inline float fan_temp_start = 42.0f;
 inline float fan_temp_stop  = 35.0f;
 inline float fan_hum_start  = 80.0f;
 inline float fan_hum_stop   = 60.0f;
+inline int ABSOLUTE_SHUTDOWN_COUNT = 5;
 
 
-
-
-#if !defined(I2C_FAN_SENSOR_ADDR) && !defined(ONEWIRE_TEMP_PIN) && !defined(DHT_TEMP_PIN) && !defined(ANALOG_TEMP_PIN)
-    fan_temp_start = -99.0f
-    fan_temp_stop  = -99.0f
-
-    #ifndef FAN_HUM_START
-        fan_hum_start = 0.0f
-        fan_hum_stop  = 0.0f
-    #endif
-#endif
  
-
-
-#ifndef DEEPSLEEP
-    // Valori "dummy" se la macro non è definita
-    force_sleep_mv = -1;
-    force_wakeup_mv = -1;
-    force_wakeup_hr = -1;
-    force_deepsleep_enabled = false;
-#endif
-
-#ifndef FAN_RELAY_PIN
-    // Variabili "fantasma" impostate a -99 per evitare errori di compilazione
-    // se altre parti del codice le leggono comunque
-    fan_temp_start = -99.0f;
-    fan_temp_stop  = -99.0f;
-    fan_hum_start  = -99.0f;
-    fan_hum_stop   = -99.0f;
-#endif
 
 // --- 4. FUNZIONI ---
 void caricavariabili();
