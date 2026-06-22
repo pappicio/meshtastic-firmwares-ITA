@@ -837,7 +837,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // --- SISTEMA DI PROTEZIONE BATTERIA CON ISTERESI: 
-//default: 3400mah per deelsleep, 4700 mah ---
+//default: 3400 mah per deelsleep, 4700 mah ---
 //default ore in deepsleep: 12
 // il tutto configurabile nel file: /src/comandiremoti.h
 #define DEEPSLEEP
@@ -878,9 +878,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef MESHTASTIC_EXCLUDE_WIFI
     #undef MESHTASTIC_EXCLUDE_WIFI
 #endif
-
-#define HAS_WIFI 1
-#if defined(HAS_WIFI) && (HAS_WIFI == 1)
+ 
+#if defined(ESP32)
+    #define HAS_WIFI 1  
     #undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
     #define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
 

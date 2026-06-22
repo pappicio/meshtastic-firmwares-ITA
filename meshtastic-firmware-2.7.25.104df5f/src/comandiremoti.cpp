@@ -5,11 +5,19 @@
 #include "main.h"
 #include "mesh/MeshService.h"
 #include "modules/Telemetry/EnvironmentTelemetry.h"
+
+
+
+// -------------------------------------------------------------
+// INCLUDE UNIVERSALI PER MEMORIA NON VOLATILE (METEO TARATURE)
+// -------------------------------------------------------------
 #if defined(ARCH_ESP32) || defined(ESP32)
-#include <Preferences.h>
+    #include <Preferences.h>
+#elif defined(NRF52_SERIES)
+    #include <InternalFileSystem.h>
+    // Usiamo il namespace di Adafruit per i chip Nordic nRF52 di Meshtastic
+    using namespace Adafruit_LittleFS_Namespace; 
 #endif
-
-
 
 // --- FUNZIONI CARICAMENTO E SALVATAGGIO ---
 /////////////////////////////////////////////////
@@ -73,8 +81,8 @@ void caricavariabili() {
     }
 #elif defined(NRF52_SERIES)
     if (InternalFS.exists("/firmware.dat")) {
-        File file = InternalFS.open("/firmware.dat", Adafruit_LittleFS_Namespace::FILE_O_READ);
-        if (file) {
+        File file(InternalFS);
+        if (file.open("/firmware.dat", FILE_O_READ)) {
             file.read(firmware_cmd_password, sizeof(firmware_cmd_password));
             file.read(&auto_reboot_days, sizeof(auto_reboot_days));
             file.read(&firmware_clean_also_nodedb, sizeof(firmware_clean_also_nodedb));
@@ -158,10 +166,9 @@ void salvavariabili() {
         prefs.end();
     }
 #elif defined(NRF52_SERIES)
-    using namespace Adafruit_LittleFS_Namespace;
     InternalFS.remove("/firmware.dat");
-    File file = InternalFS.open("/firmware.dat", FILE_O_WRITE);
-    if (file) {
+    File file(InternalFS);
+    if (file.open("/firmware.dat", FILE_O_WRITE)) {
         file.write((const uint8_t*)firmware_cmd_password, sizeof(firmware_cmd_password));
         file.write((const uint8_t*)&auto_reboot_days, sizeof(auto_reboot_days));
         file.write((const uint8_t*)&firmware_clean_also_nodedb, sizeof(firmware_clean_also_nodedb));

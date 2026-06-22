@@ -47,7 +47,7 @@ ProcessMessage TextMessageModule::handleReceived(const meshtastic_MeshPacket &mp
 
 
 ///////////////////////////////////////////////
-    // 👉 TELECOMANDO REMOTO (QUI È IL PUNTO GIUSTO)
+// 👉 TELECOMANDO REMOTO (QUI È IL PUNTO GIUSTO)
 if (mp.to == nodeDB->getNodeNum()) {
 
  	LOG_INFO("DEBUG: Messaggio gestito dal modulo.");

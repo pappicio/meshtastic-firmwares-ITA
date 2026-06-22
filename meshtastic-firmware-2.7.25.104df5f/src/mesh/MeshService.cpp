@@ -1008,6 +1008,7 @@ if (now_rain > 1000000000UL) {
 
 
 ///////////////////////////////////////////////
+#if HAS_WIFI || HAS_ETHERNET
 static bool isPrivateIpAddress(const IPAddress &ip)
 {
     constexpr struct {
@@ -1029,7 +1030,7 @@ static bool isPrivateIpAddress(const IPAddress &ip)
     }
     return false;
 }
-
+#endif
 
 /////////////////////////////////////////
 
@@ -1078,6 +1079,7 @@ void MeshService::fanControlTask(void *pvParameters) {
         
         // Chiama il modulo telemetria per forzare l'invio
 if (cicli == 0 || cicli == 6) {
+#if HAS_WIFI || HAS_ETHERNET
     IPAddress brokerIp;
     brokerIp.fromString(moduleConfig.mqtt.address);
    
@@ -1086,6 +1088,7 @@ if (cicli == 0 || cicli == 6) {
             EnvironmentTelemetryModule::pendingMqttPublish = true; // solo flag, niente chiamate
         }
     }
+#endif
 }
 
         // Avanziamo il contatore: resetta a 0 ogni 12 giri (12 cicli * 5s = 60 secondi)
