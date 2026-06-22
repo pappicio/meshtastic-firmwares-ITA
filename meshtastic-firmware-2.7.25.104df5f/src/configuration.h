@@ -880,6 +880,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
  
 #if defined(ESP32)
+#define USA_WIFI
+#if defined (USA_WIFI)
     #define HAS_WIFI 1  
     #undef USERPREFS_NETWORK_ENABLED_PROTOCOLS
     #define USERPREFS_NETWORK_ENABLED_PROTOCOLS 1
@@ -900,30 +902,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define MY_STATIC_SUBNET  255, 255, 255, 0
     #define MY_STATIC_DNS     8, 8, 8, 8
 
-#endif
+ 
 
 // --- MQTT ---
-#define USERPREFS_MQTT_ENABLED 1
-#if defined (USERPREFS_MQTT_ENABLED) && (USERPREFS_MQTT_ENABLED == 1)
-    #define USERPREFS_MQTT_ENCRYPTION_ENABLED false
-    #define USERPREFS_MQTT_JSON_ENABLED true
-    #undef USERPREFS_MQTT_ENABLED
     #define USERPREFS_MQTT_ENABLED 1
-    #undef USERPREFS_MQTT_ADDRESS
-    #define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
-    #undef USERPREFS_MQTT_USERNAME
-    #define USERPREFS_MQTT_USERNAME "mqtt_user"
-    #undef USERPREFS_MQTT_PASSWORD
-    #define USERPREFS_MQTT_PASSWORD "mqtt_pass"
-    #undef USERPREFS_MQTT_ROOT_TOPIC
+    #if defined (USERPREFS_MQTT_ENABLED) && (USERPREFS_MQTT_ENABLED == 1)
+        #define USERPREFS_MQTT_ENCRYPTION_ENABLED false
+        #define USERPREFS_MQTT_JSON_ENABLED true
+        #undef USERPREFS_MQTT_ENABLED
+        #define USERPREFS_MQTT_ENABLED 1
+        #undef USERPREFS_MQTT_ADDRESS
+        #define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
+        #undef USERPREFS_MQTT_USERNAME
+        #define USERPREFS_MQTT_USERNAME "mqtt_user"
+        #undef USERPREFS_MQTT_PASSWORD
+        #define USERPREFS_MQTT_PASSWORD "mqtt_pass"
+        #undef USERPREFS_MQTT_ROOT_TOPIC
     
-    #undef USERPREFS_MQTT_ROOT_TOPIC
+        #undef USERPREFS_MQTT_ROOT_TOPIC
 
-    #ifdef USERPREFS_CONFIG_OWNER_SHORT_NAME
-        #define USERPREFS_MQTT_ROOT_TOPIC "mesh/" USERPREFS_CONFIG_OWNER_SHORT_NAME
-    #else
-        #define USERPREFS_MQTT_ROOT_TOPIC "mesh/generico/"
+        #ifdef USERPREFS_CONFIG_OWNER_SHORT_NAME
+            #define USERPREFS_MQTT_ROOT_TOPIC "mesh/" USERPREFS_CONFIG_OWNER_SHORT_NAME
+        #else
+            #define USERPREFS_MQTT_ROOT_TOPIC "mesh/generico/"
+        #endif
     #endif
+#endif
 #endif
 
 ///////////////////////////////////////////////
