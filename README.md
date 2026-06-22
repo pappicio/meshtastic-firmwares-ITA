@@ -530,7 +530,7 @@ Modifica queste macro nel file di configurazione per adattare il firmware al tuo
 
 ### 🛠️ Configurazione GPIO (Ottimizzata)
 I pin sono stati scelti per garantire la massima stabilità ed evitare conflitti con il display OLED e i sensori interni dell'Heltec:
-* **Cooling Fan:** `GPIO 1`
+* **Cooling Fan:** `GPIO 36`
 * **Relay 1 (Luce):** `GPIO 2`
 * **Relay 2 (Pompa):** `GPIO 5`
 ---
