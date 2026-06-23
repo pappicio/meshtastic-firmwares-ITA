@@ -282,16 +282,64 @@ bool checkcomandi(const meshtastic_MeshPacket *p) {
     };
 
     // --- LOGICA COMANDI ---
-    if (cmd.equals(LISTA_COMANDI)) {
-        auto sendAndWait = [&](String msg) {
-            sendConfirm(p, msg.c_str());
-            delay(300);
+if (cmd.equals(LISTA_COMANDI)) {
+        // Struttura dati per passare i messaggi e il pacchetto al task asincrono
+        struct TaskArgs {
+            meshtastic_MeshPacket pkt;
+            String msg1;
+            String msg2;
+            String msg3;
         };
-        sendAndWait("1/3 Sys: " + String(COMANDO_STATO) + ", " + String(CMD_PASS) + ", " + String(CMD_REBOOT));
-        sendAndWait("2/3 Fan: " + String(CMD_FAN_T_START) + ", " + String(CMD_FAN_T_STOP) + ", " + String(CMD_FAN_H_START) + ", " + String(CMD_FAN_H_STOP) + ", Batt: " + String(CMD_BATT_SLEEP) + ", " + String(CMD_BATT_WAKE));
-        sendAndWait("3/3 Meteo/Relay: " + String(CMD_GUADAGNO) + ", " + String(CMD_ATTRITO) + ", " + String(CMD_RAIN) + ", " + String(CMD_INV_VENTO) + ", " + String(CMD_DIR_VENTO) + ", " + String(CMD_RELAY1) + " on/off, " + String(CMD_RELAY2) + " on/off");
+
+        // Allociamo dinamicamente gli argomenti per il task
+        TaskArgs *args = new TaskArgs();
+        if (args != nullptr) {
+            // Copiamo il pacchetto di richiesta per mantenere intatti i riferimenti a canali e nodi
+            if (p != nullptr) {
+                args->pkt = *p;
+            }
+            
+            // Componiamo le stringhe
+            args->msg1 = "1/3 Sys: " + String(COMANDO_STATO) + ", " + String(CMD_PASS) + ", " + String(CMD_REBOOT);
+            args->msg2 = "2/3 Fan: " + String(CMD_FAN_T_START) + ", " + String(CMD_FAN_T_STOP) + ", " + String(CMD_FAN_H_START) + ", " + String(CMD_FAN_H_STOP) + ", Batt: " + String(CMD_BATT_SLEEP) + ", " + String(CMD_BATT_WAKE);
+            args->msg3 = "3/3 Meteo/Relay: " + String(CMD_GUADAGNO) + ", " + String(CMD_ATTRITO) + ", " + String(CMD_RAIN) + ", " + String(CMD_INV_VENTO) + ", " + String(CMD_DIR_VENTO) + ", " + String(CMD_RELAY1) + " on/off, " + String(CMD_RELAY2) + " on/off";
+
+            // Creiamo un task FreeRTOS a bassissima priorità che gira in background
+            xTaskCreate(
+                [](void *pvParameters) {
+                    TaskArgs *dati = static_cast<TaskArgs*>(pvParameters);
+                    
+                    if (dati != nullptr) {
+                        
+                        // Invia il primo messaggio immediatamente
+                        sendConfirm(&(dati->pkt), dati->msg1.c_str());
+                        vTaskDelay(pdMS_TO_TICKS(1000)); // Attesa non bloccante per il core (400 ms)
+                        
+                        // Invia il secondo
+                        sendConfirm(&(dati->pkt), dati->msg2.c_str());
+                        vTaskDelay(pdMS_TO_TICKS(1000));
+                        
+                        // Invia il terzo
+                        sendConfirm(&(dati->pkt), dati->msg3.c_str());
+                        
+                        // Liberiamo la memoria allocata
+                        delete dati;
+                    }
+                    
+                    // Un task FreeRTOS deve obbligatoriamente auto-eliminarsi alla fine
+                    vTaskDelete(NULL);
+                },
+                "async_send_cmd",   // Nome del task
+                4096,               // Stack size (4KB sono sicuri per le conversioni String/memcpy)
+                args,               // Parametri passati al task
+                1,                  // Priorità molto bassa (lascia respirare la radio e il resto del sistema)
+                NULL                // Task handle non necessario
+            );
+        }
         return true;
     }
+	
+	
 
     if (cmd.equals(COMANDO_STATO)) {
         char stato[256];
@@ -301,7 +349,8 @@ bool checkcomandi(const meshtastic_MeshPacket *p) {
         sendConfirm(p, stato);
         return true;
     }
-
+	
+	
     if (cmd.startsWith(String(CMD_PASS) + " ")) {
         String nPass = cmd.substring(strlen(CMD_PASS) + 1);
         nPass.trim();
