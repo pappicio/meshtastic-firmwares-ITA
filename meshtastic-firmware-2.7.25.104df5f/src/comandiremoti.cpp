@@ -313,11 +313,11 @@ if (cmd.equals(LISTA_COMANDI)) {
                         
                         // Invia il primo messaggio immediatamente
                         sendConfirm(&(dati->pkt), dati->msg1.c_str());
-                        vTaskDelay(pdMS_TO_TICKS(1000)); // Attesa non bloccante per il core (400 ms)
+                        vTaskDelay(pdMS_TO_TICKS(1500)); // Attesa non bloccante per il core (400 ms)
                         
                         // Invia il secondo
                         sendConfirm(&(dati->pkt), dati->msg2.c_str());
-                        vTaskDelay(pdMS_TO_TICKS(1000));
+                        vTaskDelay(pdMS_TO_TICKS(1500));
                         
                         // Invia il terzo
                         sendConfirm(&(dati->pkt), dati->msg3.c_str());
