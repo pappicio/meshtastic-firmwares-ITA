@@ -40,7 +40,9 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
         : concurrency::OSThread("EnvironmentTelemetry"), ScanI2CConsumer(),
           ProtobufModule("EnvironmentTelemetry", meshtastic_PortNum_TELEMETRY_APP, &meshtastic_Telemetry_msg)
     {
+	///////////////////////////////////////////////
         instance = this;
+	///////////////////////////////////////////////
         lastMeasurementPacket = nullptr;
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
         setIntervalFromNow(10 * 1000);
