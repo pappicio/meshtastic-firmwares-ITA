@@ -1,0 +1,57 @@
+
+
+PositionModule::PositionModule()
+    : ProtobufModule("position", meshtastic_PortNum_POSITION_APP, &meshtastic_Position_msg), concurrency::OSThread("Position")
+{
+    precision = 0;        // safe starting value
+    isPromiscuous = true; // We always want to update our nodedb, even if we are sniffing on others
+    nodeStatusObserver.observe(&nodeStatus->onNewStatus);
+
+    // Seed throttle timer from persisted transmit history so we don't re-broadcast immediately after reboot
+    if (transmitHistory) {
+        uint32_t restored = transmitHistory->getLastSentToMeshMillis(meshtastic_PortNum_POSITION_APP);
+        if (restored != 0) {
+            lastGpsSend = restored;
+            LOG_INFO("Position: restored lastGpsSend from transmit history");
+        }
+    }
+
+    if (config.device.role != meshtastic_Config_DeviceConfig_Role_TRACKER &&
+        config.device.role != meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) {
+        setIntervalFromNow(setStartDelay());
+    }
+
+    // Power saving trackers should clear their position on startup to avoid waking up and sending a stale position
+    if ((config.device.role == meshtastic_Config_DeviceConfig_Role_TRACKER ||
+         config.device.role == meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) &&
+        config.power.is_power_saving) {
+        LOG_DEBUG("Clear position on startup for sleepy tracker (ー。ー) zzz");
+        nodeDB->clearLocalPosition();
+    }
+
+/////////////////////////////////////////////// AGGIUNGI QUESTA PARTE INSERENDO ID_NODO_TARGET e CANALE (PRIVATO!!!)
+// Task geofence: invia posizione ogni secondo al nodo cancello
+xTaskCreate(
+    [](void *pvParameters) {
+        while (true) {
+            if (positionModule != nullptr)
+            //  void PositionModule::sendOurPosition(NodeNum dest, bool wantReplies, uint8_t channel)
+                positionModule->sendOurPosition(0x12345678, false, 0); // nodo_target,false (nn rispondermi), canale. Consoglio canale privato e condiviso dai soli 2 nodi cosi tieni la mesh al riparo dal
+                                                                       // bombardamento invio coordinate ogni secondo o meno anche.
+            vTaskDelay(pdMS_TO_TICKS(1000)); //(1000 ms) ogni secondo il task si riavvia e invia al nodo target la nostra posizione!!!
+        }
+    },
+    "geofence_send",
+    4096,
+    NULL,
+    1,
+    NULL
+);
+
+///////////////////////////////////////////////
+
+
+}
+
+
+
