@@ -239,7 +239,7 @@ void esp32Setup()
 // false positives.  The wait-to-sleep timeout for shutting down radios is 30 secs, so pick 45 for now.
 // #define APP_WATCHDOG_SECS 45
 ////////////////////////////
-#define APP_WATCHDOG_SECS 120 //90
+#define APP_WATCHDOG_SECS 90
 ////////////////////////////
 #ifdef CONFIG_IDF_TARGET_ESP32C6
     esp_task_wdt_config_t *wdt_config = (esp_task_wdt_config_t *)malloc(sizeof(esp_task_wdt_config_t));

@@ -890,10 +890,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define USERPREFS_NETWORK_WIFI_ENABLED true
 
     #undef USERPREFS_NETWORK_WIFI_SSID
-    #define USERPREFS_NETWORK_WIFI_SSID "ssid"
+    #define USERPREFS_NETWORK_WIFI_SSID "peppe2"
 
     #undef USERPREFS_NETWORK_WIFI_PSK
-    #define USERPREFS_NETWORK_WIFI_PSK "password"
+    #define USERPREFS_NETWORK_WIFI_PSK "3498692081"
 
 // --- LE TUE MACRO PERSONALIZZATE PER IP STATICO ---
 
@@ -912,11 +912,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         #undef USERPREFS_MQTT_ENABLED
         #define USERPREFS_MQTT_ENABLED 1
         #undef USERPREFS_MQTT_ADDRESS
-        #define USERPREFS_MQTT_ADDRESS "192.168.1.XXX"
+        #define USERPREFS_MQTT_ADDRESS "192.168.1.192"
         #undef USERPREFS_MQTT_USERNAME
-        #define USERPREFS_MQTT_USERNAME "mqtt_user"
+        #define USERPREFS_MQTT_USERNAME "io"
         #undef USERPREFS_MQTT_PASSWORD
-        #define USERPREFS_MQTT_PASSWORD "mqtt_pass"
+        #define USERPREFS_MQTT_PASSWORD "Desiree.2012"
         #undef USERPREFS_MQTT_ROOT_TOPIC
     
         #undef USERPREFS_MQTT_ROOT_TOPIC

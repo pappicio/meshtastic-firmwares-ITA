@@ -812,7 +812,7 @@ if (leggisolouno) {
                 } else {
                     LOG_ERROR("FAN CHECK: Trovato 0x%02x ma la lettura ha fallito!", currentAddr);
                     // Fallimento lettura: impostiamo errore e usciamo comunque
-                    fanTemp = -150.0f;
+                    fanTemp = -999.0f;
                     fanHum = 0.0f;
                     isTelemetryBusy = false;
                     return false;
@@ -824,7 +824,7 @@ if (leggisolouno) {
             // SE NON È DEFINITO: Non possiamo sapere qual è il sensore giusto.
             // Impostiamo il valore di errore, sblocchiamo e chiudiamo la funzione.
             LOG_WARN("FAN CHECK: Indirizzo sensore non definito! Impossibile leggere su i2c.");
-            fanTemp = -150.0f;
+            fanTemp = -999.0f;
             fanHum=0.0f;
             isTelemetryBusy = false;
             return false; 

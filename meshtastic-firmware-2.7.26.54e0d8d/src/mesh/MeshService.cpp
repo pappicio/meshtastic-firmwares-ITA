@@ -68,7 +68,10 @@
 ///////////////////////////////////////////////
 extern float fanTemp;
 extern float fanHum; 
- 
+
+float currentTemp = -999.0f;
+float currenthum = -999.0f;
+
 extern EnvironmentTelemetryModule *environmentTelemetryModule;
  
 
@@ -642,7 +645,7 @@ float readDHTTemp() {
     // Aggiorna la globale fanHum solo se richiesto esplicitamente
     #if defined(HAS_HUMIDITY) && HAS_HUMIDITY == 1
         float h = _dht.readHumidity();
-        fanHum = (isnan(h)) ? 0.0f : h;
+        currenthum = (isnan(h)) ? 0.0f : h;
     #endif
 
     return (isnan(t)) ? -999.0f : t;
@@ -700,9 +703,11 @@ void checkInternalFan() {
         LOG_INFO("[NTP] NTP: NO");
     }
 
-    float currentTemp = -999.0f;
-    fanHum = 0.0f;
-    fanTemp = -999.0f;
+    currentTemp = -999.0f;
+    currenthum = -999.0f;
+
+    ///////fanHum = 0.0f;
+    ///////fanTemp = -999.0f;
     
     // Stringa per identificare il tipo di sensore nel log
     const char* sensorType = "NONE";
@@ -724,6 +729,13 @@ void checkInternalFan() {
 
     if (currentTemp > -50.0f && currentTemp < 150.0f) {
         fanTemp = currentTemp;
+    }else{
+        fanTemp = -999.0f;
+    }
+    if (currenthum > -50.0f && currenthum < 150.0f) {
+        fanHum = currenthum;
+     }else{
+        fanHum = 0.0f;
     }
 
     // Log arricchito con il tipo di sensore
