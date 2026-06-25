@@ -1,5 +1,8 @@
 
 
+
+//IL MODULO é: /src/modules/positionmodule.cpp
+
 PositionModule::PositionModule()
     : ProtobufModule("position", meshtastic_PortNum_POSITION_APP, &meshtastic_Position_msg), concurrency::OSThread("Position")
 {
