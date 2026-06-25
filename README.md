@@ -1,7 +1,7 @@
 # meshtastic-firmwares-ITA
 
 ***ultima release alpha: meshtastic-firmware-2.7.25***
-
+***aggiunta ultima release alpha: meshtastic-firmware-2.7.26***
 
 ---
 
@@ -66,6 +66,10 @@ per upload su wifi, da dos shell e nella cartella principale del progetto meshta
 oppure
 
 ***pio run -e heltec-v4 -t clean && pio run -e heltec-v4 -t upload --upload-port 192.168.1.251***
+
+se connesso via bt al pc:
+
+***pio run -e heltec-v4 -t upload --upload-port COMx*** (dove COMX è la porta com vortuale BT: es.: COM5) 
 
 (se trattasi di heltec v4 avente ip:192.168.1.251 sulla rete LAN domestica)
 ---

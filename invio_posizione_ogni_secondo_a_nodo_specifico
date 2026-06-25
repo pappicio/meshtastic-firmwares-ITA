@@ -1,0 +1,106 @@
+
+cpp//IL MODULO é: /src/modules/positionmodule.cpp
+PositionModule::PositionModule()
+    : ProtobufModule("position", meshtastic_PortNum_POSITION_APP, &meshtastic_Position_msg), concurrency::OSThread("Position")
+{
+    precision = 0;        // safe starting value
+    isPromiscuous = true; // We always want to update our nodedb, even if we are sniffing on others
+    nodeStatusObserver.observe(&nodeStatus->onNewStatus);
+
+    // Seed throttle timer from persisted transmit history so we don't re-broadcast immediately after reboot
+    if (transmitHistory) {
+        uint32_t restored = transmitHistory->getLastSentToMeshMillis(meshtastic_PortNum_POSITION_APP);
+        if (restored != 0) {
+            lastGpsSend = restored;
+            LOG_INFO("Position: restored lastGpsSend from transmit history");
+        }
+    }
+
+    if (config.device.role != meshtastic_Config_DeviceConfig_Role_TRACKER &&
+        config.device.role != meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) {
+        setIntervalFromNow(setStartDelay());
+    }
+
+    // Power saving trackers should clear their position on startup to avoid waking up and sending a stale position
+    if ((config.device.role == meshtastic_Config_DeviceConfig_Role_TRACKER ||
+         config.device.role == meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) &&
+        config.power.is_power_saving) {
+        LOG_DEBUG("Clear position on startup for sleepy tracker (ー。ー) zzz");
+        nodeDB->clearLocalPosition();
+    }
+
+    ///////////////////////////////////////////////
+    // Task geofence: invia la nostra posizione GPS ogni secondo al nodo target.
+    // Usare un canale privato condiviso solo dai 2 nodi per non bombardare la mesh!
+    // void PositionModule::sendOurPosition(NodeNum dest, bool wantReplies, uint8_t channel)
+    PositionModule *self = this; // "this" è valido qui, positionModule non ancora assegnato
+    xTaskCreate(
+        [](void *pvParameters) {
+            PositionModule *self = static_cast<PositionModule *>(pvParameters);
+            while (true) {
+                // Invia posizione al nodo target sul canale privato
+                self->sendOurPosition(0x12345678, // <-- sostituisci con nodenum nodo target (es. id_nodo_cancello)
+                                      false,       // non richiedere risposta
+                                      0);          // <-- sostituisci con indice canale privato condiviso
+                vTaskDelay(pdMS_TO_TICKS(1000));   // attende 1 secondo prima del prossimo invio
+            }
+        },
+        "geofence_send", // nome task FreeRTOS
+        4096,            // stack 4KB, sufficiente per le operazioni interne
+        self,            // passa this come parametro al task
+        1,               // priorità bassa, non interferisce con radio e sistema
+        NULL             // task handle non necessario
+    );
+    ///////////////////////////////////////////////
+}
+
+
+// invece per il nodo ricevente:
+
+
+//sub: bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Position *pptr)
+
+
+    nodeDB->updatePosition(getFrom(&mp), p);
+    precision = getPositionPrecisionForChannel(mp.channel);
+
+    ///////////////////////////////////////////////
+    // --- GEOFENCE CANCELLO ---
+    // Abilita/disabilita il geofence senza ricompilare: basta cambiare questo bool
+    bool geofenceEnabled = true;
+
+    if (geofenceEnabled && getFrom(&mp) == 0x12345678) { // <-- sostituisci con nodenum nodo mittente
+        if (p.latitude_i != 0 && p.longitude_i != 0) {  // posizione valida
+            // Converti da gradi * 1e7 a float
+            float lat = p.latitude_i * 1e-7f;
+            float lon = p.longitude_i * 1e-7f;
+
+            // Posizione fissa del cancello — inserisci le coordinate reali
+            const float CANCELLO_LAT = 45.123456f; // <-- latitudine cancello
+            const float CANCELLO_LON = 12.123456f; // <-- longitudine cancello
+            const float SOGLIA_METRI = 50.0f;      // <-- distanza in metri per aprire
+
+            // Calcolo distanza con formula di Haversine
+            float dlat = (lat - CANCELLO_LAT) * DEG_TO_RAD;
+            float dlon = (lon - CANCELLO_LON) * DEG_TO_RAD;
+            float a = sinf(dlat / 2) * sinf(dlat / 2) +
+                      cosf(lat * DEG_TO_RAD) * cosf(CANCELLO_LAT * DEG_TO_RAD) *
+                      sinf(dlon / 2) * sinf(dlon / 2);
+            float distanza = 6371000.0f * 2.0f * asinf(sqrtf(a));
+
+            // bool locale: true = dentro soglia, false = fuori
+            bool vicino = (distanza < SOGLIA_METRI);
+
+            LOG_INFO("GEOFENCE: distanza=%.1fm soglia=%.1fm vicino=%d", distanza, SOGLIA_METRI, vicino);
+
+            // Attiva o disattiva il relay in base alla distanza
+            digitalWrite(RELAY_PIN, vicino ? HIGH : LOW); // <-- definisci RELAY_PIN
+        }
+    }
+    // --- FINE GEOFENCE ---
+    ///////////////////////////////////////////////
+
+    return false; // Let others look at this message also if they want
+}
+
+
