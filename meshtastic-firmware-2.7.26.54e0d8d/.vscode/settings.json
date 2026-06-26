@@ -10,5 +10,6 @@
   },
   "[powershell]": {
     "editor.defaultFormatter": "ms-vscode.powershell"
-  }
+  },
+  "C_Cpp.errorSquiggles": "disabled"
 }

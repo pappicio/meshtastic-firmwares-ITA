@@ -12,7 +12,7 @@ def readProps(prefsLoc):
     version = dict(config.items("VERSION"))
     verObj = dict(
         short="{}.{}.{}".format(version["major"], version["minor"], version["build"]),
-        long="unset",
+        long="{}.{}.{}.{}".format(version["major"], version["minor"], version["build"], version.get("patch", "0")),
         deb="unset",
     )
 
@@ -31,7 +31,11 @@ def readProps(prefsLoc):
         # if isDirty:
         #     # short for 'dirty', we want to keep our verstrings source for protobuf reasons
         #     suffix = sha + "-d"
-        verObj["long"] = "{}.{}".format(verObj["short"], suffix)
+
+################################################
+        verObj["long"] = verObj["long"] 
+################################################
+        
         verObj["deb"] = "{}.{}~{}{}".format(verObj["short"], run_number, build_location, sha)
     except:
         # print("Unexpected error:", sys.exc_info()[0])
