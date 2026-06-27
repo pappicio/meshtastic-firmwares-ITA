@@ -794,7 +794,55 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define WIND_VELOCITY_PIN 47  //heltec v4 pin libero ed è ok!'
 
 #define RAIN_SENSOR_PIN 48     //heltec v4 pin libero ed è ok!'
+
+/////////////////////////////////////////////////////////////////////////////////////////
  
+ 
+
+//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
+
+//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
+ 
+
+// per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
+// password relay1 on
+//////////////////////////////////////////////////////////////////////////////////////////
+
+ // --- CANALE PRIVATO: forza ridefinizione slot 7 ---
+// definiamo un pin per un relay, tipo CANCELLO che ascolta ogni secondo le coordinate che invia il suo nodo 
+#define PRIVATE_CH_NUM 7
+#define TRANSMITTER         // <-- commenta questa per compilare il nodo cancello
+#if defined(PRIVATE_CH_NUM)
+    // --- canale privato comune ad entrambi ---
+    #ifdef USERPREFS_CHANNEL_7_NAME
+        #undef USERPREFS_CHANNEL_7_NAME
+        #undef USERPREFS_CHANNEL_7_PSK
+        #undef USERPREFS_CHANNEL_7_UPLINK_ENABLED
+        #undef USERPREFS_CHANNEL_7_DOWNLINK_ENABLED
+    #endif
+    #define USERPREFS_CHANNEL_7_NAME "Nodo-Privato"
+    #define USERPREFS_CHANNEL_7_PSK { 0x8e, 0x62, 0x67, 0xf2, 0xb1, 0x55, 0x57, 0xd6, 0x2a, 0xec, 0xa0, 0xd3, 0xf0, 0x6e, 0xee, 0xe2, 0xd4, 0x07, 0x58, 0xe3, 0xa6, 0xa8, 0x7a, 0x5f, 0x13, 0xf0, 0xfa, 0xb7, 0xa1, 0x5f, 0xaa, 0x4c }
+    #define USERPREFS_CHANNEL_7_UPLINK_ENABLED false
+    #define USERPREFS_CHANNEL_7_DOWNLINK_ENABLED false
+
+    #ifdef TRANSMITTER
+        // nodo mobile — invia posizione, non ha relay
+        #define RECEIVER_NODE_ID 0x6699aaaUL  // che in realta è: !6699aaa <-- nodenum nodo cancello
+    #else
+        // nodo cancello — riceve posizione, attiva relay
+        #define RECEIVER
+        #ifdef RELAY_1_PIN
+            #undef RELAY_1_PIN
+        #endif
+        #define RELAY_1_PIN 47
+        #define SENDER_NODE_ID 0x1122aabbUL  // che in realta è: !1122aabb <-- nodenum nodo trasmettitore trasmittente!
+        // soglia metri dal nodo cancello!
+        #define GEOFENCE_SOGLIA_M        30.0f                         // attiva entro 50m
+        #define GEOFENCE_SOGLIA_RESET_M  (GEOFENCE_SOGLIA_M + 20.0f)   // reset oltre 70m (50 + 20 metri)
+    #endif
+#endif
+
+
 
 
 // Indirizzo I2C univoco per la ventola che potrebbe essere anche 0x76, 0x44, 0x45, il sensore usato solo per la ventola
@@ -812,18 +860,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////
  
- 
-
-//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
-
-//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
- 
-
-// per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
-// password relay1 on
-//////////////////////////////////////////////////////////////////////////////////////////
 
 
 

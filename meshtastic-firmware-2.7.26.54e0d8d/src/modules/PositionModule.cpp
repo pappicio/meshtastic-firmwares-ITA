@@ -50,6 +50,30 @@ PositionModule::PositionModule()
         LOG_DEBUG("Clear position on startup for sleepy tracker (ー。ー) zzz");
         nodeDB->clearLocalPosition();
     }
+
+
+
+    
+///////////////////////////////////////////////
+// Task geofence: invia la nostra posizione GPS ogni secondo al nodo target.
+// Usare un canale privato condiviso solo dai 2 nodi per non bombardare la mesh!
+// void PositionModule::sendOurPosition(NodeNum dest, bool wantReplies, uint8_t channel)
+#if defined(PRIVATE_CH_NUM) && defined(TRANSMITTER)
+    xTaskCreate(
+        [](void *pvParameters) {
+            PositionModule *self = static_cast<PositionModule *>(pvParameters);
+            vTaskDelay(pdMS_TO_TICKS(15000));
+            while (true) {
+                self->sendOurPosition(RECEIVER_NODE_ID, false, PRIVATE_CH_NUM);
+                vTaskDelay(pdMS_TO_TICKS(1000));
+            }
+        },
+        "geofence_send", 4096, this, 1, NULL
+    );
+#endif
+///////////////////////////////////////////////
+
+
 }
 
 bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Position *pptr)
@@ -109,6 +133,56 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
 
     nodeDB->updatePosition(getFrom(&mp), p);
     precision = getPositionPrecisionForChannel(mp.channel);
+
+
+
+///////////////////////////////////////////////
+// --- GEOFENCE CANCELLO ---
+#if defined(PRIVATE_CH_NUM) && defined(RECEIVER)
+    bool geofenceEnabled = true;
+
+    if (geofenceEnabled && 
+        mp.channel == PRIVATE_CH_NUM &&
+        getFrom(&mp) == SENDER_NODE_ID) {
+        
+        if (p.latitude_i != 0 && p.longitude_i != 0) {
+            float lat = p.latitude_i * 1e-7f;
+            float lon = p.longitude_i * 1e-7f;
+
+            // posizione del nodo cancello presa da nodeDB
+            meshtastic_Position myPos = nodeDB->getLocalPosition();
+            if (myPos.latitude_i == 0 && myPos.longitude_i == 0) {
+                LOG_WARN("GEOFENCE: posizione locale non disponibile, skip");
+            } else {
+                float cancelloLat = myPos.latitude_i * 1e-7f;
+                float cancelloLon = myPos.longitude_i * 1e-7f;
+
+                float dlat = (lat - cancelloLat) * DEG_TO_RAD;
+                float dlon = (lon - cancelloLon) * DEG_TO_RAD;
+                float a = sinf(dlat / 2) * sinf(dlat / 2) +
+                          cosf(lat * DEG_TO_RAD) * cosf(cancelloLat * DEG_TO_RAD) *
+                          sinf(dlon / 2) * sinf(dlon / 2);
+                float distanza = 6371000.0f * 2.0f * asinf(sqrtf(a));
+
+                bool vicino = (distanza < GEOFENCE_SOGLIA_M);
+                if (vicino && !geofenceTriggered) {
+                    LOG_INFO("GEOFENCE: impulso relay!");
+                    digitalWrite(RELAY_1_PIN, HIGH);
+                    vTaskDelay(pdMS_TO_TICKS(1000));
+                    digitalWrite(RELAY_1_PIN, LOW);
+                    geofenceTriggered = true;
+                } else if (distanza > GEOFENCE_SOGLIA_RESET_M && geofenceTriggered) {
+                    LOG_INFO("GEOFENCE: reset trigger");
+                    geofenceTriggered = false;
+                }
+            }
+        }
+    }
+#endif
+// --- FINE GEOFENCE ---
+///////////////////////////////////////////////
+
+
 
     return false; // Let others look at this message also if they want
 }
