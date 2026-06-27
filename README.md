@@ -134,10 +134,8 @@ Tutto si configura tramite `#define` nel file di userprefs della board target.
 ```
 
 > **PSK identica su entrambi i nodi** — generala con:
-> ```powershell
-> $bytes = New-Object byte[] 32
-> [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-> ($bytes | ForEach-Object { "0x{0:x2}" -f $_ }) -join ", "
+> ```python
+> python -c "import os; b=os.urandom(32); print(', '.join(f'0x{x:02x}' for x in b))"
 > ```
 
 ---
