@@ -139,6 +139,7 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
 ///////////////////////////////////////////////
 // --- GEOFENCE CANCELLO ---
 #if defined(PRIVATE_CH_NUM) && defined(RECEIVER)
+    static bool geofenceTriggered = false;
     bool geofenceEnabled = true;
 
     if (geofenceEnabled && 
@@ -149,13 +150,11 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
             float lat = p.latitude_i * 1e-7f;
             float lon = p.longitude_i * 1e-7f;
 
-            // posizione del nodo cancello presa da nodeDB
-            meshtastic_Position myPos = nodeDB->getLocalPosition();
-            if (myPos.latitude_i == 0 && myPos.longitude_i == 0) {
+            if (localPosition.latitude_i == 0 && localPosition.longitude_i == 0) {
                 LOG_WARN("GEOFENCE: posizione locale non disponibile, skip");
             } else {
-                float cancelloLat = myPos.latitude_i * 1e-7f;
-                float cancelloLon = myPos.longitude_i * 1e-7f;
+                float cancelloLat = localPosition.latitude_i * 1e-7f;
+                float cancelloLon = localPosition.longitude_i * 1e-7f;
 
                 float dlat = (lat - cancelloLat) * DEG_TO_RAD;
                 float dlon = (lon - cancelloLon) * DEG_TO_RAD;
@@ -164,8 +163,10 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
                           sinf(dlon / 2) * sinf(dlon / 2);
                 float distanza = 6371000.0f * 2.0f * asinf(sqrtf(a));
 
-                bool vicino = (distanza < GEOFENCE_SOGLIA_M);
-                if (vicino && !geofenceTriggered) {
+                LOG_INFO("GEOFENCE: distanza=%.1fm soglia=%.1fm vicino=%d triggered=%d",
+                         distanza, GEOFENCE_SOGLIA_M, (distanza < GEOFENCE_SOGLIA_M), geofenceTriggered);
+
+                if (distanza < GEOFENCE_SOGLIA_M && !geofenceTriggered) {
                     LOG_INFO("GEOFENCE: impulso relay!");
                     digitalWrite(RELAY_1_PIN, HIGH);
                     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -180,6 +181,7 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
     }
 #endif
 // --- FINE GEOFENCE ---
+///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
 
