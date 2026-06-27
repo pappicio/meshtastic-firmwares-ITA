@@ -839,6 +839,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #else
         // nodo cancello — riceve posizione, attiva relay per 1 secondo
         #define RECEIVER
+        #define IMPULSO 1 //secondi di impulso per relay ON e poi OFF, Impostato a 0 oppure nn definito per relay fisso ON se nel raggio GEOFENCE_SOGLIA_M
         #ifdef RELAY_1_PIN
             #undef RELAY_1_PIN
         #endif

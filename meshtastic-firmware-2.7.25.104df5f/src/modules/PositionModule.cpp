@@ -167,12 +167,26 @@ bool PositionModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mes
                          distanza, GEOFENCE_SOGLIA_M, (distanza < GEOFENCE_SOGLIA_M), geofenceTriggered);
 
                 if (distanza < GEOFENCE_SOGLIA_M && !geofenceTriggered) {
-                    LOG_INFO("GEOFENCE: impulso relay!");
+#ifdef IMPULSO
+                    LOG_INFO("GEOFENCE: impulso temporaneo relay!");
+                    xTaskCreate(
+                        [](void *pvParameters) {
+                            digitalWrite(RELAY_1_PIN, HIGH);
+                            vTaskDelay(pdMS_TO_TICKS(IMPULSO * 1000));
+                            digitalWrite(RELAY_1_PIN, LOW);
+                            vTaskDelete(NULL);
+                        },
+                        "relay_impulso", 1024, NULL, 1, NULL
+                    );
+#else
+                    LOG_INFO("GEOFENCE: relay fisso a ON!");
                     digitalWrite(RELAY_1_PIN, HIGH);
-                    vTaskDelay(pdMS_TO_TICKS(1000));
-                    digitalWrite(RELAY_1_PIN, LOW);
+#endif
+
                     geofenceTriggered = true;
+
                 } else if (distanza > GEOFENCE_SOGLIA_RESET_M && geofenceTriggered) {
+                    digitalWrite(RELAY_1_PIN, LOW);
                     LOG_INFO("GEOFENCE: reset trigger");
                     geofenceTriggered = false;
                 }
