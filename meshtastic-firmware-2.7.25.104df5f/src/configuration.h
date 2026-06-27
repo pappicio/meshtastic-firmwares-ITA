@@ -799,9 +799,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
  
 
-//#define RELAY_1_PIN 47 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
+#define RELAY_1_PIN 3 // Il GPIO che piloterà il secondo relay, verificare sempre da specifiche che sia libero sto PIN!!!
 
-//#define RELAY_2_PIN 48 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
+#define RELAY_2_PIN 4 // verificare sempre se i pin che indichiamo siano liberi da altri utilizzi!
  
 
 // per accendere relay1 basta scrivere un messaggio per il nodo target con scritto su:
