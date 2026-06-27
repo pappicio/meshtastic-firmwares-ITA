@@ -133,7 +133,7 @@ Tutto si configura tramite `#define` nel file di userprefs della board target.
 #define USERPREFS_CHANNEL_7_DOWNLINK_ENABLED false
 ```
 
-> **PSK identica su entrambi i nodi** — generala con:
+> **PSK identica su entrambi i nodi** — generala da una finestra dos, digitando:
 > ```python
 > python -c "import os; b=os.urandom(32); print(', '.join(f'0x{x:02x}' for x in b))"
 > ```
