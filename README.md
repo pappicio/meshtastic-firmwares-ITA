@@ -74,6 +74,115 @@ se connesso via bt al pc:
 (se trattasi di heltec v4 avente ip:192.168.1.251 sulla rete LAN domestica)
 ---
 
+# 📡 Meshtastic Geofence — Canale Privato + Relay
+
+Feature custom per firmware Meshtastic (fork `pappicio/meshtastic-firmwares-ITA`) che implementa un sistema di geofencing punto-a-punto tramite canale LoRa privato con attivazione relay GPIO.
+
+---
+
+## 🔧 Come funziona
+
+```
+[ Nodo Mobile 📱 ]  ──LoRa privato──▶  [ Nodo Cancello 🚪 ]
+  invia GPS 1Hz                          calcola distanza
+  su canale privato                       attiva relay GPIO
+  verso nodo fisso                        se entro 50m
+```
+
+Due nodi condividono un **canale LoRa privato cifrato (AES-256)**:
+
+- **TRANSMITTER** — nodo mobile con GPS, invia la propria posizione ogni secondo direttamente al nodo cancello (`hop_limit=0`, no flood mesh)
+- **RECEIVER** — nodo fisso, riceve le coordinate, calcola la distanza con formula di Haversine, attiva un impulso relay da 1 secondo quando il mobile entra nella soglia configurata
+
+---
+
+## ⚙️ Configurazione
+
+Tutto si configura tramite `#define` nel file di userprefs della board target.
+
+```cpp
+#define PRIVATE_CH_NUM 7          // slot canale privato (0-7)
+#define TRANSMITTER               // commenta per compilare il nodo cancello
+```
+
+### Nodo Mobile (TRANSMITTER)
+
+```cpp
+#define PRIVATE_CH_NUM          7
+#define TRANSMITTER
+#define RECEIVER_NODE_ID        0xAABBCCDDUL  // nodenum nodo cancello (senza !)
+```
+
+### Nodo Cancello (RECEIVER)
+
+```cpp
+#define PRIVATE_CH_NUM          7
+// #define TRANSMITTER           // commentato = RECEIVER
+#define RELAY_1_PIN             47            // GPIO relay
+#define SENDER_NODE_ID          0x11223344UL  // nodenum nodo mobile
+#define GEOFENCE_SOGLIA_M       50.0f         // attiva entro 50m
+#define GEOFENCE_SOGLIA_RESET_M (GEOFENCE_SOGLIA_M + 20.0f)  // reset oltre 70m
+```
+
+### Canale privato (comune ad entrambi)
+
+```cpp
+#define USERPREFS_CHANNEL_7_NAME "Nodo-Privato"
+#define USERPREFS_CHANNEL_7_PSK { 0x8e, 0x62, ... }  // 32 byte AES-256
+#define USERPREFS_CHANNEL_7_UPLINK_ENABLED   false
+#define USERPREFS_CHANNEL_7_DOWNLINK_ENABLED false
+```
+
+> **PSK identica su entrambi i nodi** — generala con:
+> ```powershell
+> $bytes = New-Object byte[] 32
+> [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+> ($bytes | ForEach-Object { "0x{0:x2}" -f $_ }) -join ", "
+> ```
+
+---
+
+## 📐 Logica Geofence
+
+- Distanza calcolata con **formula di Haversine** tra posizione ricevuta e posizione GPS locale del nodo cancello (no coordinate hardcoded)
+- **Isteresi** per evitare false attivazioni da jitter GPS:
+  - Attiva relay a **< 50m**
+  - Reset trigger a **> 70m**
+- Relay: **impulso singolo da 1 secondo**, poi OFF — comportamento tipico per cancelli elettrici
+- `static bool geofenceTriggered` evita attivazioni ripetute finché il mobile non esce dalla soglia di reset
+
+---
+
+## 🔒 Sicurezza
+
+| Feature | Dettaglio |
+|---|---|
+| Cifratura | AES-256 PSK sul canale privato |
+| No flood mesh | `hop_limit = 0` — il pacchetto non viene ritrasmesso |
+| No MQTT | `UPLINK/DOWNLINK false` — traffico confinato alla radio |
+| Filtro mittente | Il receiver accetta solo pacchetti da `SENDER_NODE_ID` |
+| Filtro canale | Solo pacchetti su `PRIVATE_CH_NUM` vengono processati |
+
+---
+
+## 🗂️ File modificati
+
+| File | Modifica |
+|---|---|
+| `PositionModule.cpp` | Task FreeRTOS invio posizione (TRANSMITTER) + geofence handler (RECEIVER) |
+| `userPrefs_<board>.h` | Define configurazione canale, PSK, soglie, GPIO |
+
+---
+
+## 📌 Note
+
+- Il nodenum del nodo si legge nell'app Meshtastic come `!aabbccdd` → nel codice diventa `0xaabbccddUL`
+- Il nodo cancello non necessita di coordinate fisse — usa il proprio GPS tramite `nodeDB->getLocalPosition()`
+- Se il GPS locale non è disponibile al momento della ricezione, il pacchetto viene skippato con `LOG_WARN`
+
+
+
+---
 ## 💻 Come avviare l'ambiente di sviluppo (VS Code)
 Se vuoi aprire il progetto direttamente in Visual Studio Code con tutte le dipendenze di PlatformIO correttamente allineate tramite terminale:
 
