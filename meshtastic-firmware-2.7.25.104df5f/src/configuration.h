@@ -824,7 +824,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         #undef USERPREFS_CHANNEL_7_DOWNLINK_ENABLED
     #endif
     #define USERPREFS_CHANNEL_7_NAME "Nodo-Privato"
+
+    // per creare la protezione del canale:
+    // python -c "import os; b=os.urandom(32); print(', '.join(f'0x{x:02x}' for x in b))"
+
     #define USERPREFS_CHANNEL_7_PSK { 0x8e, 0x62, 0x67, 0xf2, 0xb1, 0x55, 0x57, 0xd6, 0x2a, 0xec, 0xa0, 0xd3, 0xf0, 0x6e, 0xee, 0xe2, 0xd4, 0x07, 0x58, 0xe3, 0xa6, 0xa8, 0x7a, 0x5f, 0x13, 0xf0, 0xfa, 0xb7, 0xa1, 0x5f, 0xaa, 0x4c }
+
     #define USERPREFS_CHANNEL_7_UPLINK_ENABLED false
     #define USERPREFS_CHANNEL_7_DOWNLINK_ENABLED false
 
