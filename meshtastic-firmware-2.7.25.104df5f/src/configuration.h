@@ -829,7 +829,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         // nodo mobile — invia posizione, non ha relay
         #define RECEIVER_NODE_ID 0x6699aaaUL  // che in realta è: !6699aaa <-- nodenum nodo cancello
     #else
-        // nodo cancello — riceve posizione, attiva relay
+        // nodo cancello — riceve posizione, attiva relay per 1 secondo
         #define RECEIVER
         #ifdef RELAY_1_PIN
             #undef RELAY_1_PIN
@@ -837,8 +837,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         #define RELAY_1_PIN 47
         #define SENDER_NODE_ID 0x1122aabbUL  // che in realta è: !1122aabb <-- nodenum nodo trasmettitore trasmittente!
         // soglia metri dal nodo cancello!
-        #define GEOFENCE_SOGLIA_M        30.0f                         // attiva entro 50m
-        #define GEOFENCE_SOGLIA_RESET_M  (GEOFENCE_SOGLIA_M + 20.0f)   // reset oltre 70m (50 + 20 metri)
+        #define GEOFENCE_SOGLIA_M        30.0f                         // attiva entro 30m
+        #define GEOFENCE_SOGLIA_RESET_M  (GEOFENCE_SOGLIA_M + 20.0f)   // reset oltre 50m (30 + 20 metri)
     #endif
 #endif
 
