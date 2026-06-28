@@ -22,6 +22,7 @@
 #define CMD_RAIN          "fattore pioggia"
 #define CMD_INV_VENTO     "inverti vento"
 #define CMD_DIR_VENTO     "direzione vento"
+#define CMD_RELAY0        "fanrelay" // on o off
 #define CMD_RELAY1        "relay1" // on o off
 #define CMD_RELAY2        "relay2" // on o off per accendere / spegnere
 #define COMANDO_STATO     "stato sensori"

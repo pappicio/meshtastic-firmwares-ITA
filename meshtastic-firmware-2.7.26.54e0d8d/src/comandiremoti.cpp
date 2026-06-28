@@ -302,7 +302,7 @@ if (cmd.equals(LISTA_COMANDI)) {
             // Componiamo le stringhe
             args->msg1 = "1/3 Sys: " + String(COMANDO_STATO) + ", " + String(CMD_PASS) + ", " + String(CMD_REBOOT);
             args->msg2 = "2/3 Fan: " + String(CMD_FAN_T_START) + ", " + String(CMD_FAN_T_STOP) + ", " + String(CMD_FAN_H_START) + ", " + String(CMD_FAN_H_STOP) + ", Batt: " + String(CMD_BATT_SLEEP) + ", " + String(CMD_BATT_WAKE);
-            args->msg3 = "3/3 Meteo/Relay: " + String(CMD_GUADAGNO) + ", " + String(CMD_ATTRITO) + ", " + String(CMD_RAIN) + ", " + String(CMD_INV_VENTO) + ", " + String(CMD_DIR_VENTO) + ", " + String(CMD_RELAY1) + " on/off, " + String(CMD_RELAY2) + " on/off";
+            args->msg3 = "3/3 Meteo/Relay: " + String(CMD_GUADAGNO) + ", " + String(CMD_ATTRITO) + ", " + String(CMD_RAIN) + ", " + String(CMD_INV_VENTO) + ", " + String(CMD_DIR_VENTO) + ", " + String(CMD_RELAY0) + " on/off, " + String(CMD_RELAY1) + " on/off" + ", " + String(CMD_RELAY2) + " on/off";
 
             // Creiamo un task FreeRTOS a bassissima priorità che gira in background
             xTaskCreate(
@@ -400,6 +400,24 @@ if (cmd.equals(LISTA_COMANDI)) {
         bool stato = cmd.substring(strlen(CMD_RELAY2) + 1).equals("on");
         digitalWrite(RELAY_2_PIN, stato ? HIGH : LOW);
         sendConfirm(p, ("OK: " + String(CMD_RELAY2) + " su: " + String(stato ? "ON" : "OFF")).c_str());
+        return true;
+    }
+#endif
+
+#ifdef RELAY_0_PIN
+    if (cmd.startsWith(String(CMD_RELAY0) + " ")) {
+        bool stato = cmd.substring(strlen(CMD_RELAY0) + 1).equals("on");
+        digitalWrite(RELAY_0_PIN, stato ? HIGH : LOW);
+        sendConfirm(p, ("OK: " + String(CMD_RELAY0) + " su: " + String(stato ? "ON" : "OFF")).c_str());
+        return true;
+    }
+#endif
+
+#ifdef FAN_RELAY_PIN
+    if (cmd.startsWith(String(CMD_RELAY0) + " ")) {
+        bool stato = cmd.substring(strlen(CMD_RELAY0) + 1).equals("on");
+        digitalWrite(FAN_RELAY_PIN, stato ? HIGH : LOW);
+        sendConfirm(p, ("OK: " + String(CMD_RELAY0) + " su: " + String(stato ? "ON" : "OFF")).c_str());
         return true;
     }
 #endif

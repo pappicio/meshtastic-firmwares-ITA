@@ -989,6 +989,11 @@ int relayMap = 5000;
 #else
     relayMap += 200; 
 #endif
+#ifdef RELAY_0_PIN
+    relayMap += (digitalRead(RELAY_0_PIN) == HIGH) ? 100 : 0;
+#else
+    relayMap += 200; 
+#endif
 
 // 2. Cifra delle DECINE: RELAY 1 (Y)
 #ifdef RELAY_1_PIN
@@ -1024,7 +1029,7 @@ if (onsleep) {
 
  
 
-#if defined(FAN_RELAY_PIN) || defined(RELAY_1_PIN) || defined(RELAY_2_PIN)
+#if defined(FAN_RELAY_PIN) || defined(RELAY_1_PIN) || defined(RELAY_2_PIN) || defined(RELAY_0_PIN)
 
 // --- INIEZIONE NELLE METRICHE ---
 // Se SHOW_ON_POWER_METRICS è definita, saltiamo questa iniezione per non duplicare i dati

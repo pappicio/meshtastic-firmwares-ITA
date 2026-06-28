@@ -343,6 +343,11 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     #else
         powerStatusMap += 200;
     #endif
+    #ifdef RELAY_0_PIN
+        powerStatusMap += (digitalRead(RELAY_0_PIN) == HIGH) ? 100 : 0;
+    #else
+        powerStatusMap += 200;
+    #endif
 
     // Cifra Decine: RELAY 1
     #ifdef RELAY_1_PIN
@@ -376,7 +381,7 @@ if (onsleep) {
     // queste condizioni lo lasciano invariato.
 }
 
-#if defined (FAN_RELAY_PIN) || defined (RELAY_1_PIN) || defined (RELAY_2_PIN)
+#if defined (FAN_RELAY_PIN) || defined (RELAY_1_PIN) || defined (RELAY_2_PIN) || defined (RELAY_0_PIN)
     // Iniezione nel canale CH3 Current
     m.variant.power_metrics.has_ch3_current = true;
     m.variant.power_metrics.ch3_current = (float)powerStatusMap;

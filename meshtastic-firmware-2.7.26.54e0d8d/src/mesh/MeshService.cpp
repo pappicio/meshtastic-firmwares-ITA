@@ -599,7 +599,11 @@ void MeshService::initHardwarePins() {
         pinMode(FAN_RELAY_PIN, OUTPUT);
         digitalWrite(FAN_RELAY_PIN, LOW);
     #endif
-
+    #ifdef RELAY_0_PIN
+        pinMode(RELAY_0_PIN, OUTPUT);
+        digitalWrite(RELAY_0_PIN, LOW);
+    #endif
+    
     #ifdef RELAY_1_PIN
         pinMode(RELAY_1_PIN, OUTPUT);
         digitalWrite(RELAY_1_PIN, LOW);
@@ -609,6 +613,8 @@ void MeshService::initHardwarePins() {
         pinMode(RELAY_2_PIN, OUTPUT);
         digitalWrite(RELAY_2_PIN, LOW);
     #endif
+
+
 
     // Setup Sensori (Inizializzazione una tantum)
     #ifdef ONEWIRE_TEMP_PIN

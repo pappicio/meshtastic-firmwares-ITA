@@ -888,6 +888,11 @@ void sendlasttelemetry() {
             digitalWrite(FAN_RELAY_PIN, LOW);
         #endif
 
+        #ifdef RELAY_0_PIN
+            pinMode(RELAY_0_PIN, OUTPUT);
+            digitalWrite(RELAY_0_PIN, LOW);
+        #endif
+
         #ifdef RELAY_1_PIN
             pinMode(RELAY_1_PIN, OUTPUT);
             digitalWrite(RELAY_1_PIN, LOW); // Assumendo Active High
