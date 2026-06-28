@@ -811,10 +811,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  // --- CANALE PRIVATO: forza ridefinizione slot 7 ---
 // definiamo un pin per un relay, tipo CANCELLO che ascolta ogni secondo le coordinate che invia il suo nodo 
 
-//#define PRIVATE_CH_NUM 7
+#define PRIVATE_CH_NUM 7
 #if defined(PRIVATE_CH_NUM)
 
-#define TRANSMITTER         // <-- commenta questa per compilare il nodo cancello
+//#define TRANSMITTER         // <-- commenta questa per compilare il nodo cancello
 
     // --- canale privato comune ad entrambi ---
     #ifdef USERPREFS_CHANNEL_7_NAME
@@ -843,7 +843,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         #ifdef RELAY_1_PIN
             #undef RELAY_1_PIN
         #endif
-        #define RELAY_1_PIN 7
+        #define RELAY_1_PIN 3
         #define SENDER_NODE_ID 0x1122aabbUL  // che in realta è: !1122aabb <-- nodenum nodo trasmettitore trasmittente!
         // soglia metri dal nodo cancello!
         #define GEOFENCE_SOGLIA_M        30.0f                         // attiva entro 30m

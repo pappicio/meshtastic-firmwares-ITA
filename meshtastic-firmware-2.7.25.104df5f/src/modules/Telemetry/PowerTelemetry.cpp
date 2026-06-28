@@ -338,16 +338,13 @@ bool PowerTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     int powerStatusMap = 5000;
 
     // Cifra Centinaia: VENTOLA
-    #ifdef FAN_RELAY_PIN
-        powerStatusMap += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100 : 0;
-    #else
-        powerStatusMap += 200;
-    #endif
-    #ifdef RELAY_0_PIN
-        powerStatusMap += (digitalRead(RELAY_0_PIN) == HIGH) ? 100 : 0;
-    #else
-        powerStatusMap += 200;
-    #endif
+#if defined(FAN_RELAY_PIN)
+    powerStatusMap += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100 : 0;
+#elif defined(RELAY_0_PIN)
+    powerStatusMap += (digitalRead(RELAY_0_PIN) == HIGH) ? 100 : 0;
+#else
+    powerStatusMap += 200;
+#endif
 
     // Cifra Decine: RELAY 1
     #ifdef RELAY_1_PIN

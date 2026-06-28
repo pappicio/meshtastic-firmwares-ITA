@@ -593,7 +593,7 @@ void setup()
     Wire.begin();
 #endif
 #endif
-//////////////////////////////////////////////////////////
+
 #if defined(M5STACK_UNITC6L)
     pinMode(LORA_CS, OUTPUT);
     digitalWrite(LORA_CS, 1);
@@ -1288,8 +1288,6 @@ void scannerToSensorsMap(const std::unique_ptr<ScanI2CTwoWire> &i2cScanner, Scan
 }
 #endif
 
-
-
 #ifndef PIO_UNIT_TESTING
 void loop()
 {
@@ -1388,5 +1386,3 @@ void loop()
     }
 }
 #endif
-
- 

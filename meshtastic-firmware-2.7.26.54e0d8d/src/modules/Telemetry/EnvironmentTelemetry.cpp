@@ -984,15 +984,13 @@ int relayMap = 5000;
 
 
 // 1. Cifra delle CENTINAIA: VENTOLA (X)
-#ifdef FAN_RELAY_PIN
+// 1. Cifra delle CENTINAIA: VENTOLA (X)
+#if defined(FAN_RELAY_PIN)
     relayMap += (digitalRead(FAN_RELAY_PIN) == HIGH) ? 100 : 0;
-#else
-    relayMap += 200; 
-#endif
-#ifdef RELAY_0_PIN
+#elif defined(RELAY_0_PIN)
     relayMap += (digitalRead(RELAY_0_PIN) == HIGH) ? 100 : 0;
 #else
-    relayMap += 200; 
+    relayMap += 200;
 #endif
 
 // 2. Cifra delle DECINE: RELAY 1 (Y)
