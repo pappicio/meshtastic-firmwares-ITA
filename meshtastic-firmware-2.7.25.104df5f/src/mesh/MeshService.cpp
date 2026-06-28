@@ -751,7 +751,10 @@ void checkInternalFan() {
     // Sicurezza: eseguiamo solo se il sensore non è scollegato (-999)
     if (currentTemp > -50.0f && currentTemp < 150.0f) {
         
-        #ifdef FAN_RELAY_PIN
+
+        #if defined(FAN_RELAY_PIN) && defined(AUTO_FAN_TEMP)
+            LOG_INFO("Fan Monitoraggio enabled: [%s] T:%.1f H:%.1f", sensorType, currentTemp, fanHum);
+
             pinMode(FAN_RELAY_PIN, OUTPUT);
             bool currentState = digitalRead(FAN_RELAY_PIN);
             bool deveStareAccesa = false;
@@ -773,6 +776,8 @@ void checkInternalFan() {
                 digitalWrite(FAN_RELAY_PIN, deveStareAccesa ? HIGH : LOW);
                 LOG_INFO(deveStareAccesa ? "VENTOLA: ATTIVATA" : "VENTOLA: DISATTIVATA");
             }
+        #else
+            LOG_INFO("Fan Monitoraggio disabled!!!");
         #endif
     }
  
