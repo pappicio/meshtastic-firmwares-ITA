@@ -163,14 +163,7 @@ Tutto si configura tramite `#define` nel file di userprefs della board target.
 
 ---
 
-## 🗂️ File modificati
 
-| File | Modifica |
-|---|---|
-| `PositionModule.cpp` | Task FreeRTOS invio posizione (TRANSMITTER) + geofence handler (RECEIVER) |
-| `userPrefs_<board>.h` | Define configurazione canale, PSK, soglie, GPIO |
-
----
 
 ## 📌 Note
 
