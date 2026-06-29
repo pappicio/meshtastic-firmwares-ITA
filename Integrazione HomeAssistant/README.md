@@ -218,11 +218,11 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
     unit_of_measurement: "mm"
 
   - name: "Nodo Pioggia 24h"
-    unique_id: "nodo_rainfall_24h"
+    unique_id: "nodo_rainfall4h"
     state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
-      {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.rainfall_24h is defined  %}
-        {{ value_json.payload.rainfall_24h | float | round(2) }}
+      {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.rainfall4h is defined  %}
+        {{ value_json.payload.rainfall4h | float | round(2) }}
       {% else %}
         {{ this.state }}
       {% endif %}
@@ -402,7 +402,7 @@ entities:
   - type: section
     label: Nodo Risposte ai comandi
   - entity: sensor.nodo_risposta_comandi_parte_1
-  - entity: sensor.nodo_risposta_comandi_parte_2
+  - entity: sensor.nodo_risposta_comandi_parte
   - entity: sensor.nodo_risposta_comandi_parte_3
   - type: section
     label: Nodo Info
@@ -416,7 +416,7 @@ entities:
   - entity: sensor.nodo_battery_voltage
   - type: section
     label: Nodo Info BOX
-  - entity: sensor.nodo_temperatura_box_2
+  - entity: sensor.nodo_temperatura_box
   - entity: sensor.nodo_umidita_box
   - entity: sensor.nodo_stato_nodo
   - entity: sensor.nodo_relay_fan
@@ -438,10 +438,10 @@ entities:
     label: Vento e Pioggia
   - entity: sensor.nodo_velocita_vento
   - entity: sensor.nodo_direzione_vento
-  - entity: sensor.nodo_bonaccia_vento_2
+  - entity: sensor.nodo_bonaccia_vento
   - entity: sensor.nodo_raffica_vento
   - entity: sensor.nodo_pioggia_1h
-  - entity: sensor.nodo_pioggia_24h
+  - entity: sensor.nodo_pioggia4h
 state_color: true
 
 
