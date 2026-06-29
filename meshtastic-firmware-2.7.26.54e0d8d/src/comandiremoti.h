@@ -53,6 +53,11 @@ inline int ABSOLUTE_SHUTDOWN_COUNT = 5;
 // --- 4. FUNZIONI ---
 void caricavariabili();
 void salvavariabili();
+
+void caricaRelay();
+void salvaRelay();
+
+
 bool checkcomandi(const meshtastic_MeshPacket *p);
 
 #endif // COMANDIREMOTI_H

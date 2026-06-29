@@ -192,6 +192,161 @@ void salvavariabili() {
 
 
 
+
+// =====================================================
+//  SALVA STATO RELAY
+// =====================================================
+void salvaRelay() {
+
+#if defined(ARCH_ESP32) || defined(ESP32)
+
+    Preferences prefs;
+    if (prefs.begin("relay", false)) {
+
+#if defined(RELAY_0_PIN)
+        prefs.putBool("r0", digitalRead(RELAY_0_PIN) == HIGH);
+#else
+        prefs.putBool("r0", false);
+#endif
+#if defined(RELAY_1_PIN)
+        prefs.putBool("r1", digitalRead(RELAY_1_PIN) == HIGH);
+#else
+        prefs.putBool("r1", false);
+#endif
+#if defined(RELAY_2_PIN)
+        prefs.putBool("r2", digitalRead(RELAY_2_PIN) == HIGH);
+#else
+        prefs.putBool("r2", false);
+#endif
+#if defined(FAN_RELAY_PIN)
+        prefs.putBool("fan", digitalRead(FAN_RELAY_PIN) == HIGH);
+#else
+        prefs.putBool("fan", false);
+#endif
+
+        prefs.end();
+    }
+
+#elif defined(NRF52_SERIES)
+
+    using namespace Adafruit_LittleFS_Namespace;
+
+    // Leggi sempre 4 bool in ordine fisso
+    bool r0  = false;
+    bool r1  = false;
+    bool r2  = false;
+    bool fan = false;
+
+#if defined(RELAY_0_PIN)
+    r0 = (digitalRead(RELAY_0_PIN) == HIGH);
+#endif
+#if defined(RELAY_1_PIN)
+    r1 = (digitalRead(RELAY_1_PIN) == HIGH);
+#endif
+#if defined(RELAY_2_PIN)
+    r2 = (digitalRead(RELAY_2_PIN) == HIGH);
+#endif
+#if defined(FAN_RELAY_PIN)
+    fan = (digitalRead(FAN_RELAY_PIN) == HIGH);
+#endif
+
+    InternalFS.remove("/relay.dat");
+    File file(InternalFS);
+    if (file.open("/relay.dat", FILE_O_WRITE)) {
+        file.write((const uint8_t*)&r0,  sizeof(r0));
+        file.write((const uint8_t*)&r1,  sizeof(r1));
+        file.write((const uint8_t*)&r2,  sizeof(r2));
+        file.write((const uint8_t*)&fan, sizeof(fan));
+        file.close();
+    }
+
+#endif
+}
+
+
+// =====================================================
+//  CARICA STATO RELAY
+// =====================================================
+void caricaRelay() {
+
+#if defined(ARCH_ESP32) || defined(ESP32)
+
+    Preferences prefs;
+    if (prefs.begin("relay", true)) {
+
+#if defined(RELAY_0_PIN)
+        pinMode(RELAY_0_PIN, OUTPUT);
+        digitalWrite(RELAY_0_PIN, prefs.getBool("r0", false) ? HIGH : LOW);
+        LOG_INFO("[RELAY] R0: %s", prefs.getBool("r0", false) ? "ON" : "OFF");
+#endif
+#if defined(RELAY_1_PIN)
+        pinMode(RELAY_1_PIN, OUTPUT);
+        digitalWrite(RELAY_1_PIN, prefs.getBool("r1", false) ? HIGH : LOW);
+        LOG_INFO("[RELAY] R1: %s", prefs.getBool("r1", false) ? "ON" : "OFF");
+#endif
+#if defined(RELAY_2_PIN)
+        pinMode(RELAY_2_PIN, OUTPUT);
+        digitalWrite(RELAY_2_PIN, prefs.getBool("r2", false) ? HIGH : LOW);
+        LOG_INFO("[RELAY] R2: %s", prefs.getBool("r2", false) ? "ON" : "OFF");
+#endif
+#if defined(FAN_RELAY_PIN)
+        pinMode(FAN_RELAY_PIN, OUTPUT);
+        digitalWrite(FAN_RELAY_PIN, prefs.getBool("fan", false) ? HIGH : LOW);
+        LOG_INFO("[RELAY] FAN: %s", prefs.getBool("fan", false) ? "ON" : "OFF");
+#endif
+
+        prefs.end();
+    }
+
+#elif defined(NRF52_SERIES)
+
+    using namespace Adafruit_LittleFS_Namespace;
+
+    // Leggi sempre 4 bool in ordine fisso
+    bool r0  = false;
+    bool r1  = false;
+    bool r2  = false;
+    bool fan = false;
+
+    if (InternalFS.exists("/relay.dat")) {
+        File file(InternalFS);
+        if (file.open("/relay.dat", FILE_O_READ)) {
+            file.read(&r0,  sizeof(r0));
+            file.read(&r1,  sizeof(r1));
+            file.read(&r2,  sizeof(r2));
+            file.read(&fan, sizeof(fan));
+            file.close();
+        }
+    }
+
+    // Applica solo i relay definiti
+#if defined(RELAY_0_PIN)
+    pinMode(RELAY_0_PIN, OUTPUT);
+    digitalWrite(RELAY_0_PIN, r0 ? HIGH : LOW);
+    LOG_INFO("[RELAY] R0: %s", r0 ? "ON" : "OFF");
+#endif
+#if defined(RELAY_1_PIN)
+    pinMode(RELAY_1_PIN, OUTPUT);
+    digitalWrite(RELAY_1_PIN, r1 ? HIGH : LOW);
+    LOG_INFO("[RELAY] R1: %s", r1 ? "ON" : "OFF");
+#endif
+#if defined(RELAY_2_PIN)
+    pinMode(RELAY_2_PIN, OUTPUT);
+    digitalWrite(RELAY_2_PIN, r2 ? HIGH : LOW);
+    LOG_INFO("[RELAY] R2: %s", r2 ? "ON" : "OFF");
+#endif
+#if defined(FAN_RELAY_PIN)
+    pinMode(FAN_RELAY_PIN, OUTPUT);
+    digitalWrite(FAN_RELAY_PIN, fan ? HIGH : LOW);
+    LOG_INFO("[RELAY] FAN: %s", fan ? "ON" : "OFF");
+#endif
+
+#endif
+}
+
+
+
+
 static void sendConfirm(const meshtastic_MeshPacket *req, const char *msg)
 {
     if (!req) return;
@@ -342,14 +497,49 @@ if (cmd.equals(LISTA_COMANDI)) {
 	
 
     if (cmd.equals(COMANDO_STATO)) {
-        char stato[256];
-        snprintf(stato, sizeof(stato), "Sys: Reb %dg, Cln %s | Vento: Off %.0f Inv %s | Anem: G%.2f A%.2f | Rain: %.3f | Fan: T%.1f/%.1f U%.0f/%.0f | Bat: S%d/W%d mV", 
-                 auto_reboot_days, firmware_clean_also_nodedb ? "SI" : "NO", WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO", 
-                 ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO, RAIN_GAUGE_FACTOR, fan_temp_start, fan_temp_stop, fan_hum_start, fan_hum_stop, force_sleep_mv, force_wakeup_mv);
+        char stato[320];
+        char relay_str[64] = "";
+
+#if defined(RELAY_0_PIN)
+    snprintf(relay_str + strlen(relay_str), sizeof(relay_str) - strlen(relay_str),
+        "R0:%s ", digitalRead(RELAY_0_PIN) == HIGH ? "ON" : "OFF");
+#elif defined(FAN_RELAY_PIN)
+    snprintf(relay_str + strlen(relay_str), sizeof(relay_str) - strlen(relay_str),
+        "FAN:%s ", digitalRead(FAN_RELAY_PIN) == HIGH ? "ON" : "OFF");
+#else
+    strncat(relay_str, "R0/FAN:NC ", sizeof(relay_str) - strlen(relay_str) - 1);
+#endif
+
+
+#if defined(RELAY_1_PIN)
+    snprintf(relay_str + strlen(relay_str), sizeof(relay_str) - strlen(relay_str),
+        "R1:%s ", digitalRead(RELAY_1_PIN) == HIGH ? "ON" : "OFF");
+#else
+    strncat(relay_str, "R1:NC ", sizeof(relay_str) - strlen(relay_str) - 1);
+#endif
+
+#if defined(RELAY_2_PIN)
+    snprintf(relay_str + strlen(relay_str), sizeof(relay_str) - strlen(relay_str),
+        "R2:%s ", digitalRead(RELAY_2_PIN) == HIGH ? "ON" : "OFF");
+#else
+    strncat(relay_str, "R2:NC ", sizeof(relay_str) - strlen(relay_str) - 1);
+#endif
+
+        snprintf(stato, sizeof(stato), 
+            "Sys: Reb %dg, Cln %s | Vento: Off %.0f Inv %s | Anem: G%.2f A%.2f | Rain: %.3f | Fan: T%.1f/%.1f U%.0f/%.0f | Bat: S%d/W%d mV | Relay: %s", 
+            auto_reboot_days, firmware_clean_also_nodedb ? "SI" : "NO", 
+            WIND_NORTH_OFFSET, WIND_DIRECTION_INVERT ? "SI" : "NO", 
+            ANEMOMETRO_GUADAGNO, ANEMOMETRO_ATTRITO, RAIN_GAUGE_FACTOR, 
+            fan_temp_start, fan_temp_stop, fan_hum_start, fan_hum_stop, 
+            force_sleep_mv, force_wakeup_mv,
+            relay_str);
+
         sendConfirm(p, stato);
         return true;
     }
-	
+
+
+
 	
     if (cmd.startsWith(String(CMD_PASS) + " ")) {
         String nPass = cmd.substring(strlen(CMD_PASS) + 1);
@@ -391,6 +581,7 @@ if (cmd.equals(LISTA_COMANDI)) {
     if (cmd.startsWith(String(CMD_RELAY1) + " ")) {
         bool stato = cmd.substring(strlen(CMD_RELAY1) + 1).equals("on");
         digitalWrite(RELAY_1_PIN, stato ? HIGH : LOW);
+        salvaRelay();
         sendConfirm(p, ("OK: " + String(CMD_RELAY1) + " su: " + String(stato ? "ON" : "OFF")).c_str());
         return true;
     }
@@ -399,6 +590,7 @@ if (cmd.equals(LISTA_COMANDI)) {
     if (cmd.startsWith(String(CMD_RELAY2) + " ")) {
         bool stato = cmd.substring(strlen(CMD_RELAY2) + 1).equals("on");
         digitalWrite(RELAY_2_PIN, stato ? HIGH : LOW);
+        salvaRelay();
         sendConfirm(p, ("OK: " + String(CMD_RELAY2) + " su: " + String(stato ? "ON" : "OFF")).c_str());
         return true;
     }
@@ -408,6 +600,7 @@ if (cmd.equals(LISTA_COMANDI)) {
     if (cmd.startsWith(String(CMD_RELAY0) + " ")) {
         bool stato = cmd.substring(strlen(CMD_RELAY0) + 1).equals("on");
         digitalWrite(RELAY_0_PIN, stato ? HIGH : LOW);
+        salvaRelay();
         sendConfirm(p, ("OK: " + String(CMD_RELAY0) + " su: " + String(stato ? "ON" : "OFF")).c_str());
         return true;
     }
@@ -417,6 +610,7 @@ if (cmd.equals(LISTA_COMANDI)) {
     if (cmd.startsWith(String(CMD_RELAY0) + " ")) {
         bool stato = cmd.substring(strlen(CMD_RELAY0) + 1).equals("on");
         digitalWrite(FAN_RELAY_PIN, stato ? HIGH : LOW);
+        salvaRelay();
         sendConfirm(p, ("OK: " + String(CMD_RELAY0) + " su: " + String(stato ? "ON" : "OFF")).c_str());
         return true;
     }

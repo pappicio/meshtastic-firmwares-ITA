@@ -614,7 +614,10 @@ void MeshService::initHardwarePins() {
         digitalWrite(RELAY_2_PIN, LOW);
     #endif
 
+    // Ripristina stato relay salvato in NVS
+    caricaRelay();
 
+    LOG_INFO("HARDWARE: Pin inizializzati e relay ripristinati.");
 
     // Setup Sensori (Inizializzazione una tantum)
     #ifdef ONEWIRE_TEMP_PIN
@@ -774,6 +777,7 @@ void checkInternalFan() {
             // --- 3. ATTUAZIONE FINALE ---
             if (deveStareAccesa != currentState) {
                 digitalWrite(FAN_RELAY_PIN, deveStareAccesa ? HIGH : LOW);
+                salvaRelay();
                 LOG_INFO(deveStareAccesa ? "VENTOLA: ATTIVATA" : "VENTOLA: DISATTIVATA");
             }
         #else
