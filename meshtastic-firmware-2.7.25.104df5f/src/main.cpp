@@ -344,28 +344,34 @@ void printInfo()
 ///////////////////////////////////////////////
 #ifdef WIND_VELOCITY_PIN
 #if defined(ARCH_ESP32)
-// ISR memorizzata in IRAM per la massima efficienza
-volatile uint32_t wind_pulse_count = 0;
-volatile unsigned long last_micros_anemometro = 0; 
+volatile uint32_t wind_pulse_count       = 0;
+volatile uint32_t wind_min_interval_us   = UINT32_MAX;
+volatile unsigned long last_micros_anemometro = 0;
 
 void IRAM_ATTR windVelocityISR() {
-    unsigned long calcolo_tempo = micros();
-    // Filtro antirimbalzo a 15ms (Tarato per max 160 km/h)
-// Ottimizzato a 5ms (5000 micros) per reggere tempeste oltre i 130 km/h veri
-    if (calcolo_tempo - last_micros_anemometro > 5000) {
+    unsigned long now      = micros();
+    unsigned long interval = now - last_micros_anemometro;
+    // Debounce 5ms — regge oltre 130 km/h reali
+    if (interval > 5000) {
         wind_pulse_count++;
-        last_micros_anemometro = calcolo_tempo;
+        if ((uint32_t)interval < wind_min_interval_us)
+            wind_min_interval_us = (uint32_t)interval; // cattura il picco di raffica
+        last_micros_anemometro = now;
     }
 }
 #else
-volatile uint32_t wind_pulse_count = 0;
+volatile uint32_t wind_pulse_count       = 0;
+volatile uint32_t wind_min_interval_us   = UINT32_MAX;
 volatile unsigned long last_micros_anemometro = 0;
 
 void windVelocityISR() {
-    unsigned long calcolo_tempo = micros();
-    if (calcolo_tempo - last_micros_anemometro > 15000) {
+    unsigned long now      = micros();
+    unsigned long interval = now - last_micros_anemometro;
+    if (interval > 15000) {
         wind_pulse_count++;
-        last_micros_anemometro = calcolo_tempo;
+        if ((uint32_t)interval < wind_min_interval_us)
+            wind_min_interval_us = (uint32_t)interval;
+        last_micros_anemometro = now;
     }
 }
 #endif
@@ -374,21 +380,20 @@ void windVelocityISR() {
 
 #ifdef RAIN_SENSOR_PIN
 #if defined(ARCH_ESP32)
-// ISR memorizzata in IRAM per la massima efficienza
 volatile uint32_t rain_pulse_count = 0;
-volatile unsigned long last_micros_rain = 0; 
+volatile unsigned long last_micros_rain = 0;
 
 void IRAM_ATTR rainGaugeISR() {
     unsigned long calcolo_tempo = micros();
-    // Debounce pluviometro: 100ms sono sicuri per evitare doppi conteggi da rimbalzo fisico
+    // Debounce 100ms — sicuro contro rimbalzi fisici del basculante
     if (calcolo_tempo - last_micros_rain > 100000) {
         rain_pulse_count++;
         last_micros_rain = calcolo_tempo;
     }
 }
 #else
-volatile uint32_t rain_pulse_count;
-volatile unsigned long last_micros_rain;
+volatile uint32_t rain_pulse_count = 0;
+volatile unsigned long last_micros_rain = 0;
 
 void rainGaugeISR() {
     unsigned long calcolo_tempo = micros();

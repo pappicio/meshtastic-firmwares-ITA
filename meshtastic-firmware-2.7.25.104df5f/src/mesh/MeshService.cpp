@@ -886,66 +886,73 @@ float wind_lull_globale = 9999.0f;
 
 void aggiornaMeteoLocale(uint8_t ciclo_attuale) {
 
-    // Scatta solo al ciclo 0 e al ciclo 3 (Intervallo preciso di 15 secondi)
     if (ciclo_attuale != 0 && ciclo_attuale != 3) {
-        return; // Nei cicli intermedi esce subito tenendo l'ultimo vento calcolato
+        return;
     }
- LOG_INFO("[MONITOR] Vento attuale (ultimi 5s): %.2f km/h", vento_salvato_globale);
-    // --- ZONA CRITICA SICURA (Scatta ogni 15 secondi reali) ---
-    noInterrupts();
-    uint32_t pulses = wind_pulse_count;
-    wind_pulse_count = 0; // Azzera il contatore hardware per i prossimi 15 secondi
-    interrupts();
-    // ---------------------------
 
-    // Calcolo della frequenza media basata sui 15 secondi fissi del task
+    LOG_INFO("[MONITOR] Vento attuale (ultimi 5s): %.2f km/h", vento_salvato_globale);
+
+    // --- ZONA CRITICA ---
+    noInterrupts();
+    uint32_t pulses          = wind_pulse_count;
+    uint32_t min_interval    = wind_min_interval_us;
+    wind_pulse_count         = 0;
+    wind_min_interval_us     = UINT32_MAX;
+    interrupts();
+    // --------------------
+
+    // Velocità media sulla finestra 15s
     float frequenza_hz = (float)pulses / 15.0f;
-    
-    // --- FORMULA LOGARITMICA APERTA (Da 0 a 150+ km/h) ---
+
     if (frequenza_hz > 0.0f) {
-        // Calcola la velocità pura con curva di potenza + offset di attrito
         vento_salvato_globale = (ANEMOMETRO_GUADAGNO * powf(frequenza_hz, 0.92f)) + ANEMOMETRO_ATTRITO;
     } else {
-        vento_salvato_globale = 0.0f; 
+        vento_salvato_globale = 0.0f;
     }
 
-    if (vento_salvato_globale > wind_gust_globale) wind_gust_globale = vento_salvato_globale;
+    // Raffica: picco istantaneo dall'intervallo minimo tra impulsi
+    if (min_interval != UINT32_MAX && min_interval > 0) {
+        float freq_gust  = 1000000.0f / (float)min_interval;
+        float gust_speed = (ANEMOMETRO_GUADAGNO * freq_gust) - ANEMOMETRO_ATTRITO;
+        if (gust_speed < 0.0f) gust_speed = 0.0f;
+        if (gust_speed > wind_gust_globale) wind_gust_globale = gust_speed;
+    } else {
+        if (vento_salvato_globale > wind_gust_globale) wind_gust_globale = vento_salvato_globale;
+    }
+
+    // Lull dalla media
     if (vento_salvato_globale < wind_lull_globale) wind_lull_globale = vento_salvato_globale;
 
-    // Nel log moltiplichiamo al volo per 3.6f solo per la visualizzazione a schermo.
-    // Così sul monitor seriale leggi i km/h e verifichi la taratura con la Ecowitt!
-    LOG_INFO("[METEO-SUB] Finestra 15s conclusa (Ciclo %d). Impulsi: %d | Frequenza: %.2f Hz | Velocità: %.2f m/s (%.2f km/h)", 
-             ciclo_attuale, pulses, frequenza_hz, vento_salvato_globale, (vento_salvato_globale * 3.6f));
+    LOG_INFO("[METEO-SUB] Finestra 15s conclusa (Ciclo %d). Impulsi: %d | Freq: %.2f Hz | "
+             "Velocità: %.2f m/s (%.2f km/h) | Raffica: %.2f m/s (%.2f km/h)",
+             ciclo_attuale, pulses, frequenza_hz,
+             vento_salvato_globale, (vento_salvato_globale * 3.6f),
+             wind_gust_globale, (wind_gust_globale * 3.6f));
 
+    // --- RESET GIORNALIERO GUST/LULL ---
+    time_t now = time(nullptr);
+    struct tm *t = localtime(&now);
+    static int      lastResetDay    = -1;
+    static uint32_t last_gust_reset = 0;
 
-
-             ////////////////////////////////////////
-        // dopo l'invio, al posto del reset immediato:
-        time_t now = time(nullptr);
-struct tm *t = localtime(&now);
-static int lastResetDay = -1;
-static uint32_t last_gust_reset = 0;
-
-if (now > 1000000000UL) {
-    // NTP disponibile - reset a mezzanotte
-    if (t->tm_mday != lastResetDay) {
-        wind_gust_globale = 0.0f;
-        wind_lull_globale = 9999.0f;
-        lastResetDay = t->tm_mday;
-        last_gust_reset = millis();
+    if (now > 1000000000UL) {
+        if (t->tm_mday != lastResetDay) {
+            wind_gust_globale = 0.0f;
+            wind_lull_globale = 9999.0f;
+            lastResetDay      = t->tm_mday;
+            last_gust_reset   = millis();
+        }
+    } else {
+        if (millis() - last_gust_reset >= 86400000UL) {
+            wind_gust_globale = 0.0f;
+            wind_lull_globale = 9999.0f;
+            last_gust_reset   = millis();
+        }
     }
-} else {
-    // NTP non disponibile - reset ogni 24h con millis()
-    if (millis() - last_gust_reset >= 86400000UL) {
-        wind_gust_globale = 0.0f;
-        wind_lull_globale = 9999.0f;
-        last_gust_reset = millis();
-    }
+    // ------------------------------------
 }
-////////////////////////////////////////
 
-
-}
+ 
 #endif
 
 #ifdef RAIN_SENSOR_PIN
