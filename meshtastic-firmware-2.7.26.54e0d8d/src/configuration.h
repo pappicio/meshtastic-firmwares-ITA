@@ -863,7 +863,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #define USERPREFS_CONFIG_DEVICE_TELEM_UPDATE_INTERVAL 3600
     #define ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE 1
 
-    #define AUTO_FAN_TEMP // if defined has temp start and temp stop for fan, and if has also humidity, has also hum start and hum stop FAN
+//    #define AUTO_FAN_TEMP // if defined has temp start and temp stop for fan, and if has also humidity, has also hum start and hum stop FAN
     
 // possiamo scegliere di mostrare i dati imvece nelle telemetrie power anziche in quelle ambientali
 //  #define SHOW_ON_POWER_METRICS
