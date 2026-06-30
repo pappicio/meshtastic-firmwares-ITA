@@ -11,7 +11,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # =====================================================
   - name: "Nodo Long Name"
     unique_id: "nodo_long_name_root"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.long_name is defined  %}
         {{ value_json.long_name }}
@@ -22,7 +22,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Short Name"
     unique_id: "nodo_short_name_root"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.short_name is defined   %}
         {{ value_json.short_name }}
@@ -34,7 +34,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # --- BATTERIA E SISTEMA ---
   - name: "Nodo Battery Voltage"
     unique_id: "nodo_battery_voltage"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     state_class: measurement
     value_template: >-
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.voltage is defined  %}
@@ -47,7 +47,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Battery Percent"
     unique_id: "nodo_battery_percent"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     state_class: measurement
     value_template: >-
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.battery_level is defined   %}
@@ -61,7 +61,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # --- STATISTICHE CANALE ---
   - name: "Nodo Channel Utilization"
     unique_id: "nodo_chutil"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     state_class: measurement
     value_template: >-
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.channel_utilization is defined   %}
@@ -74,7 +74,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Air Utilization TX"
     unique_id: "nodo_airutiltx"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     state_class: measurement
     value_template: >-
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.air_util_tx is defined %}
@@ -87,7 +87,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Uptime"
     unique_id: "nodo_uptime"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     state_class: total_increasing
     value_template: >-
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.uptime_seconds is defined %}
@@ -100,7 +100,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Uptime Formattato"
     unique_id: "nodo_uptime_formattato"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >-
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.uptime_seconds is defined %}
         {% set s = value_json.payload.uptime_seconds | int %}
@@ -116,7 +116,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # --- METEO BME680 ---
   - name: "Nodo Temperatura Esterna"
     unique_id: "nodo_temperature"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.temperature is defined   %}
         {{ value_json.payload.temperature | float | round(1) }}
@@ -128,7 +128,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Umidita'"
     unique_id: "nodo_humidity"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.relative_humidity is defined  %}
         {{ value_json.payload.relative_humidity | float | round(1) }}
@@ -140,7 +140,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Pressione"
     unique_id: "nodo_pressure"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.barometric_pressure is defined   %}
         {{ value_json.payload.barometric_pressure | float | round(2) }}
@@ -152,7 +152,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Gas Resistance"
     unique_id: "nodo_gas_resistance"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.gas_resistance is defined  %}
         {{ value_json.payload.gas_resistance | float | round(2) }}
@@ -164,7 +164,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # --- VENTO E PIOGGIA ---
   - name: "Nodo Velocita' Vento"
     unique_id: "nodo_wind_speed"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.wind_speed is defined %}
         {{ (value_json.payload.wind_speed | float * 3.6) | round(1) }}
@@ -175,7 +175,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Direzione Vento"
     unique_id: "nodo_wind_direction"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.wind_direction is defined %}
         {{ value_json.payload.wind_direction | int }}
@@ -186,7 +186,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Raffica Vento"
     unique_id: "nodo_wind_gust"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.wind_gust is defined %}
         {{ (value_json.payload.wind_gust | float * 3.6) | round(1) }}
@@ -197,7 +197,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo bonaccia Vento"
     unique_id: "nodo_wind_lull"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.wind_lull is defined %}
         {{ (value_json.payload.wind_lull | float * 3.6) | round(1) }}
@@ -208,7 +208,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Pioggia 1h"
     unique_id: "nodo_rainfall_1h"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.rainfall_1h is defined  %}
         {{ value_json.payload.rainfall_1h | float | round(2) }}
@@ -218,11 +218,11 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
     unit_of_measurement: "mm"
 
   - name: "Nodo Pioggia 24h"
-    unique_id: "nodo_rainfall_24h"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    unique_id: "nodo_rainfall4h"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
-      {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.rainfall_24h is defined  %}
-        {{ value_json.payload.rainfall_24h | float | round(2) }}
+      {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.rainfall4h is defined  %}
+        {{ value_json.payload.rainfall4h | float | round(2) }}
       {% else %}
         {{ this.state }}
       {% endif %}
@@ -231,7 +231,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # --- TEMPERATURA BOX & LUX ---
   - name: "Nodo Temperatura BOX"
     unique_id: "nodo_temperatura_box"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.voltagex is defined %}
         {{ (value_json.payload.voltagex | float) | int }}
@@ -243,7 +243,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Umidità BOX"
     unique_id: "nodo_umidita_box"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.voltagex is defined %}
         {% set hum = ((value_json.payload.voltagex | float) % 1 * 100) | round(0) | int %}
@@ -259,7 +259,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Stato Nodo"
     unique_id: "nodo_stato_nodo"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.currentx is defined %}
         {% set val = value_json.payload.currentx | int %}
@@ -272,7 +272,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Relay FAN"
     unique_id: "nodo_relay_fan"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.currentx is defined %}
         {% set val = value_json.payload.currentx | int %}
@@ -285,7 +285,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Relay R1"
     unique_id: "nodo_relay_r1"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.currentx is defined %}
         {% set val = value_json.payload.currentx | int %}
@@ -298,7 +298,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Relay R2"
     unique_id: "nodo_relay_r2"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id" and value_json.payload.currentx is defined %}
         {% set val = value_json.payload.currentx | int %}
@@ -313,7 +313,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo Lux"
     unique_id: "nodo_lux"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.lux is defined     %}
         {{ value_json.payload.lux | float | round(0) }}
@@ -325,7 +325,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 
   - name: "Nodo White Lux"
     unique_id: "nodo_white_lux"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/telemetry"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/telemetry"
     value_template: >
       {% if value_json is defined and value_json.sender == "!!tuo_nodo_id"  and value_json.payload.white_lux is defined   %}
         {{ value_json.payload.white_lux | float | round(0) }}
@@ -337,7 +337,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
     
   - name: "Nodo Risposta Comandi"
     unique_id: "nodo_risposta_comandi"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/risposta"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/risposta"
     # Poiché il valore è testo grezzo, lo prendiamo tutto così com'è
     value_template: "{{ value }}"
     icon: "mdi:message-text"
@@ -347,7 +347,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
 # SENSORE PARTE 1 (O COMANDI SINGOLI)
   - name: "R1:"
     unique_id: "nodo_risposta_comandi_parte1"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/risposta"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/risposta"
     value_template: >-
       {% if '1/' in value %}
         {{ value | replace('1/3 ', '') }}
@@ -361,7 +361,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # SENSORE PARTE 2
   - name: "R2:"
     unique_id: "nodo_risposta_comandi_parte2"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/risposta"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/risposta"
     value_template: >-
       {% if '2/' in value %}
         {{ value | replace('2/3 ', '') }}
@@ -376,7 +376,7 @@ aggiungi questa configurazione di sensori mqtt, ad esempio in;  `mqtts/mqtt_sens
   # SENSORE PARTE 3
   - name: "R3:"
     unique_id: "nodo_risposta_comandi_parte3"
-    state_topic: "mesh/SA01/privato/!!tuo_nodo_id/risposta"
+    state_topic: "mesh/!tuonodo/privato/!!tuo_nodo_id/risposta"
     value_template: >-
       {% if '3/' in value %}
         {{ value | replace('3/3 ', '') }}
@@ -402,7 +402,7 @@ entities:
   - type: section
     label: Nodo Risposte ai comandi
   - entity: sensor.nodo_risposta_comandi_parte_1
-  - entity: sensor.nodo_risposta_comandi_parte_2
+  - entity: sensor.nodo_risposta_comandi_parte
   - entity: sensor.nodo_risposta_comandi_parte_3
   - type: section
     label: Nodo Info
@@ -416,7 +416,7 @@ entities:
   - entity: sensor.nodo_battery_voltage
   - type: section
     label: Nodo Info BOX
-  - entity: sensor.nodo_temperatura_box_2
+  - entity: sensor.nodo_temperatura_box
   - entity: sensor.nodo_umidita_box
   - entity: sensor.nodo_stato_nodo
   - entity: sensor.nodo_relay_fan
@@ -438,10 +438,10 @@ entities:
     label: Vento e Pioggia
   - entity: sensor.nodo_velocita_vento
   - entity: sensor.nodo_direzione_vento
-  - entity: sensor.nodo_bonaccia_vento_2
+  - entity: sensor.nodo_bonaccia_vento
   - entity: sensor.nodo_raffica_vento
   - entity: sensor.nodo_pioggia_1h
-  - entity: sensor.nodo_pioggia_24h
+  - entity: sensor.nodo_pioggia4h
 state_color: true
 
 
